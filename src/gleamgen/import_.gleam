@@ -2,6 +2,7 @@ import gleam/list
 import gleam/option.{type Option}
 import gleamgen/expression.{type Expression}
 import gleamgen/function
+import gleamgen/types
 
 pub type ImportedModule {
   ImportedModule(name: List(String), alias: Option(String))
@@ -30,6 +31,13 @@ pub fn unchecked_ident(
   name: String,
 ) -> Expression(any) {
   expression.unchecked_ident(get_reference(imported) <> "." <> name)
+}
+
+pub fn unchecked_type(
+  imported: ImportedModule,
+  name: String,
+) -> types.GeneratedType(t) {
+  types.unchecked_ident(get_reference(imported) <> "." <> name)
 }
 
 /// Import an existing function from the module.

@@ -3,9 +3,9 @@
 [![Package Version](https://img.shields.io/hexpm/v/gleamgen?color=a6f0fc)](https://hex.pm/packages/gleamgen)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/gleamgen/)
 
-A clean, type-safe\* package for generating formatted Gleam code
+A clean, type-safe\* package for generating formatted Gleam code ✏️
 
-## Installation
+## Installation 🚀
 
 ```sh
 gleam add gleamgen
@@ -52,7 +52,7 @@ pub fn main() {
         handler: fn(greeting) {
           greeting
           |> expression.concat_string(expression.string(" from "))
-          // trying to concat any other type would be a compilation error
+          // trying to concatenate any other type would be a compilation error
           |> expression.concat_string(module_used)
         },
       ),

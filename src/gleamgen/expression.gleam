@@ -60,6 +60,7 @@ pub fn list(value: List(Expression(t))) -> Expression(List(t)) {
   )
 }
 
+/// Provide an ident that could be of any type
 pub fn unchecked_ident(value: String) -> Expression(any) {
   Expression(Ident(value), types.unchecked())
 }
@@ -204,6 +205,7 @@ pub fn type_(expr: Expression(unchecked)) -> types.GeneratedType(unchecked) {
 @external(javascript, "../gleamgen_ffi.mjs", "identity")
 pub fn to_unchecked(type_: Expression(t)) -> Expression(types.Unchecked)
 
+/// Convert an expression to any type without checking
 @external(erlang, "gleamgen_ffi", "identity")
 @external(javascript, "../gleamgen_ffi.mjs", "identity")
 pub fn unsafe_from_unchecked(type_: Expression(t1)) -> Expression(t2)

@@ -3,7 +3,7 @@
 [![Package Version](https://img.shields.io/hexpm/v/gleamgen?color=a6f0fc)](https://hex.pm/packages/gleamgen)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/gleamgen/)
 
-A clean, type-safe\* package for generating formatted Gleam code ✏️
+A clean package for generating type-checked and formatted Gleam code ✏️
 
 ## Installation 🚀
 
@@ -121,3 +121,6 @@ You can easily integrate between the two with functions such as
 `expression.to_unchecked` or `expression.unsafe_from_unchecked`
 
 Further documentation can be found at <https://hexdocs.pm/gleamgen>.
+
+Note: There is still a lot missing, and the way things like generics are
+handled are subject to change

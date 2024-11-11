@@ -35,6 +35,46 @@ pub fn simple_string_test() {
   |> should.equal("\"hello\"")
 }
 
+pub fn simple_tuple_test() {
+  expression.tuple3(
+    expression.int(3),
+    expression.string("hello"),
+    expression.bool(True),
+  )
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal("#(3, \"hello\", True)")
+}
+
+pub fn long_tuple_test() {
+  expression.tuple9(
+    expression.int(3),
+    expression.string("hello there (making this really long like really long)"),
+    expression.bool(True),
+    expression.bool(True),
+    expression.bool(True),
+    expression.bool(True),
+    expression.bool(True),
+    expression.bool(True),
+    expression.bool(True),
+  )
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "#(
+  3,
+  \"hello there (making this really long like really long)\",
+  True,
+  True,
+  True,
+  True,
+  True,
+  True,
+  True,
+)",
+  )
+}
+
 pub fn simple_todo_test() {
   expression.todo_(option.Some("some unimplemented thing"))
   |> expression.render(render.default_context())

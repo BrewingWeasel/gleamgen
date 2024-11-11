@@ -12,6 +12,7 @@ pub opaque type GeneratedType(type_) {
   GeneratedFloat
   GeneratedNil
   GeneratedList(GeneratedType(Unchecked))
+  GeneratedTuple(List(GeneratedType(Unchecked)))
   GeneratedFunction(List(GeneratedType(Unchecked)), GeneratedType(Unchecked))
   Unchecked
   UncheckedIdent(String)
@@ -39,6 +40,143 @@ pub fn nil() -> GeneratedType(Nil) {
 
 pub fn list(type_: GeneratedType(t)) -> GeneratedType(List(t)) {
   GeneratedList(type_ |> to_unchecked)
+}
+
+pub fn tuple1(type1: GeneratedType(a)) -> GeneratedType(#(a)) {
+  GeneratedTuple([type1 |> to_unchecked])
+}
+
+pub fn tuple2(
+  type1: GeneratedType(a),
+  type2: GeneratedType(b),
+) -> GeneratedType(#(a, b)) {
+  GeneratedTuple([type1 |> to_unchecked, type2 |> to_unchecked])
+}
+
+pub fn tuple3(
+  type1: GeneratedType(a),
+  type2: GeneratedType(b),
+  type3: GeneratedType(c),
+) -> GeneratedType(#(a, b, c)) {
+  GeneratedTuple([
+    type1 |> to_unchecked,
+    type2 |> to_unchecked,
+    type3 |> to_unchecked,
+  ])
+}
+
+pub fn tuple4(
+  type1: GeneratedType(a),
+  type2: GeneratedType(b),
+  type3: GeneratedType(c),
+  type4: GeneratedType(d),
+) -> GeneratedType(#(a, b, c, d)) {
+  GeneratedTuple([
+    type1 |> to_unchecked,
+    type2 |> to_unchecked,
+    type3 |> to_unchecked,
+    type4 |> to_unchecked,
+  ])
+}
+
+pub fn tuple5(
+  type1: GeneratedType(a),
+  type2: GeneratedType(b),
+  type3: GeneratedType(c),
+  type4: GeneratedType(d),
+  type5: GeneratedType(e),
+) -> GeneratedType(#(a, b, c, d, e)) {
+  GeneratedTuple([
+    type1 |> to_unchecked,
+    type2 |> to_unchecked,
+    type3 |> to_unchecked,
+    type4 |> to_unchecked,
+    type5 |> to_unchecked,
+  ])
+}
+
+pub fn tuple6(
+  type1: GeneratedType(a),
+  type2: GeneratedType(b),
+  type3: GeneratedType(c),
+  type4: GeneratedType(d),
+  type5: GeneratedType(e),
+  type6: GeneratedType(f),
+) -> GeneratedType(#(a, b, c, d, e, f)) {
+  GeneratedTuple([
+    type1 |> to_unchecked,
+    type2 |> to_unchecked,
+    type3 |> to_unchecked,
+    type4 |> to_unchecked,
+    type5 |> to_unchecked,
+    type6 |> to_unchecked,
+  ])
+}
+
+pub fn tuple7(
+  type1: GeneratedType(a),
+  type2: GeneratedType(b),
+  type3: GeneratedType(c),
+  type4: GeneratedType(d),
+  type5: GeneratedType(e),
+  type6: GeneratedType(f),
+  type7: GeneratedType(g),
+) -> GeneratedType(#(a, b, c, d, e, f, g)) {
+  GeneratedTuple([
+    type1 |> to_unchecked,
+    type2 |> to_unchecked,
+    type3 |> to_unchecked,
+    type4 |> to_unchecked,
+    type5 |> to_unchecked,
+    type6 |> to_unchecked,
+    type7 |> to_unchecked,
+  ])
+}
+
+pub fn tuple8(
+  type1: GeneratedType(a),
+  type2: GeneratedType(b),
+  type3: GeneratedType(c),
+  type4: GeneratedType(d),
+  type5: GeneratedType(e),
+  type6: GeneratedType(f),
+  type7: GeneratedType(g),
+  type8: GeneratedType(h),
+) -> GeneratedType(#(a, b, c, d, e, f, g, h)) {
+  GeneratedTuple([
+    type1 |> to_unchecked,
+    type2 |> to_unchecked,
+    type3 |> to_unchecked,
+    type4 |> to_unchecked,
+    type5 |> to_unchecked,
+    type6 |> to_unchecked,
+    type7 |> to_unchecked,
+    type8 |> to_unchecked,
+  ])
+}
+
+pub fn tuple9(
+  type1: GeneratedType(a),
+  type2: GeneratedType(b),
+  type3: GeneratedType(c),
+  type4: GeneratedType(d),
+  type5: GeneratedType(e),
+  type6: GeneratedType(f),
+  type7: GeneratedType(g),
+  type8: GeneratedType(h),
+  type9: GeneratedType(i),
+) -> GeneratedType(#(a, b, c, d, e, f, g, h, i)) {
+  GeneratedTuple([
+    type1 |> to_unchecked,
+    type2 |> to_unchecked,
+    type3 |> to_unchecked,
+    type4 |> to_unchecked,
+    type5 |> to_unchecked,
+    type6 |> to_unchecked,
+    type7 |> to_unchecked,
+    type8 |> to_unchecked,
+    type9 |> to_unchecked,
+  ])
 }
 
 pub fn unchecked_ident(name: String) -> GeneratedType(any) {
@@ -89,6 +227,7 @@ pub fn render_type(type_: GeneratedType(a)) -> Result(render.Rendered, Nil) {
     GeneratedFloat -> doc.from_string("Float") |> render.Render |> Ok
     GeneratedNil -> doc.from_string("Nil") |> render.Render |> Ok
     GeneratedList(t) -> render_list(t)
+    GeneratedTuple(t) -> render_tuple(t)
     Unchecked -> Error(Nil)
     UncheckedIdent(t) -> doc.from_string(t) |> render.Render |> Ok
     GeneratedFunction(args, return) -> {
@@ -101,6 +240,22 @@ fn render_list(type_: GeneratedType(Unchecked)) -> Result(render.Rendered, Nil) 
   use rendered <- result.try(render_type(type_))
   doc.from_string("List")
   |> doc.append(render.pretty_list([rendered.doc]))
+  |> render.Render
+  |> Ok
+}
+
+fn render_tuple(
+  types: List(GeneratedType(Unchecked)),
+) -> Result(render.Rendered, Nil) {
+  let rendered_types =
+    types
+    |> list.map(fn(t) {
+      render_type(t)
+      |> result.map(fn(x) { x.doc })
+      |> result.unwrap(doc.from_string("??"))
+    })
+  doc.from_string("#")
+  |> doc.append(render.pretty_list(rendered_types))
   |> render.Render
   |> Ok
 }

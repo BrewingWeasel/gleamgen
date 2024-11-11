@@ -20,6 +20,7 @@ type InternalExpression(type_) {
   StrLiteral(String)
   BoolLiteral(Bool)
   ListLiteral(List(Expression(types.Unchecked)))
+  TupleLiteral(List(Expression(types.Unchecked)))
   Ident(String)
   Todo(Option(String))
   MathOperator(Expression(Int), MathOperator, Expression(Int))
@@ -59,6 +60,206 @@ pub fn list(value: List(Expression(t))) -> Expression(List(t)) {
       |> types.list(),
   )
 }
+
+pub fn tuple1(arg1: Expression(a)) -> Expression(#(a)) {
+  Expression(TupleLiteral([arg1 |> to_unchecked()]), types.tuple1(type_(arg1)))
+}
+
+pub fn tuple2(arg1: Expression(a), arg2: Expression(b)) -> Expression(#(a, b)) {
+  Expression(
+    TupleLiteral([arg1 |> to_unchecked(), arg2 |> to_unchecked()]),
+    types.tuple2(type_(arg1), type_(arg2)),
+  )
+}
+
+pub fn tuple3(
+  arg1: Expression(a),
+  arg2: Expression(b),
+  arg3: Expression(c),
+) -> Expression(#(a, b, c)) {
+  Expression(
+    TupleLiteral([
+      arg1 |> to_unchecked(),
+      arg2 |> to_unchecked(),
+      arg3 |> to_unchecked(),
+    ]),
+    types.tuple3(type_(arg1), type_(arg2), type_(arg3)),
+  )
+}
+
+pub fn tuple4(
+  arg1: Expression(a),
+  arg2: Expression(b),
+  arg3: Expression(c),
+  arg4: Expression(d),
+) -> Expression(#(a, b, c, d)) {
+  Expression(
+    TupleLiteral([
+      arg1 |> to_unchecked(),
+      arg2 |> to_unchecked(),
+      arg3 |> to_unchecked(),
+      arg4 |> to_unchecked(),
+    ]),
+    types.tuple4(type_(arg1), type_(arg2), type_(arg3), type_(arg4)),
+  )
+}
+
+pub fn tuple5(
+  arg1: Expression(a),
+  arg2: Expression(b),
+  arg3: Expression(c),
+  arg4: Expression(d),
+  arg5: Expression(e),
+) -> Expression(#(a, b, c, d, e)) {
+  Expression(
+    TupleLiteral([
+      arg1 |> to_unchecked(),
+      arg2 |> to_unchecked(),
+      arg3 |> to_unchecked(),
+      arg4 |> to_unchecked(),
+      arg5 |> to_unchecked(),
+    ]),
+    types.tuple5(
+      type_(arg1),
+      type_(arg2),
+      type_(arg3),
+      type_(arg4),
+      type_(arg5),
+    ),
+  )
+}
+
+pub fn tuple6(
+  arg1: Expression(a),
+  arg2: Expression(b),
+  arg3: Expression(c),
+  arg4: Expression(d),
+  arg5: Expression(e),
+  arg6: Expression(f),
+) -> Expression(#(a, b, c, d, e, f)) {
+  Expression(
+    TupleLiteral([
+      arg1 |> to_unchecked(),
+      arg2 |> to_unchecked(),
+      arg3 |> to_unchecked(),
+      arg4 |> to_unchecked(),
+      arg5 |> to_unchecked(),
+      arg6 |> to_unchecked(),
+    ]),
+    types.tuple6(
+      type_(arg1),
+      type_(arg2),
+      type_(arg3),
+      type_(arg4),
+      type_(arg5),
+      type_(arg6),
+    ),
+  )
+}
+
+pub fn tuple7(
+  arg1: Expression(a),
+  arg2: Expression(b),
+  arg3: Expression(c),
+  arg4: Expression(d),
+  arg5: Expression(e),
+  arg6: Expression(f),
+  arg7: Expression(g),
+) -> Expression(#(a, b, c, d, e, f, g)) {
+  Expression(
+    TupleLiteral([
+      arg1 |> to_unchecked(),
+      arg2 |> to_unchecked(),
+      arg3 |> to_unchecked(),
+      arg4 |> to_unchecked(),
+      arg5 |> to_unchecked(),
+      arg6 |> to_unchecked(),
+      arg7 |> to_unchecked(),
+    ]),
+    types.tuple7(
+      type_(arg1),
+      type_(arg2),
+      type_(arg3),
+      type_(arg4),
+      type_(arg5),
+      type_(arg6),
+      type_(arg7),
+    ),
+  )
+}
+
+pub fn tuple8(
+  arg1: Expression(a),
+  arg2: Expression(b),
+  arg3: Expression(c),
+  arg4: Expression(d),
+  arg5: Expression(e),
+  arg6: Expression(f),
+  arg7: Expression(g),
+  arg8: Expression(h),
+) -> Expression(#(a, b, c, d, e, f, g, h)) {
+  Expression(
+    TupleLiteral([
+      arg1 |> to_unchecked(),
+      arg2 |> to_unchecked(),
+      arg3 |> to_unchecked(),
+      arg4 |> to_unchecked(),
+      arg5 |> to_unchecked(),
+      arg6 |> to_unchecked(),
+      arg7 |> to_unchecked(),
+      arg8 |> to_unchecked(),
+    ]),
+    types.tuple8(
+      type_(arg1),
+      type_(arg2),
+      type_(arg3),
+      type_(arg4),
+      type_(arg5),
+      type_(arg6),
+      type_(arg7),
+      type_(arg8),
+    ),
+  )
+}
+
+pub fn tuple9(
+  arg1: Expression(a),
+  arg2: Expression(b),
+  arg3: Expression(c),
+  arg4: Expression(d),
+  arg5: Expression(e),
+  arg6: Expression(f),
+  arg7: Expression(g),
+  arg8: Expression(h),
+  arg9: Expression(i),
+) -> Expression(#(a, b, c, d, e, f, g, h, i)) {
+  Expression(
+    TupleLiteral([
+      arg1 |> to_unchecked(),
+      arg2 |> to_unchecked(),
+      arg3 |> to_unchecked(),
+      arg4 |> to_unchecked(),
+      arg5 |> to_unchecked(),
+      arg6 |> to_unchecked(),
+      arg7 |> to_unchecked(),
+      arg8 |> to_unchecked(),
+      arg9 |> to_unchecked(),
+    ]),
+    types.tuple9(
+      type_(arg1),
+      type_(arg2),
+      type_(arg3),
+      type_(arg4),
+      type_(arg5),
+      type_(arg6),
+      type_(arg7),
+      type_(arg8),
+      type_(arg9),
+    ),
+  )
+}
+
+// TODO: undefined tuple
 
 /// Provide an ident that could be of any type
 pub fn unchecked_ident(value: String) -> Expression(any) {
@@ -407,6 +608,7 @@ pub fn render(
     BoolLiteral(True) -> doc.from_string("True")
     BoolLiteral(False) -> doc.from_string("False")
     ListLiteral(values) -> render_list(values, context)
+    TupleLiteral(values) -> render_tuple(values, context)
     Ident(value) -> doc.from_string(value)
     Todo(Some(value)) ->
       doc.concat([
@@ -456,6 +658,13 @@ pub fn render(
     Block(expressions) -> render_block(expressions, context)
   }
   |> render.Render
+}
+
+fn render_tuple(values, context) {
+  values
+  |> list.map(fn(x) { render(x, context).doc })
+  |> render.pretty_list()
+  |> doc.prepend(doc.from_string("#"))
 }
 
 fn render_list(values, context) {

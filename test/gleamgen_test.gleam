@@ -272,15 +272,15 @@ pub type ExampleAnimal {
 pub fn module_with_custom_type_test() {
   let animals =
     custom.new(ExampleAnimal)
-    |> custom.with_variant(
+    |> custom.with_variant(fn(_) {
       variant.new("Dog")
-      |> variant.with_argument(option.Some("bones"), types.int()),
-    )
-    |> custom.with_variant(
+      |> variant.with_argument(option.Some("bones"), types.int())
+    })
+    |> custom.with_variant(fn(_) {
       variant.new("Cat")
       |> variant.with_argument(option.Some("name"), types.string())
-      |> variant.with_argument(option.Some("has_catnip"), types.bool()),
-    )
+      |> variant.with_argument(option.Some("has_catnip"), types.bool())
+    })
 
   let mod = {
     use animal_type, dog_constructor, cat_constructor <- module.with_custom_type2(
@@ -357,6 +357,77 @@ pub fn main() -> Nil {
   )
 }
 
+pub fn module_with_custom_type_generics_test() {
+  let more_awesome_result =
+    custom.new(Nil)
+    |> custom.with_generic("awesome")
+    |> custom.with_generic("not_awesome")
+    |> custom.with_variant(fn(generics) {
+      let #(#(#(), awesome), _not_awesome) = generics
+      variant.new("VeryOk")
+      |> variant.with_argument(option.Some("contents"), awesome)
+    })
+    |> custom.with_variant(fn(generics) {
+      let #(#(#(), awesome), not_awesome) = generics
+      variant.new("NotVeryOk")
+      |> variant.with_argument(option.Some("contents"), awesome)
+      |> variant.with_argument(option.Some("failures"), not_awesome)
+    })
+
+  let mod = {
+    use _, ok_awesome_constructor, less_ok_awesome_constructor <- module.with_custom_type2(
+      module.DefinitionAttributes(
+        name: "MoreAwesomeResult",
+        is_public: True,
+        decorators: [],
+      ),
+      more_awesome_result,
+    )
+
+    use _main <- module.with_function(
+      module.DefinitionAttributes(name: "main", is_public: True, decorators: []),
+      function.new0(returns: types.nil(), handler: fn() {
+        {
+          use _ <- block.with_let_declaration(
+            "whoo",
+            expression.call1(
+              constructor.to_expression1(ok_awesome_constructor),
+              expression.int(4) |> expression.to_unchecked(),
+            ),
+          )
+          use _ <- block.with_let_declaration(
+            "still_yay",
+            expression.call2(
+              constructor.to_expression2(less_ok_awesome_constructor),
+              expression.string("jake") |> expression.to_unchecked(),
+              expression.bool(True) |> expression.to_unchecked(),
+            ),
+          )
+          block.ending_unchecked([])
+        }
+        |> block.build()
+      }),
+    )
+
+    module.eof()
+  }
+
+  mod
+  |> module.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "pub type MoreAwesomeResult(awesome, not_awesome) {
+  VeryOk(contents: awesome)
+  NotVeryOk(contents: awesome, failures: not_awesome)
+}
+
+pub fn main() -> Nil {
+  let whoo = VeryOk(4)
+  let still_yay = NotVeryOk(\"jake\", True)
+}",
+  )
+}
+
 pub fn module_with_unchecked_custom_types_test() {
   let all_variants =
     list.range(0, 20)
@@ -381,7 +452,7 @@ pub fn module_with_unchecked_custom_types_test() {
 
   let custom_type =
     custom.new(#())
-    |> custom.with_unchecked_variants(all_variants)
+    |> custom.with_unchecked_variants(fn(_) { all_variants })
 
   let mod = {
     use custom_type_type, custom_constructors <- module.with_custom_type_unchecked(

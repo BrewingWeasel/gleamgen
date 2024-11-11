@@ -31,7 +31,7 @@ pub type DefinitionAttributes {
 
 pub type Definable {
   Function(function.Function(Unchecked, Unchecked))
-  CustomType(custom.CustomType(Unchecked, Nil))
+  CustomType(custom.CustomType(Unchecked, Nil, Nil))
   Constant(Expression(Unchecked))
 }
 
@@ -82,7 +82,7 @@ pub fn with_function(
 
 pub fn with_custom_type2(
   attributes: DefinitionAttributes,
-  type_: custom.CustomType(repr, #(#(#(), a), b)),
+  type_: custom.CustomType(repr, #(#(#(), a), b), generics),
   handler: fn(
     types.GeneratedType(repr),
     constructor.Construtor(repr, a),
@@ -108,7 +108,7 @@ pub fn with_custom_type2(
 
 pub fn with_custom_type_unchecked(
   attributes: DefinitionAttributes,
-  type_: custom.CustomType(repr, Unchecked),
+  type_: custom.CustomType(repr, Unchecked, generics),
   handler: fn(
     types.GeneratedType(repr),
     List(constructor.Construtor(repr, Unchecked)),
@@ -159,7 +159,6 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
           doc.concat([
             doc.from_string("type "),
             doc.from_string(def.attributes.name),
-            doc.space,
             custom.render(type_).doc,
           ])
         Function(func) ->

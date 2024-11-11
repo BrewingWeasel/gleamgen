@@ -16,10 +16,15 @@ pub opaque type GeneratedType(type_) {
   GeneratedFunction(List(GeneratedType(Unchecked)), GeneratedType(Unchecked))
   Unchecked
   UncheckedIdent(String)
+  Generic(String)
 }
 
 pub fn bool() -> GeneratedType(Bool) {
   GeneratedBool
+}
+
+pub fn generic(name: String) -> GeneratedType(a) {
+  Generic(name)
 }
 
 pub fn string() -> GeneratedType(String) {
@@ -230,6 +235,7 @@ pub fn render_type(type_: GeneratedType(a)) -> Result(render.Rendered, Nil) {
     GeneratedTuple(t) -> render_tuple(t)
     Unchecked -> Error(Nil)
     UncheckedIdent(t) -> doc.from_string(t) |> render.Render |> Ok
+    Generic(t) -> doc.from_string(t) |> render.Render |> Ok
     GeneratedFunction(args, return) -> {
       render_function(args, return)
     }

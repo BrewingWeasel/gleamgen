@@ -6,41 +6,81 @@ import gleamgen/render
 import gleamgen/types.{type Unchecked}
 import gleamgen/types/variant.{type Variant}
 
-pub type CustomType(repr, variants) {
-  CustomType(variants: List(Variant(Unchecked)))
+pub type CustomType(repr, variants, generics) {
+  CustomType(
+    variants: List(Variant(Unchecked)),
+    generics_list: List(String),
+    generics: generics,
+  )
 }
 
-pub fn new(_typed_representation: a) -> CustomType(a, #()) {
-  CustomType(variants: [])
+pub fn new(_typed_representation: a) -> CustomType(a, #(), #()) {
+  CustomType(variants: [], generics: #(), generics_list: [])
 }
 
 pub fn new_unchecked(
   _typed_representation: repr,
   variants: List(Variant(Unchecked)),
-) -> CustomType(repr, a) {
-  CustomType(variants:)
+  generics_list: List(String),
+) -> CustomType(repr, a, List(types.GeneratedType(Unchecked))) {
+  CustomType(
+    variants:,
+    generics_list:,
+    generics: list.map(generics_list, fn(t) {
+      types.generic(t) |> types.to_unchecked
+    }),
+  )
 }
 
+pub fn with_generic(
+  old: CustomType(repr, variants, old_generics),
+  generic: String,
+) -> CustomType(repr, variants, #(old_generics, types.GeneratedType(Unchecked))) {
+  CustomType(
+    variants: old.variants,
+    generics: #(old.generics, types.generic(generic)),
+    generics_list: [generic, ..old.generics_list],
+  )
+}
+
+// TODO: with generics unchecked
+
 pub fn with_variant(
-  old: CustomType(repr, old),
-  variant: Variant(new),
-) -> CustomType(repr, #(old, new)) {
-  CustomType(variants: [variant |> variant.to_unchecked(), ..old.variants])
+  old: CustomType(repr, old, generics),
+  variant: fn(generics) -> Variant(new),
+) -> CustomType(repr, #(old, new), generics) {
+  CustomType(
+    variants: [
+      old.generics |> variant |> variant.to_unchecked(),
+      ..old.variants
+    ],
+    generics: old.generics,
+    generics_list: old.generics_list,
+  )
 }
 
 pub fn with_unchecked_variants(
-  old: CustomType(repr, old),
-  variants: List(Variant(Unchecked)),
-) -> CustomType(repr, Unchecked) {
-  CustomType(variants: list.append(list.reverse(variants), old.variants))
+  old: CustomType(repr, old, generics),
+  variants: fn(generics) -> List(Variant(Unchecked)),
+) -> CustomType(repr, Unchecked, generics) {
+  CustomType(
+    variants: list.append(
+      old.generics |> variants |> list.reverse(),
+      old.variants,
+    ),
+    generics: old.generics,
+    generics_list: old.generics_list,
+  )
 }
 
-pub fn to_unchecked(old: CustomType(_repr, _)) -> CustomType(Unchecked, Nil) {
-  let CustomType(variants) = old
-  CustomType(variants:)
+pub fn to_unchecked(
+  old: CustomType(_repr, _, _),
+) -> CustomType(Unchecked, Nil, Nil) {
+  let CustomType(variants, _, generics_list:) = old
+  CustomType(variants:, generics: Nil, generics_list:)
 }
 
-pub fn render(type_: CustomType(repr, variants)) -> render.Rendered {
+pub fn render(type_: CustomType(repr, variants, generics)) -> render.Rendered {
   type_.variants
   |> list.reverse()
   |> list.map(fn(var) {
@@ -73,5 +113,18 @@ pub fn render(type_: CustomType(repr, variants)) -> render.Rendered {
   })
   |> doc.join(doc.line)
   |> render.body(force_newlines: True)
+  |> doc.prepend(
+    doc.concat([
+      case type_.generics_list {
+        [] -> doc.empty
+        generics ->
+          generics
+          |> list.reverse()
+          |> list.map(doc.from_string)
+          |> render.pretty_list()
+      },
+      doc.space,
+    ]),
+  )
   |> render.Render
 }

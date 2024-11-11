@@ -325,12 +325,23 @@ pub fn module_with_unchecked_custom_types_test() {
       custom_type,
     )
 
-    let assert [_, _, _, selected_constructor, ..] = custom_constructors
+    let assert [variant0, _, _, variant3, ..] = custom_constructors
 
     use _get_variant <- module.with_function(
       "get_variant",
       function.new0(returns: custom_type_type, handler: fn() {
-        constructor.to_expression_unchecked(selected_constructor)
+        constructor.to_expression_unchecked(variant0)
+      }),
+    )
+    use _get_other_variant <- module.with_function(
+      "get_other_variant",
+      function.new0(returns: custom_type_type, handler: fn() {
+        expression.call3(
+          constructor.to_expression_unchecked(variant3),
+          expression.int(1),
+          expression.int(2),
+          expression.int(3),
+        )
       }),
     )
 
@@ -569,7 +580,11 @@ pub fn module_with_unchecked_custom_types_test() {
 }
 
 pub fn get_variant() -> VariantHolder {
-  Variant3
+  Variant0
+}
+
+pub fn get_other_variant() -> VariantHolder {
+  Variant3(1, 2, 3)
 }",
   )
 }

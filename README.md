@@ -28,23 +28,31 @@ pub fn main() {
   let mod = {
     use imported_io <- module.with_import(import_.new(["gleam", "io"]))
 
-    // module_used is of the type Expression(String)
+    // module_used is of type Expression(String)
     use module_used <- module.with_constant(
-      "module_used",
+      module.DefinitionAttributes(
+        name: "module_used",
+        is_public: False,
+        decorators: [],
+      ),
       expression.string("Gleamgen"),
     )
 
     use greeter <- module.with_function(
-      "greeter",
+      module.DefinitionAttributes(
+        name: "greeter",
+        is_public: False,
+        decorators: [],
+      ),
       function.new1(
         arg1: #("greeting", types.string()),
-        // we have said that greeter returns a string, so handler returning
-        // anything else would be a type error
+        // we have said that greeter returns a string, so handler returning anything
+        // else would be a type error
         returns: types.string(),
         handler: fn(greeting) {
           greeting
           |> expression.concat_string(expression.string(" from "))
-          // trying to concatenate any other type would be a compilation error
+          // trying to concat any other type would be a compilation error
           |> expression.concat_string(module_used)
         },
       ),
@@ -54,7 +62,7 @@ pub fn main() {
     let assert [outer_greeting, ..] = list.shuffle(["Howdy", "Hello", "Hi"])
 
     use _main <- module.with_function(
-      "main",
+      module.DefinitionAttributes(name: "main", is_public: True, decorators: []),
       function.new0(types.nil(), fn() {
         {
           use greeting <- block.with_let_declaration(
@@ -62,8 +70,8 @@ pub fn main() {
             expression.call1(greeter, expression.string(outer_greeting)),
           )
           block.ending_block(expression.call1(
-            // reference the actual io.println function to get the name
-            // and the type signature
+            // reference the actual io.println function to get the name and
+            // the type signature
             import_.function1(imported_io, io.println),
             greeting,
           ))
@@ -87,9 +95,9 @@ This will generate something like:
 ```gleam
 import gleam/io
 
-pub const module_used = "Gleamgen"
+const module_used = "Gleamgen"
 
-pub fn greeter(greeting: String) -> String {
+fn greeter(greeting: String) -> String {
   greeting <> " from " <> module_used
 }
 

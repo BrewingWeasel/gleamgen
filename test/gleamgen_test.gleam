@@ -96,7 +96,7 @@ pub fn block_in_function_test() {
   |> module.render_function(render.default_context(), "test_function")
   |> render.to_string()
   |> should.equal(
-    "pub fn test_function() -> Int {
+    "fn test_function() -> Int {
   let x = 4
   let y = x + 5
   y
@@ -109,7 +109,11 @@ pub fn simple_module_test() {
     module.Module(
       [
         module.Definition(
-          name: "based_number",
+          attributes: module.DefinitionAttributes(
+            name: "based_number",
+            is_public: True,
+            decorators: [],
+          ),
           value: module.Constant(
             expression.int(46) |> expression.to_unchecked(),
           ),
@@ -126,10 +130,21 @@ pub fn simple_module_test() {
 pub fn module_with_function_test() {
   let mod = {
     use io <- module.with_import(import_.new(["gleam", "io"]))
-    use language <- module.with_constant("language", expression.string("gleam"))
+    use language <- module.with_constant(
+      module.DefinitionAttributes(
+        name: "language",
+        is_public: False,
+        decorators: [],
+      ),
+      expression.string("gleam"),
+    )
 
     use describer <- module.with_function(
-      "describer",
+      module.DefinitionAttributes(
+        name: "describer",
+        is_public: True,
+        decorators: [module.Internal],
+      ),
       function.new1(
         arg1: #("thing", types.string()),
         returns: types.string(),
@@ -143,7 +158,7 @@ pub fn module_with_function_test() {
     )
 
     use _main <- module.with_function(
-      "main",
+      module.DefinitionAttributes(name: "main", is_public: True, decorators: []),
       function.new0(returns: types.nil(), handler: fn() {
         expression.call1(
           import_.unchecked_ident(io, "println"),
@@ -161,8 +176,9 @@ pub fn module_with_function_test() {
   |> should.equal(
     "import gleam/io
 
-pub const language = \"gleam\"
+const language = \"gleam\"
 
+@internal
 pub fn describer(thing: String) -> String {
   \"The \" <> thing <> \" is written in \" <> language
 }
@@ -185,7 +201,7 @@ pub fn module_import_test() {
     let int_string = import_.function1(int_mod, int.to_string)
 
     use _main <- module.with_function(
-      "main",
+      module.DefinitionAttributes(name: "main", is_public: True, decorators: []),
       function.new0(returns: types.nil(), handler: fn() {
         expression.call1(
           io_print,
@@ -228,12 +244,20 @@ pub fn module_with_custom_type_test() {
 
   let mod = {
     use animal_type, dog_constructor, cat_constructor <- module.with_custom_type2(
-      "Animal",
+      module.DefinitionAttributes(
+        name: "Animal",
+        is_public: True,
+        decorators: [],
+      ),
       animals,
     )
 
     use describer <- module.with_function(
-      "describer",
+      module.DefinitionAttributes(
+        name: "describer",
+        is_public: True,
+        decorators: [],
+      ),
       function.new1(
         arg1: #("animal", animal_type),
         returns: types.string(),
@@ -242,7 +266,7 @@ pub fn module_with_custom_type_test() {
     )
 
     use _main <- module.with_function(
-      "main",
+      module.DefinitionAttributes(name: "main", is_public: True, decorators: []),
       function.new0(returns: types.nil(), handler: fn() {
         {
           use dog_var <- block.with_let_declaration(
@@ -321,20 +345,32 @@ pub fn module_with_unchecked_custom_types_test() {
 
   let mod = {
     use custom_type_type, custom_constructors <- module.with_custom_type_unchecked(
-      "VariantHolder",
+      module.DefinitionAttributes(
+        name: "VariantHolder",
+        is_public: True,
+        decorators: [],
+      ),
       custom_type,
     )
 
     let assert [variant0, _, _, variant3, ..] = custom_constructors
 
     use _get_variant <- module.with_function(
-      "get_variant",
+      module.DefinitionAttributes(
+        name: "get_variant",
+        is_public: True,
+        decorators: [],
+      ),
       function.new0(returns: custom_type_type, handler: fn() {
         constructor.to_expression_unchecked(variant0)
       }),
     )
     use _get_other_variant <- module.with_function(
-      "get_other_variant",
+      module.DefinitionAttributes(
+        name: "get_other_variant",
+        is_public: True,
+        decorators: [],
+      ),
       function.new0(returns: custom_type_type, handler: fn() {
         expression.call3(
           constructor.to_expression_unchecked(variant3),

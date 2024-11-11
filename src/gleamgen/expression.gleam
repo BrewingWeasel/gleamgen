@@ -136,10 +136,21 @@ pub fn math_operator_float(
   Expression(MathOperatorFloat(expr1, op, expr2), types.int())
 }
 
+/// Call a function or constructor with no arguments
+/// ```gleam
+/// expression.call0(
+///   import_.function0(dict_module, dict.new)
+/// )
+/// |> expression.render(render.default_context())
+/// |> render.to_string()
+/// // -> "dict.new()"
+/// ```
 pub fn call0(func: Expression(fn() -> ret)) -> Expression(ret) {
   Expression(internal: Call(func |> to_unchecked, []), type_: types.unchecked())
 }
 
+/// Call a function or constructor with one argument
+/// See `call0`
 pub fn call1(
   func: Expression(fn(arg1) -> ret),
   arg1: Expression(arg1),
@@ -150,6 +161,8 @@ pub fn call1(
   )
 }
 
+/// Call a function or constructor with two arguments
+/// See `call0`
 pub fn call2(
   func: Expression(fn(arg1, arg2) -> ret),
   arg1: Expression(arg1),
@@ -164,6 +177,8 @@ pub fn call2(
   )
 }
 
+/// Call a function or constructor with three arguments
+/// See `call0`
 pub fn call3(
   func: Expression(fn(arg1, arg2, arg3) -> ret),
   arg1: Expression(arg1),
@@ -180,6 +195,159 @@ pub fn call3(
   )
 }
 
+/// Call a function or constructor with four arguments
+/// See `call0`
+pub fn call4(
+  func: Expression(fn(arg1, arg2, arg3, arg4) -> ret),
+  arg1: Expression(arg1),
+  arg2: Expression(arg2),
+  arg3: Expression(arg3),
+  arg4: Expression(arg4),
+) -> Expression(ret) {
+  Expression(
+    internal: Call(func |> to_unchecked, [
+      arg1 |> to_unchecked,
+      arg2 |> to_unchecked,
+      arg3 |> to_unchecked,
+      arg4 |> to_unchecked,
+    ]),
+    type_: types.unchecked(),
+  )
+}
+
+/// Call a function or constructor with five arguments
+/// See `call0`
+pub fn call5(
+  func: Expression(fn(arg1, arg2, arg3, arg4, arg5) -> ret),
+  arg1: Expression(arg1),
+  arg2: Expression(arg2),
+  arg3: Expression(arg3),
+  arg4: Expression(arg4),
+  arg5: Expression(arg5),
+) -> Expression(ret) {
+  Expression(
+    internal: Call(func |> to_unchecked, [
+      arg1 |> to_unchecked,
+      arg2 |> to_unchecked,
+      arg3 |> to_unchecked,
+      arg4 |> to_unchecked,
+      arg5 |> to_unchecked,
+    ]),
+    type_: types.unchecked(),
+  )
+}
+
+/// Call a function or constructor with six arguments
+/// See `call0`
+pub fn call6(
+  func: Expression(fn(arg1, arg2, arg3, arg4, arg5, arg6) -> ret),
+  arg1: Expression(arg1),
+  arg2: Expression(arg2),
+  arg3: Expression(arg3),
+  arg4: Expression(arg4),
+  arg5: Expression(arg5),
+  arg6: Expression(arg6),
+) -> Expression(ret) {
+  Expression(
+    internal: Call(func |> to_unchecked, [
+      arg1 |> to_unchecked,
+      arg2 |> to_unchecked,
+      arg3 |> to_unchecked,
+      arg4 |> to_unchecked,
+      arg5 |> to_unchecked,
+      arg6 |> to_unchecked,
+    ]),
+    type_: types.unchecked(),
+  )
+}
+
+/// Call a function or constructor with seven arguments
+/// See `call0`
+pub fn call7(
+  func: Expression(fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7) -> ret),
+  arg1: Expression(arg1),
+  arg2: Expression(arg2),
+  arg3: Expression(arg3),
+  arg4: Expression(arg4),
+  arg5: Expression(arg5),
+  arg6: Expression(arg6),
+  arg7: Expression(arg7),
+) -> Expression(ret) {
+  Expression(
+    internal: Call(func |> to_unchecked, [
+      arg1 |> to_unchecked,
+      arg2 |> to_unchecked,
+      arg3 |> to_unchecked,
+      arg4 |> to_unchecked,
+      arg5 |> to_unchecked,
+      arg6 |> to_unchecked,
+      arg7 |> to_unchecked,
+    ]),
+    type_: types.unchecked(),
+  )
+}
+
+/// Call a function or constructor with eight arguments
+/// See `call0`
+pub fn call8(
+  func: Expression(fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) -> ret),
+  arg1: Expression(arg1),
+  arg2: Expression(arg2),
+  arg3: Expression(arg3),
+  arg4: Expression(arg4),
+  arg5: Expression(arg5),
+  arg6: Expression(arg6),
+  arg7: Expression(arg7),
+  arg8: Expression(arg8),
+) -> Expression(ret) {
+  Expression(
+    internal: Call(func |> to_unchecked, [
+      arg1 |> to_unchecked,
+      arg2 |> to_unchecked,
+      arg3 |> to_unchecked,
+      arg4 |> to_unchecked,
+      arg5 |> to_unchecked,
+      arg6 |> to_unchecked,
+      arg7 |> to_unchecked,
+      arg8 |> to_unchecked,
+    ]),
+    type_: types.unchecked(),
+  )
+}
+
+/// Call a function or constructor with nine arguments
+/// See `call0`
+pub fn call9(
+  func: Expression(
+    fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) -> ret,
+  ),
+  arg1: Expression(arg1),
+  arg2: Expression(arg2),
+  arg3: Expression(arg3),
+  arg4: Expression(arg4),
+  arg5: Expression(arg5),
+  arg6: Expression(arg6),
+  arg7: Expression(arg7),
+  arg8: Expression(arg8),
+  arg9: Expression(arg9),
+) -> Expression(ret) {
+  Expression(
+    internal: Call(func |> to_unchecked, [
+      arg1 |> to_unchecked,
+      arg2 |> to_unchecked,
+      arg3 |> to_unchecked,
+      arg4 |> to_unchecked,
+      arg5 |> to_unchecked,
+      arg6 |> to_unchecked,
+      arg7 |> to_unchecked,
+      arg8 |> to_unchecked,
+      arg9 |> to_unchecked,
+    ]),
+    type_: types.unchecked(),
+  )
+}
+
+/// Call a function or constructor without type checking
 pub fn call_unchecked(
   func: Expression(types.Unchecked),
   args: List(Expression(types.Unchecked)),

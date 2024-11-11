@@ -72,6 +72,9 @@ pub fn function1(
   expression.unchecked_ident(get_reference(imported) <> "." <> name)
 }
 
+// rest of the repetitive functionN functions
+// {{{
+
 /// Import an existing function from the module.
 /// See `function1` for more details.
 pub fn function2(
@@ -101,3 +104,55 @@ pub fn function4(
   let name = function.get_function_name(func)
   expression.unchecked_ident(get_reference(imported) <> "." <> name)
 }
+
+/// Import an existing function from the module.
+/// See `function1` for more details.
+pub fn function5(
+  imported: ImportedModule,
+  func: fn(a, b, c, d, e) -> ret,
+) -> Expression(fn(a, b, c, d, e) -> ret) {
+  let name = function.get_function_name(func)
+  expression.unchecked_ident(get_reference(imported) <> "." <> name)
+}
+
+/// Import an existing function from the module.
+/// See `function1` for more details.
+pub fn function6(
+  imported: ImportedModule,
+  func: fn(a, b, c, d, e, f) -> ret,
+) -> Expression(fn(a, b, c, d, e, f) -> ret) {
+  let name = function.get_function_name(func)
+  expression.unchecked_ident(get_reference(imported) <> "." <> name)
+}
+
+/// Import an existing function from the module.
+/// See `function1` for more details.
+pub fn function7(
+  imported: ImportedModule,
+  func: fn(a, b, c, d, e, f, g) -> ret,
+) -> Expression(fn(a, b, c, d, e, f, g) -> ret) {
+  let name = function.get_function_name(func)
+  expression.unchecked_ident(get_reference(imported) <> "." <> name)
+}
+
+/// Import an existing function from the module.
+/// See `function1` for more details.
+pub fn function8(
+  imported: ImportedModule,
+  func: fn(a, b, c, d, e, f, g, h) -> ret,
+) -> Expression(fn(a, b, c, d, e, f, g, h) -> ret) {
+  let name = function.get_function_name(func)
+  expression.unchecked_ident(get_reference(imported) <> "." <> name)
+}
+
+/// Import an existing function from the module.
+/// See `function1` for more details.
+pub fn function9(
+  imported: ImportedModule,
+  func: fn(a, b, c, d, e, f, g, h, i) -> ret,
+) -> Expression(fn(a, b, c, d, e, f, g, h, i) -> ret) {
+  let name = function.get_function_name(func)
+  expression.unchecked_ident(get_reference(imported) <> "." <> name)
+}
+// }}}
+// vim: foldmethod=marker foldlevel=0

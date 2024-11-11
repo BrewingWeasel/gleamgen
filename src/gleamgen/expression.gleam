@@ -65,6 +65,9 @@ pub fn tuple1(arg1: Expression(a)) -> Expression(#(a)) {
   Expression(TupleLiteral([arg1 |> to_unchecked()]), types.tuple1(type_(arg1)))
 }
 
+// Remaining repetitive tuple functions
+// {{{
+
 pub fn tuple2(arg1: Expression(a), arg2: Expression(b)) -> Expression(#(a, b)) {
   Expression(
     TupleLiteral([arg1 |> to_unchecked(), arg2 |> to_unchecked()]),
@@ -259,6 +262,8 @@ pub fn tuple9(
   )
 }
 
+// }}}
+
 // TODO: undefined tuple
 
 /// Provide an ident that could be of any type
@@ -361,6 +366,9 @@ pub fn call1(
     type_: types.unchecked(),
   )
 }
+
+// remaining repetitive call functions
+// {{{
 
 /// Call a function or constructor with two arguments
 /// See `call0`
@@ -547,6 +555,8 @@ pub fn call9(
     type_: types.unchecked(),
   )
 }
+
+// }}}
 
 /// Call a function or constructor without type checking
 pub fn call_unchecked(
@@ -756,3 +766,4 @@ pub fn render_attribute(
     False -> doc.from_string(x.0)
   }
 }
+// vim: foldmethod=marker foldlevel=0

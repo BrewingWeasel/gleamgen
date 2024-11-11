@@ -5,9 +5,11 @@ import gleam/option
 import gleam/result
 import gleamgen/expression
 import gleamgen/expression/block
+import gleamgen/expression/case_
 import gleamgen/expression/constructor
 import gleamgen/function
 import gleamgen/import_
+import gleamgen/matcher
 import gleamgen/module
 import gleamgen/render
 import gleamgen/types
@@ -96,6 +98,25 @@ pub fn simple_string_addition_test() {
   |> expression.render(render.default_context())
   |> render.to_string()
   |> should.equal("\"hello \" <> \"world\"")
+}
+
+pub fn simple_case_string_test() {
+  case_.new(expression.string("hello"))
+  |> case_.with_matcher(matcher.string_literal("hello"), fn(_) {
+    expression.string("world")
+  })
+  |> case_.with_matcher(matcher.variable("v"), fn(v) {
+    expression.concat_string(v, expression.string(" world"))
+  })
+  |> case_.build_expression()
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "case \"hello\" {
+  \"hello \" -> \"world\"
+  v -> v <> \" world\"
+}",
+  )
 }
 
 pub fn simple_block_test() {

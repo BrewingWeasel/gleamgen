@@ -19,6 +19,7 @@ type InternalExpression(type_) {
   FloatLiteral(Float)
   StrLiteral(String)
   BoolLiteral(Bool)
+  NilLiteral
   ListLiteral(List(Expression(types.Unchecked)))
   TupleLiteral(List(Expression(types.Unchecked)))
   Ident(String)
@@ -28,6 +29,7 @@ type InternalExpression(type_) {
   MathOperatorFloat(Expression(Float), MathOperator, Expression(Float))
   Call(Expression(types.Unchecked), List(Expression(types.Unchecked)))
   Block(List(Statement))
+  Case(Expression(types.Unchecked), List(doc.Document))
 }
 
 // ----------------------------------------------------------------------------
@@ -48,6 +50,10 @@ pub fn string(value: String) -> Expression(String) {
 
 pub fn bool(value: Bool) -> Expression(Bool) {
   Expression(BoolLiteral(value), types.bool())
+}
+
+pub fn nil() -> Expression(Nil) {
+  Expression(NilLiteral, types.nil())
 }
 
 pub fn list(value: List(Expression(t))) -> Expression(List(t)) {
@@ -571,6 +577,11 @@ pub fn new_block(expressions, return) -> Expression(type_) {
   Expression(internal: Block(expressions), type_: return)
 }
 
+@internal
+pub fn new_case(to_match_on, matchers, return) -> Expression(type_) {
+  Expression(internal: Case(to_match_on, matchers), type_: return)
+}
+
 /// Get the internal type of an expression
 pub fn type_(expr: Expression(unchecked)) -> types.GeneratedType(unchecked) {
   expr.type_
@@ -617,6 +628,7 @@ pub fn render(
       ])
     BoolLiteral(True) -> doc.from_string("True")
     BoolLiteral(False) -> doc.from_string("False")
+    NilLiteral -> doc.from_string("Nil")
     ListLiteral(values) -> render_list(values, context)
     TupleLiteral(values) -> render_tuple(values, context)
     Ident(value) -> doc.from_string(value)
@@ -666,8 +678,22 @@ pub fn render(
       )
     Call(func, args) -> render_call(func, args, context)
     Block(expressions) -> render_block(expressions, context)
+    Case(to_match_on, matchers) -> render_case(to_match_on, matchers, context)
   }
   |> render.Render
+}
+
+fn render_case(to_match_on, matchers, context) {
+  doc.concat([
+    doc.from_string("case "),
+    render(to_match_on, context).doc,
+    doc.space,
+    render.body(
+      matchers
+        |> doc.join(doc.line),
+      force_newlines: True,
+    ),
+  ])
 }
 
 fn render_tuple(values, context) {

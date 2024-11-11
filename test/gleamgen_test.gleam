@@ -113,8 +113,28 @@ pub fn simple_case_string_test() {
   |> render.to_string()
   |> should.equal(
     "case \"hello\" {
-  \"hello \" -> \"world\"
+  \"hello\" -> \"world\"
   v -> v <> \" world\"
+}",
+  )
+}
+
+pub fn simple_case_tuple_test() {
+  case_.new(expression.tuple2(expression.string("hello"), expression.int(3)))
+  |> case_.with_matcher(
+    matcher.tuple2(matcher.string_literal("hello"), matcher.variable("_")),
+    fn(_) { expression.string("world") },
+  )
+  |> case_.with_matcher(matcher.variable("_"), fn(_) {
+    expression.string("other")
+  })
+  |> case_.build_expression()
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "case #(\"hello\", 3) {
+  #(\"hello\", _) -> \"world\"
+  _ -> \"other\"
 }",
   )
 }
@@ -367,6 +387,142 @@ pub fn module_with_custom_type_test() {
 
 pub fn describer(animal: Animal) -> String {
   todo as \"implement me\"
+}
+
+pub fn main() -> Nil {
+  let dog = Dog(4)
+  describer(dog)
+  let cat = Cat(\"jake\", True)
+  describer(cat)
+}",
+  )
+}
+
+pub fn module_case_on_custom_type_test() {
+  let animals =
+    custom.new(ExampleAnimal)
+    |> custom.with_variant(fn(_) {
+      variant.new("Dog")
+      |> variant.with_argument(option.Some("bones"), types.int())
+    })
+    |> custom.with_variant(fn(_) {
+      variant.new("Cat")
+      |> variant.with_argument(option.Some("name"), types.string())
+      |> variant.with_argument(option.Some("has_catnip"), types.bool())
+    })
+
+  let mod = {
+    use int_mod <- module.with_import(import_.new(["gleam", "int"]))
+    use animal_type, dog_constructor, cat_constructor <- module.with_custom_type2(
+      module.DefinitionAttributes(
+        name: "Animal",
+        is_public: True,
+        decorators: [],
+      ),
+      animals,
+    )
+
+    use describer <- module.with_function(
+      module.DefinitionAttributes(
+        name: "describer",
+        is_public: True,
+        decorators: [],
+      ),
+      function.new1(
+        arg1: #("animal", animal_type),
+        returns: types.string(),
+        handler: fn(animal) {
+          case_.new(animal)
+          |> case_.with_matcher(
+            matcher.from_constructor1(
+              dog_constructor,
+              matcher.variable("bones"),
+            ),
+            fn(bones) {
+              expression.string("Dog with ")
+              |> expression.concat_string(expression.call1(
+                import_.function1(int_mod, int.to_string),
+                bones,
+              ))
+            },
+          )
+          |> case_.with_matcher(
+            matcher.from_constructor2(
+              cat_constructor,
+              matcher.variable("name"),
+              matcher.bool_literal(True),
+            ),
+            fn(info) {
+              let #(name, Nil) = info
+              expression.string("Cat named ")
+              |> expression.concat_string(name)
+              |> expression.concat_string(expression.string(" (energetic!)"))
+            },
+          )
+          |> case_.with_matcher(
+            matcher.from_constructor2(
+              cat_constructor,
+              matcher.variable("name"),
+              matcher.bool_literal(False),
+            ),
+            fn(info) {
+              let #(name, Nil) = info
+              expression.string("Bored cat named ")
+              |> expression.concat_string(name)
+            },
+          )
+          |> case_.build_expression()
+        },
+      ),
+    )
+
+    use _main <- module.with_function(
+      module.DefinitionAttributes(name: "main", is_public: True, decorators: []),
+      function.new0(returns: types.nil(), handler: fn() {
+        {
+          use dog_var <- block.with_let_declaration(
+            "dog",
+            expression.call1(
+              constructor.to_expression1(dog_constructor),
+              expression.int(4),
+            ),
+          )
+          use <- block.with_expression(expression.call1(describer, dog_var))
+          use cat_var <- block.with_let_declaration(
+            "cat",
+            expression.call2(
+              constructor.to_expression2(cat_constructor),
+              expression.string("jake"),
+              expression.bool(True),
+            ),
+          )
+          use <- block.with_expression(expression.call1(describer, cat_var))
+          block.ending_unchecked([])
+        }
+        |> block.build()
+      }),
+    )
+
+    module.eof()
+  }
+
+  mod
+  |> module.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "import gleam/int
+
+pub type Animal {
+  Dog(bones: Int)
+  Cat(name: String, has_catnip: Bool)
+}
+
+pub fn describer(animal: Animal) -> String {
+  case animal {
+    Dog(bones) -> \"Dog with \" <> int.to_string(bones)
+    Cat(name, True) -> \"Cat named \" <> name <> \" (energetic!)\"
+    Cat(name, False) -> \"Bored cat named \" <> name
+  }
 }
 
 pub fn main() -> Nil {

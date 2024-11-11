@@ -34,6 +34,7 @@ pub fn build_expression(
   expression.new_case(
     case_.input_expression |> expression.to_unchecked(),
     case_.cases
+      |> list.reverse()
       |> list.map(fn(c) {
         matcher.render(c.0).doc
         |> doc.append(doc.concat([doc.space, doc.from_string("->"), doc.space]))

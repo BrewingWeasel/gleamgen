@@ -1,3 +1,4 @@
+import gleam/list
 import gleam/option.{type Option}
 import gleamgen/types.{type Unchecked}
 
@@ -21,6 +22,16 @@ pub fn with_argument(
     #(name, type_ |> types.to_unchecked()),
     ..old.arguments
   ])
+}
+
+pub fn with_arguments_unchecked(
+  old: Variant(old),
+  variants: List(#(Option(String), types.GeneratedType(Unchecked))),
+) -> Variant(Unchecked) {
+  Variant(
+    name: old.name,
+    arguments: list.append(list.reverse(variants), old.arguments),
+  )
 }
 
 pub fn to_unchecked(variant: Variant(a)) -> Variant(Unchecked) {

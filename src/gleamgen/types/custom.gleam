@@ -28,6 +28,13 @@ pub fn with_variant(
   CustomType(variants: [variant |> variant.to_unchecked(), ..old.variants])
 }
 
+pub fn with_unchecked_variants(
+  old: CustomType(repr, old),
+  variants: List(Variant(Unchecked)),
+) -> CustomType(repr, Unchecked) {
+  CustomType(variants: list.append(list.reverse(variants), old.variants))
+}
+
 pub fn to_unchecked(old: CustomType(_repr, _)) -> CustomType(Unchecked, Nil) {
   let CustomType(variants) = old
   CustomType(variants:)
@@ -38,28 +45,31 @@ pub fn render(type_: CustomType(repr, variants)) -> render.Rendered {
   |> list.reverse()
   |> list.map(fn(var) {
     doc.from_string(var.name)
-    |> doc.append(
-      var.arguments
-      |> list.reverse()
-      |> list.map(fn(arg) {
-        case arg.0 {
-          option.None ->
-            types.render_type(arg.1)
-            |> result.map(fn(v) { v.doc })
-            |> result.unwrap(doc.from_string("??"))
-          option.Some(name) ->
-            doc.concat([
-              doc.from_string(name),
-              doc.from_string(":"),
-              doc.space,
+    |> doc.append(case var.arguments {
+      [] -> doc.empty
+      _ ->
+        var.arguments
+        |> list.reverse()
+        |> list.map(fn(arg) {
+          case arg.0 {
+            option.None ->
               types.render_type(arg.1)
-                |> result.map(fn(v) { v.doc })
-                |> result.unwrap(doc.from_string("??")),
-            ])
-        }
-      })
-      |> render.pretty_list(),
-    )
+              |> result.map(fn(v) { v.doc })
+              |> result.unwrap(doc.from_string("??"))
+            option.Some(name) ->
+              doc.concat([
+                doc.from_string(name),
+                doc.from_string(":"),
+                doc.space,
+                types.render_type(arg.1)
+                  |> result.map(fn(v) { v.doc })
+                  |> result.unwrap(doc.from_string("??")),
+              ])
+              |> doc.group()
+          }
+        })
+        |> render.pretty_list()
+    })
   })
   |> doc.join(doc.line)
   |> render.body(force_newlines: True)

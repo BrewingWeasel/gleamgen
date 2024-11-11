@@ -76,8 +76,31 @@ pub fn with_custom_type2(
   let rest =
     handler(
       types.unchecked_ident(name),
-      constructor.Construtor(variant1),
-      constructor.Construtor(variant2),
+      constructor.new(variant1),
+      constructor.new(variant2),
+    )
+  Module(
+    ..rest,
+    definitions: [
+      Definition(name:, value: CustomType(type_ |> custom.to_unchecked())),
+      ..rest.definitions
+    ],
+  )
+}
+
+pub fn with_custom_type_unchecked(
+  name: String,
+  type_: custom.CustomType(repr, Unchecked),
+  handler: fn(
+    types.GeneratedType(repr),
+    List(constructor.Construtor(repr, Unchecked)),
+  ) ->
+    Module,
+) -> Module {
+  let rest =
+    handler(
+      types.unchecked_ident(name),
+      type_.variants |> list.reverse() |> list.map(constructor.new),
     )
   Module(
     ..rest,

@@ -1,6 +1,8 @@
 import gleam/int
 import gleam/io
+import gleam/list
 import gleam/option
+import gleam/result
 import gleamgen/expression
 import gleamgen/expression/block
 import gleamgen/expression/constructor
@@ -287,6 +289,287 @@ pub fn main() -> Nil {
   describer(dog)
   let cat = Cat(\"jake\", True)
   describer(cat)
+}",
+  )
+}
+
+pub fn module_with_unchecked_custom_types_test() {
+  let all_variants =
+    list.range(0, 20)
+    |> list.map(fn(i) {
+      variant.new("Variant" <> int.to_string(i))
+      |> variant.with_arguments_unchecked(
+        list.range(0, i)
+        |> list.reverse()
+        |> list.pop(fn(_) { True })
+        |> result.map(fn(x) { x.1 })
+        |> result.unwrap([])
+        |> list.reverse()
+        |> list.map(fn(x) {
+          #(
+            option.Some("arg" <> int.to_string(x)),
+            types.int() |> types.to_unchecked(),
+          )
+        }),
+      )
+      |> variant.to_unchecked()
+    })
+
+  let custom_type =
+    custom.new(#())
+    |> custom.with_unchecked_variants(all_variants)
+
+  let mod = {
+    use custom_type_type, custom_constructors <- module.with_custom_type_unchecked(
+      "VariantHolder",
+      custom_type,
+    )
+
+    let assert [_, _, _, selected_constructor, ..] = custom_constructors
+
+    use _get_variant <- module.with_function(
+      "get_variant",
+      function.new0(returns: custom_type_type, handler: fn() {
+        constructor.to_expression_unchecked(selected_constructor)
+      }),
+    )
+
+    module.eof()
+  }
+
+  mod
+  |> module.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "pub type VariantHolder {
+  Variant0
+  Variant1(arg0: Int)
+  Variant2(arg0: Int, arg1: Int)
+  Variant3(arg0: Int, arg1: Int, arg2: Int)
+  Variant4(arg0: Int, arg1: Int, arg2: Int, arg3: Int)
+  Variant5(arg0: Int, arg1: Int, arg2: Int, arg3: Int, arg4: Int)
+  Variant6(arg0: Int, arg1: Int, arg2: Int, arg3: Int, arg4: Int, arg5: Int)
+  Variant7(
+    arg0: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    arg5: Int,
+    arg6: Int,
+  )
+  Variant8(
+    arg0: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    arg5: Int,
+    arg6: Int,
+    arg7: Int,
+  )
+  Variant9(
+    arg0: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    arg5: Int,
+    arg6: Int,
+    arg7: Int,
+    arg8: Int,
+  )
+  Variant10(
+    arg0: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    arg5: Int,
+    arg6: Int,
+    arg7: Int,
+    arg8: Int,
+    arg9: Int,
+  )
+  Variant11(
+    arg0: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    arg5: Int,
+    arg6: Int,
+    arg7: Int,
+    arg8: Int,
+    arg9: Int,
+    arg10: Int,
+  )
+  Variant12(
+    arg0: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    arg5: Int,
+    arg6: Int,
+    arg7: Int,
+    arg8: Int,
+    arg9: Int,
+    arg10: Int,
+    arg11: Int,
+  )
+  Variant13(
+    arg0: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    arg5: Int,
+    arg6: Int,
+    arg7: Int,
+    arg8: Int,
+    arg9: Int,
+    arg10: Int,
+    arg11: Int,
+    arg12: Int,
+  )
+  Variant14(
+    arg0: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    arg5: Int,
+    arg6: Int,
+    arg7: Int,
+    arg8: Int,
+    arg9: Int,
+    arg10: Int,
+    arg11: Int,
+    arg12: Int,
+    arg13: Int,
+  )
+  Variant15(
+    arg0: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    arg5: Int,
+    arg6: Int,
+    arg7: Int,
+    arg8: Int,
+    arg9: Int,
+    arg10: Int,
+    arg11: Int,
+    arg12: Int,
+    arg13: Int,
+    arg14: Int,
+  )
+  Variant16(
+    arg0: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    arg5: Int,
+    arg6: Int,
+    arg7: Int,
+    arg8: Int,
+    arg9: Int,
+    arg10: Int,
+    arg11: Int,
+    arg12: Int,
+    arg13: Int,
+    arg14: Int,
+    arg15: Int,
+  )
+  Variant17(
+    arg0: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    arg5: Int,
+    arg6: Int,
+    arg7: Int,
+    arg8: Int,
+    arg9: Int,
+    arg10: Int,
+    arg11: Int,
+    arg12: Int,
+    arg13: Int,
+    arg14: Int,
+    arg15: Int,
+    arg16: Int,
+  )
+  Variant18(
+    arg0: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    arg5: Int,
+    arg6: Int,
+    arg7: Int,
+    arg8: Int,
+    arg9: Int,
+    arg10: Int,
+    arg11: Int,
+    arg12: Int,
+    arg13: Int,
+    arg14: Int,
+    arg15: Int,
+    arg16: Int,
+    arg17: Int,
+  )
+  Variant19(
+    arg0: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    arg5: Int,
+    arg6: Int,
+    arg7: Int,
+    arg8: Int,
+    arg9: Int,
+    arg10: Int,
+    arg11: Int,
+    arg12: Int,
+    arg13: Int,
+    arg14: Int,
+    arg15: Int,
+    arg16: Int,
+    arg17: Int,
+    arg18: Int,
+  )
+  Variant20(
+    arg0: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    arg5: Int,
+    arg6: Int,
+    arg7: Int,
+    arg8: Int,
+    arg9: Int,
+    arg10: Int,
+    arg11: Int,
+    arg12: Int,
+    arg13: Int,
+    arg14: Int,
+    arg15: Int,
+    arg16: Int,
+    arg17: Int,
+    arg18: Int,
+    arg19: Int,
+  )
+}
+
+pub fn get_variant() -> VariantHolder {
+  Variant3
 }",
   )
 }

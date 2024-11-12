@@ -65,6 +65,14 @@ pub fn with_import(
   Module(..rest, imports: [module, ..rest.imports])
 }
 
+pub fn with_imports_unchecked(
+  modules: List(import_.ImportedModule),
+  handler: fn(List(import_.ImportedModule)) -> Module,
+) -> Module {
+  let rest = handler(modules)
+  Module(..rest, imports: list.append(list.reverse(modules), rest.imports))
+}
+
 pub fn with_function(
   attributes: DefinitionAttributes,
   func: function.Function(func_type, ret),

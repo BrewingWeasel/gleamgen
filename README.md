@@ -121,7 +121,7 @@ You can easily integrate between the two with functions such as
 `expression.to_unchecked` or `expression.unsafe_from_unchecked`
 
 Further documentation can be found at <https://hexdocs.pm/gleamgen>.
-Also see the tests for more examples.
+Also check out the examples folder (or the tests).
 
 Note: There are still a lot of basic functions that have yet to be implemented, and
 the way things like generics are handled are subject to change

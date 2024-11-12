@@ -83,6 +83,24 @@ pub fn with_function(
   )
 }
 
+pub fn with_custom_type1(
+  details: DefinitionDetails,
+  type_: custom.CustomType(repr, #(#(), a), generics),
+  handler: fn(types.GeneratedType(repr), constructor.Construtor(repr, a)) ->
+    Module,
+) -> Module {
+  let assert [variant1] = type_.variants
+  let rest =
+    handler(types.unchecked_ident(details.name), constructor.new(variant1))
+  Module(
+    ..rest,
+    definitions: [
+      Definition(details:, value: CustomType(type_ |> custom.to_unchecked())),
+      ..rest.definitions
+    ],
+  )
+}
+
 pub fn with_custom_type2(
   details: DefinitionDetails,
   type_: custom.CustomType(repr, #(#(#(), a), b), generics),
@@ -109,16 +127,279 @@ pub fn with_custom_type2(
   )
 }
 
-pub fn with_type_alias(
+pub fn with_custom_type3(
   details: DefinitionDetails,
-  type_: types.GeneratedType(repr),
-  handler: fn(types.GeneratedType(repr)) -> Module,
+  type_: custom.CustomType(repr, #(#(#(), a), b, c), generics),
+  handler: fn(
+    types.GeneratedType(repr),
+    constructor.Construtor(repr, a),
+    constructor.Construtor(repr, b),
+    constructor.Construtor(repr, c),
+  ) ->
+    Module,
 ) -> Module {
-  let rest = handler(types.unchecked_ident(details.name))
+  let assert [variant3, variant2, variant1] = type_.variants
+  let rest =
+    handler(
+      types.unchecked_ident(details.name),
+      constructor.new(variant1),
+      constructor.new(variant2),
+      constructor.new(variant3),
+    )
   Module(
     ..rest,
     definitions: [
-      Definition(details:, value: TypeAlias(type_ |> types.to_unchecked())),
+      Definition(details:, value: CustomType(type_ |> custom.to_unchecked())),
+      ..rest.definitions
+    ],
+  )
+}
+
+pub fn with_custom_type4(
+  details: DefinitionDetails,
+  type_: custom.CustomType(repr, #(#(#(#(), a), b), c, d), generics),
+  handler: fn(
+    types.GeneratedType(repr),
+    constructor.Construtor(repr, a),
+    constructor.Construtor(repr, b),
+    constructor.Construtor(repr, c),
+    constructor.Construtor(repr, d),
+  ) ->
+    Module,
+) -> Module {
+  let assert [variant4, variant3, variant2, variant1] = type_.variants
+  let rest =
+    handler(
+      types.unchecked_ident(details.name),
+      constructor.new(variant1),
+      constructor.new(variant2),
+      constructor.new(variant3),
+      constructor.new(variant4),
+    )
+  Module(
+    ..rest,
+    definitions: [
+      Definition(details:, value: CustomType(type_ |> custom.to_unchecked())),
+      ..rest.definitions
+    ],
+  )
+}
+
+pub fn with_custom_type5(
+  details: DefinitionDetails,
+  type_: custom.CustomType(repr, #(#(#(#(#(), a), b), c), d, e), generics),
+  handler: fn(
+    types.GeneratedType(repr),
+    constructor.Construtor(repr, a),
+    constructor.Construtor(repr, b),
+    constructor.Construtor(repr, c),
+    constructor.Construtor(repr, d),
+    constructor.Construtor(repr, e),
+  ) ->
+    Module,
+) -> Module {
+  let assert [variant5, variant4, variant3, variant2, variant1] = type_.variants
+  let rest =
+    handler(
+      types.unchecked_ident(details.name),
+      constructor.new(variant1),
+      constructor.new(variant2),
+      constructor.new(variant3),
+      constructor.new(variant4),
+      constructor.new(variant5),
+    )
+  Module(
+    ..rest,
+    definitions: [
+      Definition(details:, value: CustomType(type_ |> custom.to_unchecked())),
+      ..rest.definitions
+    ],
+  )
+}
+
+pub fn with_custom_type6(
+  details: DefinitionDetails,
+  type_: custom.CustomType(repr, #(#(#(#(#(#(), a), b), c), d), e, f), generics),
+  handler: fn(
+    types.GeneratedType(repr),
+    constructor.Construtor(repr, a),
+    constructor.Construtor(repr, b),
+    constructor.Construtor(repr, c),
+    constructor.Construtor(repr, d),
+    constructor.Construtor(repr, e),
+    constructor.Construtor(repr, f),
+  ) ->
+    Module,
+) -> Module {
+  let assert [variant6, variant5, variant4, variant3, variant2, variant1] =
+    type_.variants
+  let rest =
+    handler(
+      types.unchecked_ident(details.name),
+      constructor.new(variant1),
+      constructor.new(variant2),
+      constructor.new(variant3),
+      constructor.new(variant4),
+      constructor.new(variant5),
+      constructor.new(variant6),
+    )
+  Module(
+    ..rest,
+    definitions: [
+      Definition(details:, value: CustomType(type_ |> custom.to_unchecked())),
+      ..rest.definitions
+    ],
+  )
+}
+
+pub fn with_custom_type7(
+  details: DefinitionDetails,
+  type_: custom.CustomType(
+    repr,
+    #(#(#(#(#(#(#(), a), b), c), d), e), f, g),
+    generics,
+  ),
+  handler: fn(
+    types.GeneratedType(repr),
+    constructor.Construtor(repr, a),
+    constructor.Construtor(repr, b),
+    constructor.Construtor(repr, c),
+    constructor.Construtor(repr, d),
+    constructor.Construtor(repr, e),
+    constructor.Construtor(repr, f),
+    constructor.Construtor(repr, g),
+  ) ->
+    Module,
+) -> Module {
+  let assert [
+    variant7,
+    variant6,
+    variant5,
+    variant4,
+    variant3,
+    variant2,
+    variant1,
+  ] = type_.variants
+  let rest =
+    handler(
+      types.unchecked_ident(details.name),
+      constructor.new(variant1),
+      constructor.new(variant2),
+      constructor.new(variant3),
+      constructor.new(variant4),
+      constructor.new(variant5),
+      constructor.new(variant6),
+      constructor.new(variant7),
+    )
+  Module(
+    ..rest,
+    definitions: [
+      Definition(details:, value: CustomType(type_ |> custom.to_unchecked())),
+      ..rest.definitions
+    ],
+  )
+}
+
+pub fn with_custom_type8(
+  details: DefinitionDetails,
+  type_: custom.CustomType(
+    repr,
+    #(#(#(#(#(#(#(#(), a), b), c), d), e), f), g, h),
+    generics,
+  ),
+  handler: fn(
+    types.GeneratedType(repr),
+    constructor.Construtor(repr, a),
+    constructor.Construtor(repr, b),
+    constructor.Construtor(repr, c),
+    constructor.Construtor(repr, d),
+    constructor.Construtor(repr, e),
+    constructor.Construtor(repr, f),
+    constructor.Construtor(repr, g),
+    constructor.Construtor(repr, h),
+  ) ->
+    Module,
+) -> Module {
+  let assert [
+    variant8,
+    variant7,
+    variant6,
+    variant5,
+    variant4,
+    variant3,
+    variant2,
+    variant1,
+  ] = type_.variants
+  let rest =
+    handler(
+      types.unchecked_ident(details.name),
+      constructor.new(variant1),
+      constructor.new(variant2),
+      constructor.new(variant3),
+      constructor.new(variant4),
+      constructor.new(variant5),
+      constructor.new(variant6),
+      constructor.new(variant7),
+      constructor.new(variant8),
+    )
+  Module(
+    ..rest,
+    definitions: [
+      Definition(details:, value: CustomType(type_ |> custom.to_unchecked())),
+      ..rest.definitions
+    ],
+  )
+}
+
+pub fn with_custom_type9(
+  details: DefinitionDetails,
+  type_: custom.CustomType(
+    repr,
+    #(#(#(#(#(#(#(#(#(), a), b), c), d), e), f), g), h, i),
+    generics,
+  ),
+  handler: fn(
+    types.GeneratedType(repr),
+    constructor.Construtor(repr, a),
+    constructor.Construtor(repr, b),
+    constructor.Construtor(repr, c),
+    constructor.Construtor(repr, d),
+    constructor.Construtor(repr, e),
+    constructor.Construtor(repr, f),
+    constructor.Construtor(repr, g),
+    constructor.Construtor(repr, h),
+    constructor.Construtor(repr, i),
+  ) ->
+    Module,
+) -> Module {
+  let assert [
+    variant9,
+    variant8,
+    variant7,
+    variant6,
+    variant5,
+    variant4,
+    variant3,
+    variant2,
+    variant1,
+  ] = type_.variants
+  let rest =
+    handler(
+      types.unchecked_ident(details.name),
+      constructor.new(variant1),
+      constructor.new(variant2),
+      constructor.new(variant3),
+      constructor.new(variant4),
+      constructor.new(variant5),
+      constructor.new(variant6),
+      constructor.new(variant7),
+      constructor.new(variant8),
+      constructor.new(variant9),
+    )
+  Module(
+    ..rest,
+    definitions: [
+      Definition(details:, value: CustomType(type_ |> custom.to_unchecked())),
       ..rest.definitions
     ],
   )
@@ -142,6 +423,21 @@ pub fn with_custom_type_unchecked(
     ..rest,
     definitions: [
       Definition(details:, value: CustomType(type_ |> custom.to_unchecked())),
+      ..rest.definitions
+    ],
+  )
+}
+
+pub fn with_type_alias(
+  details: DefinitionDetails,
+  type_: types.GeneratedType(repr),
+  handler: fn(types.GeneratedType(repr)) -> Module,
+) -> Module {
+  let rest = handler(types.unchecked_ident(details.name))
+  Module(
+    ..rest,
+    definitions: [
+      Definition(details:, value: TypeAlias(type_ |> types.to_unchecked())),
       ..rest.definitions
     ],
   )

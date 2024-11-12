@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- added support for or (|) in case expressions
+
 ## v0.2.0 - 2024-11-11
 
 - renamed decorators to attributes

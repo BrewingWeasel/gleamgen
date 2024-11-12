@@ -6,12 +6,19 @@ import gleamgen/render
 import gleamgen/types
 
 pub opaque type Matcher(input, match_output) {
-  Variable(String, output: match_output)
-  StringLiteral(String, output: match_output)
-  BoolLiteral(Bool, output: match_output)
-  Tuple(List(Matcher(types.Unchecked, types.Unchecked)), output: match_output)
+  Variable(name: String, output: match_output)
+  StringLiteral(contents: String, output: match_output)
+  BoolLiteral(contents: Bool, output: match_output)
+  Tuple(
+    contents: List(Matcher(types.Unchecked, types.Unchecked)),
+    output: match_output,
+  )
   Constructor(
-    #(String, List(Matcher(types.Unchecked, types.Unchecked))),
+    constructor: #(String, List(Matcher(types.Unchecked, types.Unchecked))),
+    output: match_output,
+  )
+  Or(
+    options: #(Matcher(input, match_output), Matcher(input, match_output)),
     output: match_output,
   )
 }
@@ -26,6 +33,31 @@ pub fn string_literal(literal: String) -> Matcher(String, Nil) {
 
 pub fn bool_literal(literal: Bool) -> Matcher(Bool, Nil) {
   BoolLiteral(literal, output: Nil)
+}
+
+/// Use either of the two matchers
+/// ```gleam
+/// case_.new(expression.string("hello"))
+/// |> case_.with_matcher(
+///   matcher.or(matcher.string_literal("hello"), matcher.string_literal("hi")),
+///   fn(_) { expression.string("world") },
+/// )
+/// |> case_.with_matcher(matcher.variable("v"), fn(v) {
+///   expression.concat_string(v, expression.string(" world"))
+/// })
+/// |> case_.build_expression()
+/// |> expression.render(render.default_context())
+/// |> render.to_string()
+/// // -> "case \"hello\" {
+///  \"hello\" | \"hi\" -> \"world\"
+///  v -> v <> \" world\"
+/// }",
+/// ```
+pub fn or(
+  first: Matcher(input, match_output),
+  second: Matcher(input, match_output),
+) -> Matcher(input, match_output) {
+  Or(#(first, second), output: first.output)
 }
 
 pub fn from_constructor0(
@@ -583,6 +615,14 @@ pub fn render(matcher: Matcher(_, _)) -> render.Rendered {
     StringLiteral(literal, ..) -> doc.from_string("\"" <> literal <> "\"")
     BoolLiteral(True, ..) -> doc.from_string("True")
     BoolLiteral(False, ..) -> doc.from_string("False")
+    Or(#(first, second), ..) ->
+      doc.concat([
+        render(first).doc,
+        doc.space,
+        doc.from_string("|"),
+        doc.space,
+        render(second).doc,
+      ])
     Constructor(#(name, matchers), ..) ->
       matchers
       |> list.map(fn(m) { render(m).doc })

@@ -13,7 +13,7 @@ pub fn generate() {
     let io_println = import_.function1(io_mod, io.println)
 
     use _ <- module.with_function(
-      module.DefinitionAttributes("main", is_public: True, decorators: []),
+      module.DefinitionDetails("main", is_public: True, attributes: []),
       function.new0(types.nil(), fn() {
         expression.call1(io_println, expression.string("Hello, world!"))
       }),

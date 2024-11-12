@@ -190,10 +190,10 @@ pub fn simple_module_test() {
     module.Module(
       [
         module.Definition(
-          attributes: module.DefinitionAttributes(
+          details: module.DefinitionDetails(
             name: "based_number",
             is_public: True,
-            decorators: [],
+            attributes: [],
           ),
           value: module.Constant(
             expression.int(46) |> expression.to_unchecked(),
@@ -212,20 +212,18 @@ pub fn module_with_function_test() {
   let mod = {
     use io <- module.with_import(import_.new(["gleam", "io"]))
     use language <- module.with_constant(
-      module.DefinitionAttributes(
+      module.DefinitionDetails(
         name: "language",
         is_public: False,
-        decorators: [],
+        attributes: [],
       ),
       expression.string("gleam"),
     )
 
     use describer <- module.with_function(
-      module.DefinitionAttributes(
-        name: "describer",
-        is_public: True,
-        decorators: [module.Internal],
-      ),
+      module.DefinitionDetails(name: "describer", is_public: True, attributes: [
+        module.Internal,
+      ]),
       function.new1(
         arg1: #("thing", types.string()),
         returns: types.string(),
@@ -239,7 +237,7 @@ pub fn module_with_function_test() {
     )
 
     use _main <- module.with_function(
-      module.DefinitionAttributes(name: "main", is_public: True, decorators: []),
+      module.DefinitionDetails(name: "main", is_public: True, attributes: []),
       function.new0(returns: types.nil(), handler: fn() {
         expression.call1(
           import_.unchecked_ident(io, "println"),
@@ -282,7 +280,7 @@ pub fn module_import_test() {
     let int_string = import_.function1(int_mod, int.to_string)
 
     use _main <- module.with_function(
-      module.DefinitionAttributes(name: "main", is_public: True, decorators: []),
+      module.DefinitionDetails(name: "main", is_public: True, attributes: []),
       function.new0(returns: types.nil(), handler: fn() {
         expression.call1(
           io_print,
@@ -325,19 +323,15 @@ pub fn module_with_custom_type_test() {
 
   let mod = {
     use animal_type, dog_constructor, cat_constructor <- module.with_custom_type2(
-      module.DefinitionAttributes(
-        name: "Animal",
-        is_public: True,
-        decorators: [],
-      ),
+      module.DefinitionDetails(name: "Animal", is_public: True, attributes: []),
       animals,
     )
 
     use describer <- module.with_function(
-      module.DefinitionAttributes(
+      module.DefinitionDetails(
         name: "describer",
         is_public: True,
-        decorators: [],
+        attributes: [],
       ),
       function.new1(
         arg1: #("animal", animal_type),
@@ -347,7 +341,7 @@ pub fn module_with_custom_type_test() {
     )
 
     use _main <- module.with_function(
-      module.DefinitionAttributes(name: "main", is_public: True, decorators: []),
+      module.DefinitionDetails(name: "main", is_public: True, attributes: []),
       function.new0(returns: types.nil(), handler: fn() {
         {
           use dog_var <- block.with_let_declaration(
@@ -414,19 +408,15 @@ pub fn module_case_on_custom_type_test() {
   let mod = {
     use int_mod <- module.with_import(import_.new(["gleam", "int"]))
     use animal_type, dog_constructor, cat_constructor <- module.with_custom_type2(
-      module.DefinitionAttributes(
-        name: "Animal",
-        is_public: True,
-        decorators: [],
-      ),
+      module.DefinitionDetails(name: "Animal", is_public: True, attributes: []),
       animals,
     )
 
     use describer <- module.with_function(
-      module.DefinitionAttributes(
+      module.DefinitionDetails(
         name: "describer",
         is_public: True,
-        decorators: [],
+        attributes: [],
       ),
       function.new1(
         arg1: #("animal", animal_type),
@@ -477,7 +467,7 @@ pub fn module_case_on_custom_type_test() {
     )
 
     use _main <- module.with_function(
-      module.DefinitionAttributes(name: "main", is_public: True, decorators: []),
+      module.DefinitionDetails(name: "main", is_public: True, attributes: []),
       function.new0(returns: types.nil(), handler: fn() {
         {
           use dog_var <- block.with_let_declaration(
@@ -553,16 +543,16 @@ pub fn module_with_custom_type_generics_test() {
 
   let mod = {
     use _, ok_awesome_constructor, less_ok_awesome_constructor <- module.with_custom_type2(
-      module.DefinitionAttributes(
+      module.DefinitionDetails(
         name: "MoreAwesomeResult",
         is_public: True,
-        decorators: [],
+        attributes: [],
       ),
       more_awesome_result,
     )
 
     use _main <- module.with_function(
-      module.DefinitionAttributes(name: "main", is_public: True, decorators: []),
+      module.DefinitionDetails(name: "main", is_public: True, attributes: []),
       function.new0(returns: types.nil(), handler: fn() {
         {
           use _ <- block.with_let_declaration(
@@ -633,10 +623,10 @@ pub fn module_with_unchecked_custom_types_test() {
 
   let mod = {
     use custom_type_type, custom_constructors <- module.with_custom_type_unchecked(
-      module.DefinitionAttributes(
+      module.DefinitionDetails(
         name: "VariantHolder",
         is_public: True,
-        decorators: [],
+        attributes: [],
       ),
       custom_type,
     )
@@ -644,20 +634,20 @@ pub fn module_with_unchecked_custom_types_test() {
     let assert [variant0, _, _, variant3, ..] = custom_constructors
 
     use _get_variant <- module.with_function(
-      module.DefinitionAttributes(
+      module.DefinitionDetails(
         name: "get_variant",
         is_public: True,
-        decorators: [],
+        attributes: [],
       ),
       function.new0(returns: custom_type_type, handler: fn() {
         constructor.to_expression_unchecked(variant0)
       }),
     )
     use _get_other_variant <- module.with_function(
-      module.DefinitionAttributes(
+      module.DefinitionDetails(
         name: "get_other_variant",
         is_public: True,
-        decorators: [],
+        attributes: [],
       ),
       function.new0(returns: custom_type_type, handler: fn() {
         expression.call3(

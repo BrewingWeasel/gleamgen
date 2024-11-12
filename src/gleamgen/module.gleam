@@ -11,22 +11,18 @@ import gleamgen/types.{type Unchecked}
 import gleamgen/types/custom
 
 pub type Definition {
-  Definition(attributes: DefinitionAttributes, value: Definable)
+  Definition(details: DefinitionDetails, value: Definable)
 }
 
-pub type Decorator {
+pub type Attribute {
   ExternalErlang
   ExternalJavascript
   Deprecated(String)
   Internal
 }
 
-pub type DefinitionAttributes {
-  DefinitionAttributes(
-    name: String,
-    is_public: Bool,
-    decorators: List(Decorator),
-  )
+pub type DefinitionDetails {
+  DefinitionDetails(name: String, is_public: Bool, attributes: List(Attribute))
 }
 
 pub type Definable {
@@ -40,18 +36,15 @@ pub type Module {
 }
 
 pub fn with_constant(
-  attributes: DefinitionAttributes,
+  details: DefinitionDetails,
   value: Expression(t),
   handler: fn(Expression(t)) -> Module,
 ) -> Module {
-  let rest = handler(expression.unchecked_ident(attributes.name))
+  let rest = handler(expression.unchecked_ident(details.name))
   Module(
     ..rest,
     definitions: [
-      Definition(
-        attributes:,
-        value: Constant(value |> expression.to_unchecked()),
-      ),
+      Definition(details:, value: Constant(value |> expression.to_unchecked())),
       ..rest.definitions
     ],
   )
@@ -74,22 +67,22 @@ pub fn with_imports_unchecked(
 }
 
 pub fn with_function(
-  attributes: DefinitionAttributes,
+  details: DefinitionDetails,
   func: function.Function(func_type, ret),
   handler: fn(Expression(func_type)) -> Module,
 ) -> Module {
-  let rest = handler(expression.unchecked_ident(attributes.name))
+  let rest = handler(expression.unchecked_ident(details.name))
   Module(
     ..rest,
     definitions: [
-      Definition(attributes:, value: Function(func |> function.to_unchecked())),
+      Definition(details:, value: Function(func |> function.to_unchecked())),
       ..rest.definitions
     ],
   )
 }
 
 pub fn with_custom_type2(
-  attributes: DefinitionAttributes,
+  details: DefinitionDetails,
   type_: custom.CustomType(repr, #(#(#(), a), b), generics),
   handler: fn(
     types.GeneratedType(repr),
@@ -101,21 +94,21 @@ pub fn with_custom_type2(
   let assert [variant2, variant1] = type_.variants
   let rest =
     handler(
-      types.unchecked_ident(attributes.name),
+      types.unchecked_ident(details.name),
       constructor.new(variant1),
       constructor.new(variant2),
     )
   Module(
     ..rest,
     definitions: [
-      Definition(attributes:, value: CustomType(type_ |> custom.to_unchecked())),
+      Definition(details:, value: CustomType(type_ |> custom.to_unchecked())),
       ..rest.definitions
     ],
   )
 }
 
 pub fn with_custom_type_unchecked(
-  attributes: DefinitionAttributes,
+  details: DefinitionDetails,
   type_: custom.CustomType(repr, Unchecked, generics),
   handler: fn(
     types.GeneratedType(repr),
@@ -125,13 +118,13 @@ pub fn with_custom_type_unchecked(
 ) -> Module {
   let rest =
     handler(
-      types.unchecked_ident(attributes.name),
+      types.unchecked_ident(details.name),
       type_.variants |> list.reverse() |> list.map(constructor.new),
     )
   Module(
     ..rest,
     definitions: [
-      Definition(attributes:, value: CustomType(type_ |> custom.to_unchecked())),
+      Definition(details:, value: CustomType(type_ |> custom.to_unchecked())),
       ..rest.definitions
     ],
   )
@@ -144,12 +137,12 @@ pub fn eof() -> Module {
 pub fn render(module: Module, context: render.Context) -> render.Rendered {
   let rendered_defs =
     list.map(module.definitions, fn(def) {
-      doc.join(list.map(def.attributes.decorators, render_decorator), doc.line)
-      |> doc.append(case list.is_empty(def.attributes.decorators) {
+      doc.join(list.map(def.details.attributes, render_attribute), doc.line)
+      |> doc.append(case list.is_empty(def.details.attributes) {
         True -> doc.empty
         False -> doc.line
       })
-      |> doc.append(case def.attributes.is_public {
+      |> doc.append(case def.details.is_public {
         True -> doc.concat([doc.from_string("pub"), doc.space])
         False -> doc.empty
       })
@@ -157,7 +150,7 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
         Constant(value) ->
           doc.concat([
             doc.from_string("const "),
-            doc.from_string(def.attributes.name),
+            doc.from_string(def.details.name),
             doc.space,
             doc.from_string("="),
             doc.space,
@@ -166,11 +159,10 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
         CustomType(type_) ->
           doc.concat([
             doc.from_string("type "),
-            doc.from_string(def.attributes.name),
+            doc.from_string(def.details.name),
             custom.render(type_).doc,
           ])
-        Function(func) ->
-          render_function(func, context, def.attributes.name).doc
+        Function(func) -> render_function(func, context, def.details.name).doc
       })
     })
 
@@ -190,8 +182,8 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
   |> render.Render
 }
 
-fn render_decorator(decorator: Decorator) -> doc.Document {
-  case decorator {
+fn render_attribute(attribute: Attribute) -> doc.Document {
+  case attribute {
     ExternalErlang -> doc.from_string("@external(erlang)")
     ExternalJavascript -> doc.from_string("@external(javascript)")
     Deprecated(reason) ->

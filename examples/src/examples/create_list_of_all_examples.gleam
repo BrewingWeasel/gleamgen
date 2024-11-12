@@ -18,10 +18,10 @@ pub fn generate() -> String {
       |> list.map(fn(file) { import_.new(["examples", file]) }),
     )
     use _ <- module.with_function(
-      module.DefinitionAttributes(
+      module.DefinitionDetails(
         "get_all_examples",
         is_public: True,
-        decorators: [],
+        attributes: [],
       ),
       function.new0(
         types.list(types.tuple2(types.function0(types.string()), types.string())),

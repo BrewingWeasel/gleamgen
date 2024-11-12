@@ -30,19 +30,19 @@ pub fn main() {
 
     // module_used is of type Expression(String)
     use module_used <- module.with_constant(
-      module.DefinitionAttributes(
+      module.DefinitionDetails(
         name: "module_used",
         is_public: False,
-        decorators: [],
+        attributes: [],
       ),
       expression.string("Gleamgen"),
     )
 
     use greeter <- module.with_function(
-      module.DefinitionAttributes(
+      module.DefinitionDetails(
         name: "greeter",
         is_public: False,
-        decorators: [],
+        attributes: [],
       ),
       function.new1(
         arg1: #("greeting", types.string()),
@@ -62,7 +62,7 @@ pub fn main() {
     let assert [outer_greeting, ..] = list.shuffle(["Howdy", "Hello", "Hi"])
 
     use _main <- module.with_function(
-      module.DefinitionAttributes(name: "main", is_public: True, decorators: []),
+      module.DefinitionDetails(name: "main", is_public: True, attributes: []),
       function.new0(types.nil(), fn() {
         {
           use greeting <- block.with_let_declaration(

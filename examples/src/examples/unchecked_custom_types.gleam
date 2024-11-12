@@ -46,10 +46,10 @@ pub fn generate() {
 
   let mod = {
     use custom_type_type, custom_constructors <- module.with_custom_type_unchecked(
-      module.DefinitionAttributes(
+      module.DefinitionDetails(
         name: "VariantHolder",
         is_public: True,
-        decorators: [],
+        attributes: [],
       ),
       custom_type,
     )
@@ -57,10 +57,10 @@ pub fn generate() {
     let assert [variant0, ..] = custom_constructors
 
     use _ <- module.with_function(
-      module.DefinitionAttributes(
+      module.DefinitionDetails(
         "get_variant",
         is_public: True,
-        decorators: [],
+        attributes: [],
       ),
       function.new0(custom_type_type, fn() {
         constructor.to_expression_unchecked(variant0)

@@ -3,6 +3,7 @@
 ## v0.2.0 (unreleased)
 
 - renamed decorators to attributes
+- add panic expression
 
 ## v0.1.0 - 2024-11-11
 

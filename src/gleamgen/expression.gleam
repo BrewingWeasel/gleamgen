@@ -24,6 +24,7 @@ type InternalExpression(type_) {
   TupleLiteral(List(Expression(types.Unchecked)))
   Ident(String)
   Todo(Option(String))
+  Panic(Option(String))
   MathOperator(Expression(Int), MathOperator, Expression(Int))
   ConcatString(Expression(String), Expression(String))
   MathOperatorFloat(Expression(Float), MathOperator, Expression(Float))
@@ -300,6 +301,17 @@ pub fn concat_string(
 /// ```
 pub fn todo_(as_string: Option(String)) -> Expression(a) {
   Expression(Todo(as_string), types.unchecked())
+}
+
+/// Create a panic expression with an optional as clause
+/// ```gleam
+/// expression.todo_(option.Some("ahhhhhh!!!"))
+/// |> expression.render(render.default_context())
+/// |> render.to_string()
+/// // -> "panic as \"ahhhhhh!!!\""
+/// ```
+pub fn panic_(as_string: Option(String)) -> Expression(a) {
+  Expression(Panic(as_string), types.unchecked())
 }
 
 /// See `math_operator` and `math_operator_float`
@@ -632,16 +644,8 @@ pub fn render(
     ListLiteral(values) -> render_list(values, context)
     TupleLiteral(values) -> render_tuple(values, context)
     Ident(value) -> doc.from_string(value)
-    Todo(Some(value)) ->
-      doc.concat([
-        doc.from_string("todo as"),
-        doc.space,
-        doc.from_string("\""),
-        doc.from_string(value),
-        doc.from_string("\""),
-      ])
-      |> doc.group
-    Todo(None) -> doc.from_string("todo")
+    Todo(as_string) -> render_panicking_expression("todo", as_string)
+    Panic(as_string) -> render_panicking_expression("panic", as_string)
     ConcatString(expr1, expr2) ->
       render_operator(expr1, expr2, doc.from_string("<>"), context)
     MathOperator(expr1, op, expr2) ->
@@ -681,6 +685,21 @@ pub fn render(
     Case(to_match_on, matchers) -> render_case(to_match_on, matchers, context)
   }
   |> render.Render
+}
+
+fn render_panicking_expression(name: String, as_string: Option(String)) {
+  case as_string {
+    Some(value) ->
+      doc.concat([
+        doc.from_string(name <> " as"),
+        doc.space,
+        doc.from_string("\""),
+        doc.from_string(value),
+        doc.from_string("\""),
+      ])
+      |> doc.group
+    None -> doc.from_string(name)
+  }
 }
 
 fn render_case(to_match_on, matchers, context) {

@@ -4,6 +4,7 @@
 
 - renamed decorators to attributes
 - add panic expression
+- add type aliases
 
 ## v0.1.0 - 2024-11-11
 

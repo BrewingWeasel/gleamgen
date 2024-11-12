@@ -1,6 +1,7 @@
 import glam/doc
 import gleam/list
 import gleam/option
+import gleam/result
 import gleam/string
 import gleamgen/expression.{type Expression}
 import gleamgen/expression/constructor
@@ -29,6 +30,7 @@ pub type Definable {
   Function(function.Function(Unchecked, Unchecked))
   CustomType(custom.CustomType(Unchecked, Nil, Nil))
   Constant(Expression(Unchecked))
+  TypeAlias(types.GeneratedType(Unchecked))
 }
 
 pub type Module {
@@ -107,6 +109,21 @@ pub fn with_custom_type2(
   )
 }
 
+pub fn with_type_alias(
+  details: DefinitionDetails,
+  type_: types.GeneratedType(repr),
+  handler: fn(types.GeneratedType(repr)) -> Module,
+) -> Module {
+  let rest = handler(types.unchecked_ident(details.name))
+  Module(
+    ..rest,
+    definitions: [
+      Definition(details:, value: TypeAlias(type_ |> types.to_unchecked())),
+      ..rest.definitions
+    ],
+  )
+}
+
 pub fn with_custom_type_unchecked(
   details: DefinitionDetails,
   type_: custom.CustomType(repr, Unchecked, generics),
@@ -161,6 +178,17 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
             doc.from_string("type "),
             doc.from_string(def.details.name),
             custom.render(type_).doc,
+          ])
+        TypeAlias(type_) ->
+          doc.concat([
+            doc.from_string("type "),
+            doc.from_string(def.details.name),
+            doc.space,
+            doc.from_string("="),
+            doc.space,
+            types.render_type(type_)
+              |> result.map(fn(v) { v.doc })
+              |> result.unwrap(doc.from_string("??")),
           ])
         Function(func) -> render_function(func, context, def.details.name).doc
       })

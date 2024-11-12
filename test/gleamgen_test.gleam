@@ -268,6 +268,47 @@ pub fn main() -> Nil {
   )
 }
 
+pub fn module_with_type_alias_test() {
+  let mod = {
+    use awesome_string <- module.with_type_alias(
+      module.DefinitionDetails(
+        name: "AwesomeString",
+        is_public: False,
+        attributes: [],
+      ),
+      types.string(),
+    )
+
+    use _ <- module.with_function(
+      module.DefinitionDetails(name: "runner", is_public: True, attributes: [
+        module.Internal,
+      ]),
+      function.new1(
+        arg1: #("thing", awesome_string),
+        returns: types.string(),
+        handler: fn(thing) {
+          expression.string("Hi ")
+          |> expression.concat_string(thing)
+        },
+      ),
+    )
+
+    module.eof()
+  }
+
+  mod
+  |> module.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "type AwesomeString = String
+
+@internal
+pub fn runner(thing: AwesomeString) -> String {
+  \"Hi \" <> thing
+}",
+  )
+}
+
 pub fn module_import_test() {
   let mod = {
     use io <- module.with_import(import_.new_with_alias(

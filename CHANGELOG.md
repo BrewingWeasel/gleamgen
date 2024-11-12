@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.2.0 (unreleased)
+## v0.2.0 - 2024-11-11
 
 - renamed decorators to attributes
 - add panic expression

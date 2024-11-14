@@ -1,4 +1,5 @@
 import glam/doc
+import gleam/int
 import gleam/list
 import gleamgen/expression.{type Expression}
 import gleamgen/expression/constructor
@@ -8,6 +9,7 @@ import gleamgen/types
 pub opaque type Matcher(input, match_output) {
   Variable(name: String, output: match_output)
   StringLiteral(contents: String, output: match_output)
+  IntLiteral(contents: Int, output: match_output)
   BoolLiteral(contents: Bool, output: match_output)
   Tuple(
     contents: List(Matcher(types.Unchecked, types.Unchecked)),
@@ -29,6 +31,10 @@ pub fn variable(name: String) -> Matcher(a, Expression(a)) {
 
 pub fn string_literal(literal: String) -> Matcher(String, Nil) {
   StringLiteral(literal, output: Nil)
+}
+
+pub fn int_literal(literal: Int) -> Matcher(Int, Nil) {
+  IntLiteral(literal, output: Nil)
 }
 
 pub fn bool_literal(literal: Bool) -> Matcher(Bool, Nil) {
@@ -613,6 +619,7 @@ pub fn render(matcher: Matcher(_, _)) -> render.Rendered {
   case matcher {
     Variable(name, ..) -> doc.from_string(name)
     StringLiteral(literal, ..) -> doc.from_string("\"" <> literal <> "\"")
+    IntLiteral(literal, ..) -> literal |> int.to_string() |> doc.from_string()
     BoolLiteral(True, ..) -> doc.from_string("True")
     BoolLiteral(False, ..) -> doc.from_string("False")
     Or(#(first, second), ..) ->

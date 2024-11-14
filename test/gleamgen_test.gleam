@@ -139,6 +139,29 @@ pub fn simple_case_or_test() {
   )
 }
 
+pub fn simple_case_as_test() {
+  case_.new(expression.string("hello"))
+  |> case_.with_matcher(
+    matcher.or(matcher.string_literal("hello"), matcher.string_literal("hi"))
+      |> matcher.as_("greeting"),
+    fn(greeting) {
+      expression.concat_string(greeting, expression.string("world"))
+    },
+  )
+  |> case_.with_matcher(matcher.variable("v"), fn(v) {
+    expression.concat_string(v, expression.string(" world"))
+  })
+  |> case_.build_expression()
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "case \"hello\" {
+  \"hello\" | \"hi\" as greeting -> greeting <> \"world\"
+  v -> v <> \" world\"
+}",
+  )
+}
+
 pub fn simple_case_tuple_test() {
   case_.new(expression.tuple2(expression.string("hello"), expression.int(3)))
   |> case_.with_matcher(

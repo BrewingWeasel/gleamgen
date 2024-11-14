@@ -23,6 +23,10 @@ pub opaque type Matcher(input, match_output) {
     options: #(Matcher(input, match_output), Matcher(input, match_output)),
     output: match_output,
   )
+  As(
+    options: #(Matcher(types.Unchecked, types.Unchecked), String),
+    output: match_output,
+  )
 }
 
 pub fn variable(name: String) -> Matcher(a, Expression(a)) {
@@ -64,6 +68,16 @@ pub fn or(
   second: Matcher(input, match_output),
 ) -> Matcher(input, match_output) {
   Or(#(first, second), output: first.output)
+}
+
+pub fn as_(
+  original: Matcher(input, _),
+  name: String,
+) -> Matcher(input, Expression(input)) {
+  As(
+    #(original |> to_unchecked(), name),
+    output: expression.unchecked_ident(name),
+  )
 }
 
 pub fn from_constructor0(
@@ -629,6 +643,14 @@ pub fn render(matcher: Matcher(_, _)) -> render.Rendered {
         doc.from_string("|"),
         doc.space,
         render(second).doc,
+      ])
+    As(#(original, name), ..) ->
+      doc.concat([
+        render(original).doc,
+        doc.space,
+        doc.from_string("as"),
+        doc.space,
+        doc.from_string(name),
       ])
     Constructor(#(name, matchers), ..) ->
       matchers

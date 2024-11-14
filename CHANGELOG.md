@@ -1,8 +1,10 @@
 # Changelog
 
-## Unreleased
+## v0.2.1 - 2024-11-13
 
 - added support for or (|) in case expressions
+- added support for as in case expressions
+- added support for integer literals in case expressions
 
 ## v0.2.0 - 2024-11-11
 

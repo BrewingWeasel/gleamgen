@@ -20,7 +20,10 @@ type InternalExpression(type_) {
   StrLiteral(String)
   BoolLiteral(Bool)
   NilLiteral
-  ListLiteral(List(Expression(types.Unchecked)))
+  ListLiteral(
+    prepending: List(Expression(types.Unchecked)),
+    initial: Option(Expression(types.Unchecked)),
+  )
   TupleLiteral(List(Expression(types.Unchecked)))
   Ident(String)
   Todo(Option(String))
@@ -59,8 +62,25 @@ pub fn nil() -> Expression(Nil) {
 
 pub fn list(value: List(Expression(t))) -> Expression(List(t)) {
   Expression(
-    ListLiteral(value |> list.map(to_unchecked)),
+    ListLiteral(value |> list.map(to_unchecked), None),
     value
+      |> list.first()
+      |> result.map(type_)
+      |> result.lazy_unwrap(fn() { types.unchecked() })
+      |> types.list(),
+  )
+}
+
+pub fn list_prepend(
+  prepending: List(Expression(t)),
+  original: Expression(List(t)),
+) -> Expression(List(t)) {
+  Expression(
+    ListLiteral(
+      prepending: prepending |> list.map(to_unchecked),
+      initial: Some(original |> to_unchecked()),
+    ),
+    prepending
       |> list.first()
       |> result.map(type_)
       |> result.lazy_unwrap(fn() { types.unchecked() })
@@ -641,7 +661,8 @@ pub fn render(
     BoolLiteral(True) -> doc.from_string("True")
     BoolLiteral(False) -> doc.from_string("False")
     NilLiteral -> doc.from_string("Nil")
-    ListLiteral(values) -> render_list(values, context)
+    ListLiteral(values, initial_list) ->
+      render_list(values, initial_list, context)
     TupleLiteral(values) -> render_tuple(values, context)
     Ident(value) -> doc.from_string(value)
     Todo(as_string) -> render_panicking_expression("todo", as_string)
@@ -722,19 +743,32 @@ fn render_tuple(values, context) {
   |> doc.prepend(doc.from_string("#"))
 }
 
-fn render_list(values, context) {
+fn render_list(values, initial_list, context) {
   let comma = doc.concat([doc.from_string(","), doc.space])
-  let trailing_comma = doc.break("", ",")
 
-  let open_paren = doc.concat([doc.from_string("["), doc.soft_break])
-  let close_paren = doc.concat([trailing_comma, doc.from_string("]")])
+  let #(ending, trailing_comma) = case initial_list {
+    Some(initial) -> #(
+      doc.concat([
+        doc.from_string(","),
+        doc.space,
+        doc.from_string(".."),
+        render(initial, context).doc,
+      ]),
+      doc.soft_break,
+    )
+    None -> #(doc.empty, doc.break("", ","))
+  }
+
+  let open_bracket = doc.concat([doc.from_string("["), doc.soft_break])
+  let close_bracket = doc.concat([trailing_comma, doc.from_string("]")])
 
   values
   |> list.map(fn(x) { render(x, context).doc })
   |> doc.join(with: comma)
-  |> doc.prepend(open_paren)
+  |> doc.prepend(open_bracket)
+  |> doc.append(ending)
   |> doc.nest(2)
-  |> doc.append(close_paren)
+  |> doc.append(close_bracket)
   |> doc.group
 }
 

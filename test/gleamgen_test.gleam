@@ -48,6 +48,74 @@ pub fn simple_tuple_test() {
   |> should.equal("#(3, \"hello\", True)")
 }
 
+pub fn simple_list_test() {
+  expression.list([expression.string("hello"), expression.string("hi")])
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal("[\"hello\", \"hi\"]")
+}
+
+pub fn simple_list_prepending_test() {
+  expression.list_prepend(
+    [expression.string("hello"), expression.string("hi")],
+    expression.list([expression.string("yo")]),
+  )
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal("[\"hello\", \"hi\", ..[\"yo\"]]")
+}
+
+pub fn multiline_list_prepending_test() {
+  expression.list_prepend(
+    [
+      expression.string("hello but much, much, much, much longer so it breaks"),
+      expression.string("hello but much, much, much, much longer so it breaks"),
+    ],
+    expression.list([expression.string("yo")]),
+  )
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "[
+  \"hello but much, much, much, much longer so it breaks\",
+  \"hello but much, much, much, much longer so it breaks\",
+  ..[\"yo\"]
+]",
+  )
+}
+
+pub fn long_list_test() {
+  expression.list([
+    expression.list([
+      expression.string("hello"),
+      expression.string("hello"),
+      expression.string("hello"),
+      expression.string("hello"),
+      expression.string("hello but much, much, much, much longer so it breaks"),
+    ]),
+    expression.list([
+      expression.string("hi"),
+      expression.string("hi"),
+      expression.string("hi"),
+      expression.string("hi"),
+    ]),
+  ])
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "[
+  [
+    \"hello\",
+    \"hello\",
+    \"hello\",
+    \"hello\",
+    \"hello but much, much, much, much longer so it breaks\",
+  ],
+  [\"hi\", \"hi\", \"hi\", \"hi\"],
+]",
+  )
+}
+
 pub fn long_tuple_test() {
   expression.tuple9(
     expression.int(3),

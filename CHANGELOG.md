@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- added support for prepending to lists [x, ..xs]
+
 ## v0.2.1 - 2024-11-13
 
 - added support for or (|) in case expressions

@@ -314,7 +314,7 @@ pub fn block_in_function_test() {
     }
     |> block.build()
 
-  function.new0(types.int(), fn() { block_expr })
+  function.new0(types.int, fn() { block_expr })
   |> function.to_unchecked()
   |> module.render_function(render.default_context(), "test_function")
   |> render.to_string()
@@ -367,8 +367,8 @@ pub fn module_with_function_test() {
         module.Internal,
       ]),
       function.new1(
-        arg1: #("thing", types.string()),
-        returns: types.string(),
+        arg1: #("thing", types.string),
+        returns: types.string,
         handler: fn(thing) {
           expression.string("The ")
           |> expression.concat_string(thing)
@@ -380,7 +380,7 @@ pub fn module_with_function_test() {
 
     use _main <- module.with_function(
       module.DefinitionDetails(name: "main", is_public: True, attributes: []),
-      function.new0(returns: types.nil(), handler: fn() {
+      function.new0(returns: types.nil, handler: fn() {
         expression.call1(
           import_.unchecked_ident(io, "println"),
           expression.call1(describer, expression.string("program")),
@@ -423,15 +423,15 @@ pub fn module_import_constructor_test() {
         attributes: [],
       ),
       function.new1(
-        arg1: #("str", types.string()),
-        returns: option_type |> custom.to_type1(types.string()),
+        arg1: #("str", types.string),
+        returns: option_type |> custom.to_type1(types.string),
         handler: fn(str) {
           case_.new(str)
           |> case_.with_matcher(matcher.string_literal(""), fn(_) {
             expression.construct0(import_.value_of_type(
               option_module,
               "None",
-              types.function0(option_type |> custom.to_type1(types.string())),
+              types.function0(option_type |> custom.to_type1(types.string)),
             ))
           })
           |> case_.with_matcher(matcher.variable("value"), fn(value) {
@@ -440,8 +440,8 @@ pub fn module_import_constructor_test() {
                 option_module,
                 "Some",
                 types.function1(
-                  types.string(),
-                  option_type |> custom.to_type1(types.string()),
+                  types.string,
+                  option_type |> custom.to_type1(types.string),
                 ),
               ),
               value,
@@ -482,8 +482,8 @@ pub fn result_test() {
         attributes: [],
       ),
       function.new1(
-        arg1: #("res", types.result(types.string(), types.int())),
-        returns: types.result(types.bool(), types.int()),
+        arg1: #("res", types.result(types.string, types.int)),
+        returns: types.result(types.bool, types.int),
         handler: fn(res) {
           let block = {
             use _ <- block.with_let_declaration(
@@ -557,7 +557,7 @@ pub fn module_with_type_alias_test() {
         is_public: False,
         attributes: [],
       ),
-      types.string(),
+      types.string,
     )
 
     use _ <- module.with_function(
@@ -566,7 +566,7 @@ pub fn module_with_type_alias_test() {
       ]),
       function.new1(
         arg1: #("thing", awesome_string),
-        returns: types.string(),
+        returns: types.string,
         handler: fn(thing) {
           expression.string("Hi ")
           |> expression.concat_string(thing)
@@ -603,7 +603,7 @@ pub fn module_import_test() {
 
     use _main <- module.with_function(
       module.DefinitionDetails(name: "main", is_public: True, attributes: []),
-      function.new0(returns: types.nil(), handler: fn() {
+      function.new0(returns: types.nil, handler: fn() {
         expression.call1(
           io_print,
           expression.call1(int_string, expression.int(23)),
@@ -635,12 +635,12 @@ pub fn module_with_custom_type_test() {
     custom.new(ExampleAnimal)
     |> custom.with_variant(fn(_) {
       variant.new("Dog")
-      |> variant.with_argument(option.Some("bones"), types.int())
+      |> variant.with_argument(option.Some("bones"), types.int)
     })
     |> custom.with_variant(fn(_) {
       variant.new("Cat")
-      |> variant.with_argument(option.Some("name"), types.string())
-      |> variant.with_argument(option.Some("has_catnip"), types.bool())
+      |> variant.with_argument(option.Some("name"), types.string)
+      |> variant.with_argument(option.Some("has_catnip"), types.bool)
     })
 
   let mod = {
@@ -657,14 +657,14 @@ pub fn module_with_custom_type_test() {
       ),
       function.new1(
         arg1: #("animal", animal_type |> custom.to_type()),
-        returns: types.string(),
+        returns: types.string,
         handler: fn(_thing) { expression.todo_(option.Some("implement me")) },
       ),
     )
 
     use _main <- module.with_function(
       module.DefinitionDetails(name: "main", is_public: True, attributes: []),
-      function.new0(returns: types.nil(), handler: fn() {
+      function.new0(returns: types.nil, handler: fn() {
         {
           use dog_var <- block.with_let_declaration(
             "dog",
@@ -719,12 +719,12 @@ pub fn module_case_on_custom_type_test() {
     custom.new(ExampleAnimal)
     |> custom.with_variant(fn(_) {
       variant.new("Dog")
-      |> variant.with_argument(option.Some("bones"), types.int())
+      |> variant.with_argument(option.Some("bones"), types.int)
     })
     |> custom.with_variant(fn(_) {
       variant.new("Cat")
-      |> variant.with_argument(option.Some("name"), types.string())
-      |> variant.with_argument(option.Some("has_catnip"), types.bool())
+      |> variant.with_argument(option.Some("name"), types.string)
+      |> variant.with_argument(option.Some("has_catnip"), types.bool)
     })
 
   let mod = {
@@ -742,7 +742,7 @@ pub fn module_case_on_custom_type_test() {
       ),
       function.new1(
         arg1: #("animal", animal_type |> custom.to_type()),
-        returns: types.string(),
+        returns: types.string,
         handler: fn(animal) {
           case_.new(animal)
           |> case_.with_matcher(
@@ -790,7 +790,7 @@ pub fn module_case_on_custom_type_test() {
 
     use _main <- module.with_function(
       module.DefinitionDetails(name: "main", is_public: True, attributes: []),
-      function.new0(returns: types.nil(), handler: fn() {
+      function.new0(returns: types.nil, handler: fn() {
         {
           use dog_var <- block.with_let_declaration(
             "dog",
@@ -880,7 +880,7 @@ pub fn module_with_custom_type_generics_test() {
         attributes: [],
       ),
       function.new0(
-        returns: custom.to_type2(awesome_type, types.int(), types.bool()),
+        returns: custom.to_type2(awesome_type, types.int, types.bool),
         handler: fn() {
           {
             use _ <- block.with_let_declaration(
@@ -970,7 +970,7 @@ pub fn module_with_custom_type_generics_multiple_ways_test() {
         attributes: [],
       ),
       function.new0(
-        returns: custom.to_type2(awesome_type, types.string(), types.bool()),
+        returns: custom.to_type2(awesome_type, types.string, types.bool),
         handler: fn() {
           {
             use _ <- block.with_let_declaration(
@@ -1025,7 +1025,7 @@ pub fn module_with_unchecked_custom_types_test() {
         |> list.map(fn(x) {
           #(
             option.Some("arg" <> int.to_string(x)),
-            types.int() |> types.to_unchecked(),
+            types.int |> types.to_unchecked(),
           )
         }),
       )

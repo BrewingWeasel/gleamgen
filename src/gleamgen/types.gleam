@@ -20,28 +20,18 @@ pub opaque type GeneratedType(type_) {
   Generic(String)
 }
 
-pub fn bool() -> GeneratedType(Bool) {
-  GeneratedBool
-}
+pub const bool: GeneratedType(Bool) = GeneratedBool
+
+pub const nil: GeneratedType(Nil) = GeneratedNil
+
+pub const float: GeneratedType(Float) = GeneratedFloat
+
+pub const int: GeneratedType(Int) = GeneratedInt
+
+pub const string: GeneratedType(String) = GeneratedString
 
 pub fn generic(name: String) -> GeneratedType(a) {
   Generic(name)
-}
-
-pub fn string() -> GeneratedType(String) {
-  GeneratedString
-}
-
-pub fn int() -> GeneratedType(Int) {
-  GeneratedInt
-}
-
-pub fn float() -> GeneratedType(Float) {
-  GeneratedFloat
-}
-
-pub fn nil() -> GeneratedType(Nil) {
-  GeneratedNil
 }
 
 pub fn list(type_: GeneratedType(t)) -> GeneratedType(List(t)) {

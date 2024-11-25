@@ -45,10 +45,10 @@ pub fn main() {
         attributes: [],
       ),
       function.new1(
-        arg1: #("greeting", types.string()),
+        arg1: #("greeting", types.string),
         // we have said that greeter returns a string, so handler returning anything
         // else would be a type error
-        returns: types.string(),
+        returns: types.string,
         handler: fn(greeting) {
           greeting
           |> expression.concat_string(expression.string(" from "))
@@ -63,7 +63,7 @@ pub fn main() {
 
     use _main <- module.with_function(
       module.DefinitionDetails(name: "main", is_public: True, attributes: []),
-      function.new0(types.nil(), fn() {
+      function.new0(types.nil, fn() {
         {
           use greeting <- block.with_let_declaration(
             "greeting",

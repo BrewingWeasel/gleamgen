@@ -43,23 +43,23 @@ type InternalExpression(type_) {
 // ----------------------------------------------------------------------------
 
 pub fn int(value: Int) -> Expression(Int) {
-  Expression(IntLiteral(value), types.int())
+  Expression(IntLiteral(value), types.int)
 }
 
 pub fn float(value: Float) -> Expression(Float) {
-  Expression(FloatLiteral(value), types.float())
+  Expression(FloatLiteral(value), types.float)
 }
 
 pub fn string(value: String) -> Expression(String) {
-  Expression(StrLiteral(value), types.string())
+  Expression(StrLiteral(value), types.string)
 }
 
 pub fn bool(value: Bool) -> Expression(Bool) {
-  Expression(BoolLiteral(value), types.bool())
+  Expression(BoolLiteral(value), types.bool)
 }
 
 pub fn nil() -> Expression(Nil) {
-  Expression(NilLiteral, types.nil())
+  Expression(NilLiteral, types.nil)
 }
 
 pub fn list(value: List(Expression(t))) -> Expression(List(t)) {
@@ -97,7 +97,7 @@ pub fn tuple1(arg1: Expression(a)) -> Expression(#(a)) {
 pub fn equals(first: Expression(a), second: Expression(a)) -> Expression(Bool) {
   Expression(
     Equals(first |> to_unchecked(), second |> to_unchecked()),
-    types.bool(),
+    types.bool,
   )
 }
 
@@ -326,7 +326,7 @@ pub fn concat_string(
   expr1: Expression(String),
   expr2: Expression(String),
 ) -> Expression(String) {
-  Expression(ConcatString(expr1, expr2), types.string())
+  Expression(ConcatString(expr1, expr2), types.string)
 }
 
 /// Create a todo expression with an optional as clause
@@ -389,7 +389,7 @@ pub fn math_operator(
   op: MathOperator,
   expr2: Expression(Int),
 ) -> Expression(Int) {
-  Expression(MathOperator(expr1, op, expr2), types.int())
+  Expression(MathOperator(expr1, op, expr2), types.int)
 }
 
 /// Apply a math operator to two expressions with the type of Float
@@ -408,7 +408,7 @@ pub fn math_operator_float(
   op: MathOperator,
   expr2: Expression(Float),
 ) -> Expression(Int) {
-  Expression(MathOperatorFloat(expr1, op, expr2), types.int())
+  Expression(MathOperatorFloat(expr1, op, expr2), types.int)
 }
 
 /// Call a function or constructor with no arguments

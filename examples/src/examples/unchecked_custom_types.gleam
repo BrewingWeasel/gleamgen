@@ -17,9 +17,9 @@ pub fn generate() {
   let generate_argument = fn(x) {
     let assert [type_, ..] =
       [
-        types.int() |> types.to_unchecked(),
-        types.string() |> types.to_unchecked(),
-        types.bool() |> types.to_unchecked(),
+        types.int |> types.to_unchecked(),
+        types.string |> types.to_unchecked(),
+        types.bool |> types.to_unchecked(),
       ]
       |> list.shuffle()
     #(option.Some("arg" <> int.to_string(x)), type_)

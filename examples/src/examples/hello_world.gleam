@@ -14,7 +14,7 @@ pub fn generate() {
 
     use _ <- module.with_function(
       module.DefinitionDetails("main", is_public: True, attributes: []),
-      function.new0(types.nil(), fn() {
+      function.new0(types.nil, fn() {
         expression.call1(io_println, expression.string("Hello, world!"))
       }),
     )

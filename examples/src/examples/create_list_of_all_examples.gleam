@@ -24,7 +24,7 @@ pub fn generate() -> String {
         attributes: [],
       ),
       function.new0(
-        types.list(types.tuple2(types.function0(types.string()), types.string())),
+        types.list(types.tuple2(types.function0(types.string), types.string)),
         fn() {
           imports
           |> list.zip(file_roots)

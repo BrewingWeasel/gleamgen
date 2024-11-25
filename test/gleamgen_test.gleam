@@ -379,6 +379,66 @@ pub fn main() -> Nil {
   )
 }
 
+pub fn module_import_constructor_test() {
+  let mod = {
+    use option_module <- module.with_import(import_.new(["gleam", "option"]))
+
+    let option_type = import_.unchecked_type(option_module, "Option")
+
+    use _option_from_str <- module.with_function(
+      module.DefinitionDetails(
+        name: "option_from_string",
+        is_public: True,
+        attributes: [],
+      ),
+      function.new1(
+        arg1: #("str", types.string()),
+        returns: option_type |> custom.to_type1(types.string()),
+        handler: fn(str) {
+          case_.new(str)
+          |> case_.with_matcher(matcher.string_literal(""), fn(_) {
+            expression.construct0(import_.value_of_type(
+              option_module,
+              "None",
+              types.function0(option_type |> custom.to_type1(types.string())),
+            ))
+          })
+          |> case_.with_matcher(matcher.variable("value"), fn(value) {
+            expression.construct1(
+              import_.value_of_type(
+                option_module,
+                "Some",
+                types.function1(
+                  types.string(),
+                  option_type |> custom.to_type1(types.string()),
+                ),
+              ),
+              value,
+            )
+          })
+          |> case_.build_expression()
+        },
+      ),
+    )
+
+    module.eof()
+  }
+
+  mod
+  |> module.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "import gleam/option
+
+pub fn option_from_string(str: String) -> option.Option(String) {
+  case str {
+    \"\" -> option.None
+    value -> option.Some(value)
+  }
+}",
+  )
+}
+
 pub fn module_with_type_alias_test() {
   let mod = {
     use awesome_string <- module.with_type_alias(
@@ -486,7 +546,7 @@ pub fn module_with_custom_type_test() {
         attributes: [],
       ),
       function.new1(
-        arg1: #("animal", animal_type),
+        arg1: #("animal", animal_type |> custom.to_type()),
         returns: types.string(),
         handler: fn(_thing) { expression.todo_(option.Some("implement me")) },
       ),
@@ -498,7 +558,7 @@ pub fn module_with_custom_type_test() {
         {
           use dog_var <- block.with_let_declaration(
             "dog",
-            expression.call1(
+            expression.construct1(
               constructor.to_expression1(dog_constructor),
               expression.int(4),
             ),
@@ -506,7 +566,7 @@ pub fn module_with_custom_type_test() {
           use <- block.with_expression(expression.call1(describer, dog_var))
           use cat_var <- block.with_let_declaration(
             "cat",
-            expression.call2(
+            expression.construct2(
               constructor.to_expression2(cat_constructor),
               expression.string("jake"),
               expression.bool(True),
@@ -571,7 +631,7 @@ pub fn module_case_on_custom_type_test() {
         attributes: [],
       ),
       function.new1(
-        arg1: #("animal", animal_type),
+        arg1: #("animal", animal_type |> custom.to_type()),
         returns: types.string(),
         handler: fn(animal) {
           case_.new(animal)
@@ -677,7 +737,7 @@ pub fn main() -> Nil {
 }
 
 pub fn module_with_custom_type_generics_test() {
-  let more_awesome_result =
+  let more_awesome_result: custom.CustomTypeBuilder(Nil, _, _) =
     custom.new(Nil)
     |> custom.with_generic("awesome")
     |> custom.with_generic("not_awesome")
@@ -694,7 +754,7 @@ pub fn module_with_custom_type_generics_test() {
     })
 
   let mod = {
-    use _, ok_awesome_constructor, less_ok_awesome_constructor <- module.with_custom_type2(
+    use awesome_type, ok_awesome_constructor, less_ok_awesome_constructor <- module.with_custom_type2(
       module.DefinitionDetails(
         name: "MoreAwesomeResult",
         is_public: True,
@@ -704,28 +764,31 @@ pub fn module_with_custom_type_generics_test() {
     )
 
     use _main <- module.with_function(
-      module.DefinitionDetails(name: "main", is_public: True, attributes: []),
-      function.new0(returns: types.nil(), handler: fn() {
-        {
-          use _ <- block.with_let_declaration(
-            "whoo",
-            expression.call1(
-              constructor.to_expression1(ok_awesome_constructor),
-              expression.int(4) |> expression.to_unchecked(),
-            ),
-          )
-          use _ <- block.with_let_declaration(
-            "still_yay",
-            expression.call2(
+      module.DefinitionDetails(
+        name: "generate",
+        is_public: True,
+        attributes: [],
+      ),
+      function.new0(
+        returns: custom.to_type2(awesome_type, types.int(), types.bool()),
+        handler: fn() {
+          {
+            use _ <- block.with_let_declaration(
+              "whoo",
+              expression.call1(
+                constructor.to_expression1(ok_awesome_constructor),
+                expression.int(4),
+              ),
+            )
+            block.ending_block(expression.call2(
               constructor.to_expression2(less_ok_awesome_constructor),
-              expression.string("jake") |> expression.to_unchecked(),
-              expression.bool(True) |> expression.to_unchecked(),
-            ),
-          )
-          block.ending_unchecked([])
-        }
-        |> block.build()
-      }),
+              expression.int(23),
+              expression.bool(True),
+            ))
+          }
+          |> block.build()
+        },
+      ),
     )
 
     module.eof()
@@ -740,9 +803,99 @@ pub fn module_with_custom_type_generics_test() {
   NotVeryOk(contents: awesome, failures: not_awesome)
 }
 
-pub fn main() -> Nil {
+pub fn generate() -> MoreAwesomeResult(Int, Bool) {
   let whoo = VeryOk(4)
-  let still_yay = NotVeryOk(\"jake\", True)
+  NotVeryOk(23, True)
+}",
+  )
+}
+
+pub fn module_with_custom_type_generics_multiple_ways_test() {
+  let more_awesome_result: custom.CustomTypeBuilder(
+    Nil,
+    _,
+    custom.Generics2(types.GeneratedType(a), types.GeneratedType(b)),
+  ) =
+    custom.new(Nil)
+    |> custom.with_generic("awesome")
+    |> custom.with_generic("not_awesome")
+    |> custom.with_variant(fn(generics) {
+      let #(#(#(), awesome), _not_awesome) = generics
+      variant.new("VeryOk")
+      |> variant.with_argument(option.Some("contents"), awesome)
+    })
+    |> custom.with_variant(fn(generics) {
+      let #(#(#(), awesome), not_awesome) = generics
+      variant.new("NotVeryOk")
+      |> variant.with_argument(option.Some("contents"), awesome)
+      |> variant.with_argument(option.Some("failures"), not_awesome)
+    })
+
+  let mod = {
+    use awesome_type, base_ok_constructor, base_less_ok_constructor <- module.with_custom_type2(
+      module.DefinitionDetails(
+        name: "MoreAwesomeResult",
+        is_public: True,
+        attributes: [],
+      ),
+      more_awesome_result,
+    )
+
+    let first_ok_constructor: constructor.Constructor(
+      Nil,
+      _,
+      custom.Generics2(types.GeneratedType(Int), types.GeneratedType(String)),
+    ) = constructor.unsafe_convert(base_ok_constructor)
+
+    let less_ok_constructor: constructor.Constructor(
+      Nil,
+      _,
+      custom.Generics2(types.GeneratedType(String), types.GeneratedType(Bool)),
+    ) = constructor.unsafe_convert(base_less_ok_constructor)
+
+    use _main <- module.with_function(
+      module.DefinitionDetails(
+        name: "generate",
+        is_public: True,
+        attributes: [],
+      ),
+      function.new0(
+        returns: custom.to_type2(awesome_type, types.string(), types.bool()),
+        handler: fn() {
+          {
+            use _ <- block.with_let_declaration(
+              "whoo",
+              expression.call1(
+                constructor.to_expression1(first_ok_constructor),
+                expression.int(4),
+              ),
+            )
+            block.ending_block(expression.call2(
+              constructor.to_expression2(less_ok_constructor),
+              expression.string("hi"),
+              expression.bool(True),
+            ))
+          }
+          |> block.build()
+        },
+      ),
+    )
+
+    module.eof()
+  }
+
+  mod
+  |> module.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "pub type MoreAwesomeResult(awesome, not_awesome) {
+  VeryOk(contents: awesome)
+  NotVeryOk(contents: awesome, failures: not_awesome)
+}
+
+pub fn generate() -> MoreAwesomeResult(String, Bool) {
+  let whoo = VeryOk(4)
+  NotVeryOk(\"hi\", True)
 }",
   )
 }
@@ -791,7 +944,7 @@ pub fn module_with_unchecked_custom_types_test() {
         is_public: True,
         attributes: [],
       ),
-      function.new0(returns: custom_type_type, handler: fn() {
+      function.new0(returns: custom.to_type(custom_type_type), handler: fn() {
         constructor.to_expression_unchecked(variant0)
       }),
     )
@@ -801,7 +954,7 @@ pub fn module_with_unchecked_custom_types_test() {
         is_public: True,
         attributes: [],
       ),
-      function.new0(returns: custom_type_type, handler: fn() {
+      function.new0(returns: custom.to_type(custom_type_type), handler: fn() {
         expression.call3(
           constructor.to_expression_unchecked(variant3),
           expression.int(1),

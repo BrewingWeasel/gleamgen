@@ -15,6 +15,7 @@ pub opaque type GeneratedType(type_) {
   GeneratedTuple(List(GeneratedType(Unchecked)))
   GeneratedFunction(List(GeneratedType(Unchecked)), GeneratedType(Unchecked))
   Unchecked
+  CustomType(String, List(GeneratedType(Unchecked)))
   UncheckedIdent(String)
   Generic(String)
 }
@@ -214,6 +215,14 @@ pub fn function2(
   )
 }
 
+@internal
+pub fn custom_type(
+  name: String,
+  types: List(GeneratedType(Unchecked)),
+) -> GeneratedType(a) {
+  CustomType(name, types)
+}
+
 @external(erlang, "gleamgen_ffi", "identity")
 @external(javascript, "../gleamgen_ffi.mjs", "identity")
 pub fn to_unchecked(type_: GeneratedType(t)) -> GeneratedType(Unchecked)
@@ -231,8 +240,9 @@ pub fn render_type(type_: GeneratedType(a)) -> Result(render.Rendered, Nil) {
     GeneratedInt -> doc.from_string("Int") |> render.Render |> Ok
     GeneratedFloat -> doc.from_string("Float") |> render.Render |> Ok
     GeneratedNil -> doc.from_string("Nil") |> render.Render |> Ok
-    GeneratedList(t) -> render_list(t)
+    GeneratedList(t) -> render_custom("List", [t])
     GeneratedTuple(t) -> render_tuple(t)
+    CustomType(name, types) -> render_custom(name, types)
     Unchecked -> Error(Nil)
     UncheckedIdent(t) -> doc.from_string(t) |> render.Render |> Ok
     Generic(t) -> doc.from_string(t) |> render.Render |> Ok
@@ -242,10 +252,20 @@ pub fn render_type(type_: GeneratedType(a)) -> Result(render.Rendered, Nil) {
   }
 }
 
-fn render_list(type_: GeneratedType(Unchecked)) -> Result(render.Rendered, Nil) {
-  use rendered <- result.try(render_type(type_))
-  doc.from_string("List")
-  |> doc.append(render.pretty_list([rendered.doc]))
+fn render_custom(
+  name: String,
+  types: List(GeneratedType(Unchecked)),
+) -> Result(render.Rendered, Nil) {
+  let rendered_types =
+    types
+    |> list.map(fn(t) {
+      render_type(t) |> result.map(fn(rendered) { rendered.doc })
+    })
+    |> result.all()
+  use rendered <- result.try(rendered_types)
+
+  doc.from_string(name)
+  |> doc.append(render.pretty_list(rendered))
   |> render.Render
   |> Ok
 }

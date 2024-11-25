@@ -5,6 +5,7 @@ import gleamgen/expression.{type Expression}
 import gleamgen/expression/constructor
 import gleamgen/render
 import gleamgen/types
+import gleamgen/types/custom
 
 pub opaque type Matcher(input, match_output) {
   Variable(name: String, output: match_output)
@@ -81,15 +82,15 @@ pub fn as_(
 }
 
 pub fn from_constructor0(
-  constructor: constructor.Construtor(construct_to, #()),
+  constructor: constructor.Constructor(construct_to, #(), generics),
 ) -> Matcher(construct_to, Nil) {
   Constructor(#(constructor.name(constructor), []), output: Nil)
 }
 
 pub fn from_constructor1(
-  constructor: constructor.Construtor(construct_to, #(#(), a)),
+  constructor: constructor.Constructor(construct_to, #(#(), a), generics),
   first: Matcher(a, a_output),
-) -> Matcher(construct_to, a_output) {
+) -> Matcher(custom.CustomType(construct_to, generics), a_output) {
   Constructor(
     #(constructor.name(constructor), [first |> to_unchecked]),
     output: first.output,
@@ -100,10 +101,10 @@ pub fn from_constructor1(
 // {{{
 
 pub fn from_constructor2(
-  constructor: constructor.Construtor(construct_to, #(#(#(), a), b)),
+  constructor: constructor.Constructor(construct_to, #(#(#(), a), b), generics),
   first: Matcher(a, a_output),
   second: Matcher(b, b_output),
-) -> Matcher(construct_to, #(a_output, b_output)) {
+) -> Matcher(custom.CustomType(construct_to, generics), #(a_output, b_output)) {
   Constructor(
     #(constructor.name(constructor), [
       first |> to_unchecked,
@@ -114,7 +115,11 @@ pub fn from_constructor2(
 }
 
 pub fn from_constructor3(
-  constructor: constructor.Construtor(construct_to, #(#(#(#(), a), b), c)),
+  constructor: constructor.Constructor(
+    construct_to,
+    #(#(#(#(), a), b), c),
+    generics,
+  ),
   first: Matcher(a, a_output),
   second: Matcher(b, b_output),
   third: Matcher(c, c_output),
@@ -130,7 +135,11 @@ pub fn from_constructor3(
 }
 
 pub fn from_constructor4(
-  constructor: constructor.Construtor(construct_to, #(#(#(#(#(), a), b), c), d)),
+  constructor: constructor.Constructor(
+    construct_to,
+    #(#(#(#(#(), a), b), c), d),
+    generics,
+  ),
   first: Matcher(a, a_output),
   second: Matcher(b, b_output),
   third: Matcher(c, c_output),
@@ -148,9 +157,10 @@ pub fn from_constructor4(
 }
 
 pub fn from_constructor5(
-  constructor: constructor.Construtor(
+  constructor: constructor.Constructor(
     construct_to,
     #(#(#(#(#(#(), a), b), c), d), e),
+    generics,
   ),
   first: Matcher(a, a_output),
   second: Matcher(b, b_output),
@@ -177,9 +187,10 @@ pub fn from_constructor5(
 }
 
 pub fn from_constructor6(
-  constructor: constructor.Construtor(
+  constructor: constructor.Constructor(
     construct_to,
     #(#(#(#(#(#(#(), a), b), c), d), e), f),
+    generics,
   ),
   first: Matcher(a, a_output),
   second: Matcher(b, b_output),
@@ -212,9 +223,10 @@ pub fn from_constructor6(
 }
 
 pub fn from_constructor7(
-  constructor: constructor.Construtor(
+  constructor: constructor.Constructor(
     construct_to,
     #(#(#(#(#(#(#(#(), a), b), c), d), e), f), g),
+    generics,
   ),
   first: Matcher(a, a_output),
   second: Matcher(b, b_output),
@@ -250,9 +262,10 @@ pub fn from_constructor7(
 }
 
 pub fn from_constructor8(
-  constructor: constructor.Construtor(
+  constructor: constructor.Constructor(
     construct_to,
     #(#(#(#(#(#(#(#(#(), a), b), c), d), e), f), g), h),
+    generics,
   ),
   first: Matcher(a, a_output),
   second: Matcher(b, b_output),
@@ -300,9 +313,10 @@ pub fn from_constructor8(
 }
 
 pub fn from_constructor9(
-  constructor: constructor.Construtor(
+  constructor: constructor.Constructor(
     construct_to,
     #(#(#(#(#(#(#(#(#(#(), a), b), c), d), e), f), g), h), i),
+    generics,
   ),
   first: Matcher(a, a_output),
   second: Matcher(b, b_output),

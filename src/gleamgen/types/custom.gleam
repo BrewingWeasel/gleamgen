@@ -6,24 +6,51 @@ import gleamgen/render
 import gleamgen/types.{type Unchecked}
 import gleamgen/types/variant.{type Variant}
 
-pub type CustomType(repr, variants, generics) {
-  CustomType(
+pub type CustomTypeBuilder(repr, variants, generics) {
+  CustomTypeBuilder(
     variants: List(Variant(Unchecked)),
     generics_list: List(String),
     generics: generics,
   )
 }
 
-pub fn new(_typed_representation: a) -> CustomType(a, #(), #()) {
-  CustomType(variants: [], generics: #(), generics_list: [])
+pub type Generics1(a) =
+  #(#(), a)
+
+pub type Generics2(a, b) =
+  #(#(#(), a), b)
+
+pub type Generics3(a, b, c) =
+  #(#(#(#(), a), b), c)
+
+pub type Generics4(a, b, c, d) =
+  #(#(#(#(#(), a), b), c), d)
+
+pub type Generics5(a, b, c, d, e) =
+  #(#(#(#(#(#(), a), b), c), d), e)
+
+pub type Generics6(a, b, c, d, e, f) =
+  #(#(#(#(#(#(#(), a), b), c), d), e), f)
+
+pub type Generics7(a, b, c, d, e, f, g) =
+  #(#(#(#(#(#(#(#(), a), b), c), d), e), f), g)
+
+pub type Generics8(a, b, c, d, e, f, g, h) =
+  #(#(#(#(#(#(#(#(#(), a), b), c), d), e), f), g), h)
+
+pub type Generics9(a, b, c, d, e, f, g, h, i) =
+  #(#(#(#(#(#(#(#(#(#(), a), b), c), d), e), f), g), h), i)
+
+pub fn new(_typed_representation: a) -> CustomTypeBuilder(a, #(), #()) {
+  CustomTypeBuilder(variants: [], generics: #(), generics_list: [])
 }
 
 pub fn new_unchecked(
   _typed_representation: repr,
   variants: List(Variant(Unchecked)),
   generics_list: List(String),
-) -> CustomType(repr, a, List(types.GeneratedType(Unchecked))) {
-  CustomType(
+) -> CustomTypeBuilder(repr, a, List(types.GeneratedType(Unchecked))) {
+  CustomTypeBuilder(
     variants:,
     generics_list:,
     generics: list.map(generics_list, fn(t) {
@@ -33,10 +60,10 @@ pub fn new_unchecked(
 }
 
 pub fn with_generic(
-  old: CustomType(repr, variants, old_generics),
+  old: CustomTypeBuilder(repr, variants, old_generics),
   generic: String,
-) -> CustomType(repr, variants, #(old_generics, types.GeneratedType(Unchecked))) {
-  CustomType(
+) -> CustomTypeBuilder(repr, variants, #(old_generics, types.GeneratedType(a))) {
+  CustomTypeBuilder(
     variants: old.variants,
     generics: #(old.generics, types.generic(generic)),
     generics_list: [generic, ..old.generics_list],
@@ -46,10 +73,10 @@ pub fn with_generic(
 // TODO: with generics unchecked
 
 pub fn with_variant(
-  old: CustomType(repr, old, generics),
+  old: CustomTypeBuilder(repr, old, generics),
   variant: fn(generics) -> Variant(new),
-) -> CustomType(repr, #(old, new), generics) {
-  CustomType(
+) -> CustomTypeBuilder(repr, #(old, new), generics) {
+  CustomTypeBuilder(
     variants: [
       old.generics |> variant |> variant.to_unchecked(),
       ..old.variants
@@ -60,10 +87,10 @@ pub fn with_variant(
 }
 
 pub fn with_unchecked_variants(
-  old: CustomType(repr, old, generics),
+  old: CustomTypeBuilder(repr, old, generics),
   variants: fn(generics) -> List(Variant(Unchecked)),
-) -> CustomType(repr, Unchecked, generics) {
-  CustomType(
+) -> CustomTypeBuilder(repr, Unchecked, generics) {
+  CustomTypeBuilder(
     variants: list.append(
       old.generics |> variants |> list.reverse(),
       old.variants,
@@ -74,13 +101,152 @@ pub fn with_unchecked_variants(
 }
 
 pub fn to_unchecked(
-  old: CustomType(_repr, _, _),
-) -> CustomType(Unchecked, Nil, Nil) {
-  let CustomType(variants, _, generics_list:) = old
-  CustomType(variants:, generics: Nil, generics_list:)
+  old: CustomTypeBuilder(_repr, _, _),
+) -> CustomTypeBuilder(Unchecked, Nil, Nil) {
+  let CustomTypeBuilder(variants, _, generics_list:) = old
+  CustomTypeBuilder(variants:, generics: Nil, generics_list:)
 }
 
-pub fn render(type_: CustomType(repr, variants, generics)) -> render.Rendered {
+pub type CustomType(repr, generics) {
+  CustomType(name: String)
+}
+
+pub fn to_type(
+  input: CustomType(repr, #()),
+) -> types.GeneratedType(CustomType(repr, #())) {
+  types.unchecked_ident(input.name)
+}
+
+pub fn to_type1(
+  input: CustomType(repr, Generics1(types.GeneratedType(a))),
+  type1: types.GeneratedType(type_a),
+) -> types.GeneratedType(
+  CustomType(repr, Generics1(types.GeneratedType(type_a))),
+) {
+  types.custom_type(input.name, [type1 |> types.to_unchecked()])
+}
+
+pub fn to_type2(
+  input: CustomType(
+    repr,
+    Generics2(types.GeneratedType(a), types.GeneratedType(b)),
+  ),
+  type1: types.GeneratedType(type_a),
+  type2: types.GeneratedType(type_b),
+) -> types.GeneratedType(
+  CustomType(
+    repr,
+    Generics2(types.GeneratedType(type_a), types.GeneratedType(type_b)),
+  ),
+) {
+  types.custom_type(input.name, [
+    type1 |> types.to_unchecked(),
+    type2 |> types.to_unchecked(),
+  ])
+}
+
+pub fn to_type3(
+  input: CustomType(
+    repr,
+    Generics3(
+      types.GeneratedType(a),
+      types.GeneratedType(b),
+      types.GeneratedType(c),
+    ),
+  ),
+  type1: types.GeneratedType(type_a),
+  type2: types.GeneratedType(type_b),
+  type3: types.GeneratedType(type_c),
+) -> types.GeneratedType(
+  CustomType(
+    repr,
+    Generics3(
+      types.GeneratedType(type_a),
+      types.GeneratedType(type_b),
+      types.GeneratedType(type_c),
+    ),
+  ),
+) {
+  types.custom_type(input.name, [
+    type1 |> types.to_unchecked(),
+    type2 |> types.to_unchecked(),
+    type3 |> types.to_unchecked(),
+  ])
+}
+
+pub fn to_type4(
+  input: CustomType(
+    repr,
+    Generics4(
+      types.GeneratedType(a),
+      types.GeneratedType(b),
+      types.GeneratedType(c),
+      types.GeneratedType(d),
+    ),
+  ),
+  type1: types.GeneratedType(type_a),
+  type2: types.GeneratedType(type_b),
+  type3: types.GeneratedType(type_c),
+  type4: types.GeneratedType(type_d),
+) -> types.GeneratedType(
+  CustomType(
+    repr,
+    Generics4(
+      types.GeneratedType(type_a),
+      types.GeneratedType(type_b),
+      types.GeneratedType(type_c),
+      types.GeneratedType(type_d),
+    ),
+  ),
+) {
+  types.custom_type(input.name, [
+    type1 |> types.to_unchecked(),
+    type2 |> types.to_unchecked(),
+    type3 |> types.to_unchecked(),
+    type4 |> types.to_unchecked(),
+  ])
+}
+
+pub fn to_type5(
+  input: CustomType(
+    repr,
+    Generics5(
+      types.GeneratedType(a),
+      types.GeneratedType(b),
+      types.GeneratedType(c),
+      types.GeneratedType(d),
+      types.GeneratedType(e),
+    ),
+  ),
+  type1: types.GeneratedType(type_a),
+  type2: types.GeneratedType(type_b),
+  type3: types.GeneratedType(type_c),
+  type4: types.GeneratedType(type_d),
+  type5: types.GeneratedType(type_e),
+) -> types.GeneratedType(
+  CustomType(
+    repr,
+    Generics5(
+      types.GeneratedType(type_a),
+      types.GeneratedType(type_b),
+      types.GeneratedType(type_c),
+      types.GeneratedType(type_d),
+      types.GeneratedType(type_e),
+    ),
+  ),
+) {
+  types.custom_type(input.name, [
+    type1 |> types.to_unchecked(),
+    type2 |> types.to_unchecked(),
+    type3 |> types.to_unchecked(),
+    type4 |> types.to_unchecked(),
+    type5 |> types.to_unchecked(),
+  ])
+}
+
+pub fn render(
+  type_: CustomTypeBuilder(repr, variants, generics),
+) -> render.Rendered {
   type_.variants
   |> list.reverse()
   |> list.map(fn(var) {

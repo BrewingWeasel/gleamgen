@@ -32,6 +32,7 @@ type InternalExpression(type_) {
   ConcatString(Expression(String), Expression(String))
   MathOperatorFloat(Expression(Float), MathOperator, Expression(Float))
   Call(Expression(types.Unchecked), List(Expression(types.Unchecked)))
+  SingleConstructor(Expression(types.Unchecked))
   Block(List(Statement))
   Case(Expression(types.Unchecked), List(doc.Document))
 }
@@ -296,6 +297,14 @@ pub fn tuple9(
 /// Provide an ident that could be of any type
 pub fn unchecked_ident(value: String) -> Expression(any) {
   Expression(Ident(value), types.unchecked())
+}
+
+/// Provide a string to inject without any checking of the specified type
+pub fn unchecked_of_type(
+  value: String,
+  type_: types.GeneratedType(t),
+) -> Expression(t) {
+  Expression(Ident(value), type_)
 }
 
 /// Use the <> operator to concatenate two strings
@@ -604,6 +613,31 @@ pub fn call_unchecked(
   Expression(internal: Call(func, args), type_: types.unchecked())
 }
 
+pub fn construct0(constructor: Expression(fn() -> ret)) -> Expression(ret) {
+  Expression(
+    internal: SingleConstructor(constructor |> to_unchecked),
+    type_: types.unchecked(),
+  )
+}
+
+pub const construct1 = call1
+
+pub const construct2 = call2
+
+pub const construct3 = call3
+
+pub const construct4 = call4
+
+pub const construct5 = call5
+
+pub const construct6 = call6
+
+pub const construct7 = call7
+
+pub const construct8 = call8
+
+pub const construct9 = call9
+
 @internal
 pub fn new_block(expressions, return) -> Expression(type_) {
   Expression(internal: Block(expressions), type_: return)
@@ -702,6 +736,7 @@ pub fn render(
         context,
       )
     Call(func, args) -> render_call(func, args, context)
+    SingleConstructor(constructor) -> render_constructor(constructor, context)
     Block(expressions) -> render_block(expressions, context)
     Case(to_match_on, matchers) -> render_case(to_match_on, matchers, context)
   }
@@ -810,6 +845,10 @@ fn render_call(func, args, context) {
     render(func, context).doc,
     render.pretty_list(list.map(args, fn(arg) { render(arg, context).doc })),
   ])
+}
+
+fn render_constructor(func, context) {
+  render(func, context).doc
 }
 
 fn render_operator(

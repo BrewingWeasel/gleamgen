@@ -57,12 +57,8 @@ pub fn generate() {
     let assert [variant0, ..] = custom_constructors
 
     use _ <- module.with_function(
-      module.DefinitionDetails(
-        "get_variant",
-        is_public: True,
-        attributes: [],
-      ),
-      function.new0(custom_type_type, fn() {
+      module.DefinitionDetails("get_variant", is_public: True, attributes: []),
+      function.new0(custom.to_type(custom_type_type), fn() {
         constructor.to_expression_unchecked(variant0)
       }),
     )

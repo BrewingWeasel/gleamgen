@@ -24,6 +24,7 @@ type InternalExpression(type_) {
     prepending: List(Expression(types.Unchecked)),
     initial: Option(Expression(types.Unchecked)),
   )
+  Equals(Expression(types.Unchecked), Expression(types.Unchecked))
   TupleLiteral(List(Expression(types.Unchecked)))
   Ident(String)
   Todo(Option(String))
@@ -91,6 +92,13 @@ pub fn list_prepend(
 
 pub fn tuple1(arg1: Expression(a)) -> Expression(#(a)) {
   Expression(TupleLiteral([arg1 |> to_unchecked()]), types.tuple1(type_(arg1)))
+}
+
+pub fn equals(first: Expression(a), second: Expression(a)) -> Expression(Bool) {
+  Expression(
+    Equals(first |> to_unchecked(), second |> to_unchecked()),
+    types.bool(),
+  )
 }
 
 // Remaining repetitive tuple functions
@@ -733,6 +741,8 @@ pub fn render(
     Call(func, args) -> render_call(func, args, context)
     SingleConstructor(constructor) -> render_constructor(constructor, context)
     Block(expressions) -> render_block(expressions, context)
+    Equals(expr1, expr2) ->
+      render_operator(expr1, expr2, doc.from_string("=="), context)
     Case(to_match_on, matchers) -> render_case(to_match_on, matchers, context)
   }
   |> render.Render

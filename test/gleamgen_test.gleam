@@ -181,6 +181,15 @@ pub fn simple_float_subtraction_test() {
   |> should.equal("3.3 +. 5.3")
 }
 
+pub fn equals_test() {
+  expression.string("hi")
+  |> expression.equals(expression.string("hello"))
+  |> expression.equals(expression.bool(True))
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal("\"hi\" == \"hello\" == True")
+}
+
 pub fn simple_string_addition_test() {
   expression.string("hello ")
   |> expression.concat_string(expression.string("world"))

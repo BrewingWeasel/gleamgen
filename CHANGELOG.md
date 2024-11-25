@@ -4,7 +4,8 @@
 
 - added support for prepending to lists `[x, ..xs]`
 - reworked generics for custom types to be more flexible and type-safe
-- fix not escaping srtings
+- fix not escaping strings
+- add equals expression
 
 ## v0.2.1 - 2024-11-13
 

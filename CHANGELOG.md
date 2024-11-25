@@ -6,6 +6,7 @@
 - reworked generics for custom types to be more flexible and type-safe
 - fix not escaping strings
 - add equals expression
+- add support for builtin result type
 
 ## v0.2.1 - 2024-11-13
 

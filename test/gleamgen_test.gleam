@@ -3,6 +3,7 @@ import gleam/io
 import gleam/list
 import gleam/option
 import gleam/result
+import gleam/string
 import gleamgen/expression
 import gleamgen/expression/block
 import gleamgen/expression/case_
@@ -464,6 +465,85 @@ pub fn option_from_string(str: String) -> option.Option(String) {
   case str {
     \"\" -> option.None
     value -> option.Some(value)
+  }
+}",
+  )
+}
+
+pub fn result_test() {
+  let mod = {
+    use result_module <- module.with_import(import_.new(["gleam", "result"]))
+    use string_module <- module.with_import(import_.new(["gleam", "string"]))
+
+    use _swap_result <- module.with_function(
+      module.DefinitionDetails(
+        name: "handle_result",
+        is_public: True,
+        attributes: [],
+      ),
+      function.new1(
+        arg1: #("res", types.result(types.string(), types.int())),
+        returns: types.result(types.bool(), types.int()),
+        handler: fn(res) {
+          let block = {
+            use _ <- block.with_let_declaration(
+              "v",
+              expression.call2(
+                import_.function2(result_module, result.unwrap),
+                expression.ok(expression.string("hi")),
+                expression.string("hey"),
+              ),
+            )
+
+            let special_matcher =
+              matcher.or(
+                matcher.ok(matcher.string_literal("")),
+                matcher.error(matcher.int_literal(0)),
+              )
+
+            block.ending_block(
+              case_.new(res)
+              |> case_.with_matcher(special_matcher, fn(_) {
+                expression.ok(expression.bool(True))
+              })
+              |> case_.with_matcher(
+                matcher.ok(matcher.variable("str")),
+                fn(str) {
+                  expression.call1(
+                    import_.function1(string_module, string.length),
+                    str,
+                  )
+                  |> expression.error()
+                },
+              )
+              |> case_.with_matcher(
+                matcher.error(matcher.variable("number")),
+                fn(number) { expression.error(number) },
+              )
+              |> case_.build_expression(),
+            )
+          }
+          block |> block.build()
+        },
+      ),
+    )
+
+    module.eof()
+  }
+
+  mod
+  |> module.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "import gleam/result
+import gleam/string
+
+pub fn handle_result(res: Result(String, Int)) -> Result(Bool, Int) {
+  let v = result.unwrap(Ok(\"hi\"), \"hey\")
+  case res {
+    Ok(\"\") | Error(0) -> Ok(True)
+    Ok(str) -> Error(string.length(str))
+    Error(number) -> Error(number)
   }
 }",
   )

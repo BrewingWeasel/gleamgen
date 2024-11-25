@@ -351,6 +351,20 @@ pub fn panic_(as_string: Option(String)) -> Expression(a) {
   Expression(Panic(as_string), types.unchecked())
 }
 
+pub fn ok(ok_value: Expression(ok)) -> Expression(Result(ok, err)) {
+  Expression(
+    internal: Call(unchecked_ident("Ok"), [ok_value |> to_unchecked]),
+    type_: types.result(type_(ok_value), types.unchecked()),
+  )
+}
+
+pub fn error(err_value: Expression(err)) -> Expression(Result(ok, err)) {
+  Expression(
+    internal: Call(unchecked_ident("Error"), [err_value |> to_unchecked]),
+    type_: types.result(types.unchecked(), type_(err_value)),
+  )
+}
+
 /// See `math_operator` and `math_operator_float`
 pub type MathOperator {
   Add

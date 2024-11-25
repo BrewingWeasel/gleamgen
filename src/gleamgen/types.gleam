@@ -193,6 +193,13 @@ pub fn unchecked() -> GeneratedType(any) {
   Unchecked
 }
 
+pub fn result(
+  ok_type: GeneratedType(ok),
+  err_type: GeneratedType(err),
+) -> GeneratedType(Result(ok, err)) {
+  CustomType("Result", [ok_type |> to_unchecked, err_type |> to_unchecked])
+}
+
 pub fn function0(returns: GeneratedType(ret)) -> GeneratedType(fn() -> ret) {
   GeneratedFunction([], returns |> to_unchecked)
 }

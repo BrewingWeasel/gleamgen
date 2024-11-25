@@ -46,6 +46,19 @@ pub fn bool_literal(literal: Bool) -> Matcher(Bool, Nil) {
   BoolLiteral(literal, output: Nil)
 }
 
+pub fn ok(ok_matcher: Matcher(a, a_output)) -> Matcher(Result(a, err), a_output) {
+  Constructor(#("Ok", [ok_matcher |> to_unchecked]), output: ok_matcher.output)
+}
+
+pub fn error(
+  err_matcher: Matcher(a, a_output),
+) -> Matcher(Result(ok, a), a_output) {
+  Constructor(
+    #("Error", [err_matcher |> to_unchecked]),
+    output: err_matcher.output,
+  )
+}
+
 /// Use either of the two matchers
 /// ```gleam
 /// case_.new(expression.string("hello"))

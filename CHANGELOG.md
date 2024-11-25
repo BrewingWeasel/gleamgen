@@ -2,8 +2,9 @@
 
 ## Unreleased
 
-- added support for prepending to lists [x, ..xs]
+- added support for prepending to lists `[x, ..xs]`
 - reworked generics for custom types to be more flexible and type-safe
+- fix not escaping srtings
 
 ## v0.2.1 - 2024-11-13
 

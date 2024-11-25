@@ -686,12 +686,7 @@ pub fn render(
   case expression.internal {
     IntLiteral(value) -> value |> int.to_string() |> doc.from_string()
     FloatLiteral(value) -> value |> float.to_string() |> doc.from_string()
-    StrLiteral(value) ->
-      doc.concat([
-        doc.from_string("\""),
-        doc.from_string(value),
-        doc.from_string("\""),
-      ])
+    StrLiteral(value) -> render.escape_string(value)
     BoolLiteral(True) -> doc.from_string("True")
     BoolLiteral(False) -> doc.from_string("False")
     NilLiteral -> doc.from_string("Nil")
@@ -749,9 +744,7 @@ fn render_panicking_expression(name: String, as_string: Option(String)) {
       doc.concat([
         doc.from_string(name <> " as"),
         doc.space,
-        doc.from_string("\""),
-        doc.from_string(value),
-        doc.from_string("\""),
+        render.escape_string(value),
       ])
       |> doc.group
     None -> doc.from_string(name)

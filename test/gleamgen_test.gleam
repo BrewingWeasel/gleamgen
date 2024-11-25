@@ -37,6 +37,27 @@ pub fn simple_string_test() {
   |> should.equal("\"hello\"")
 }
 
+pub fn string_escape_quote_test() {
+  expression.string("hel\"lo")
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal("\"hel\\\"lo\"")
+}
+
+pub fn string_escape_slash_test() {
+  expression.string("hello\\hi")
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal("\"hello\\hi\"")
+}
+
+pub fn empty_string_test() {
+  expression.string("")
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal("\"\"")
+}
+
 pub fn simple_tuple_test() {
   expression.tuple3(
     expression.int(3),

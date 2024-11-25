@@ -646,7 +646,7 @@ pub fn to_unchecked(
 pub fn render(matcher: Matcher(_, _)) -> render.Rendered {
   case matcher {
     Variable(name, ..) -> doc.from_string(name)
-    StringLiteral(literal, ..) -> doc.from_string("\"" <> literal <> "\"")
+    StringLiteral(literal, ..) -> render.escape_string(literal)
     IntLiteral(literal, ..) -> literal |> int.to_string() |> doc.from_string()
     BoolLiteral(True, ..) -> doc.from_string("True")
     BoolLiteral(False, ..) -> doc.from_string("False")

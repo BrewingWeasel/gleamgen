@@ -1,4 +1,5 @@
 import glam/doc
+import gleam/string
 
 pub type Rendered {
   Render(doc: doc.Document)
@@ -47,4 +48,26 @@ pub fn body(
   |> doc.nest(2)
   |> doc.append(doc.concat([between_brackets, doc.from_string("}")]))
   |> doc.group
+}
+
+@internal
+pub fn escape_string(string: String) -> doc.Document {
+  let escaped = do_escape_string(string, "")
+  doc.concat([
+    doc.from_string("\""),
+    doc.from_string(escaped),
+    doc.from_string("\""),
+  ])
+}
+
+fn do_escape_string(original: String, escaped: String) -> String {
+  case string.pop_grapheme(original) {
+    Ok(#("\"", rest)) -> {
+      do_escape_string(rest, escaped <> "\\\"")
+    }
+    Ok(#(c, rest)) -> {
+      do_escape_string(rest, escaped <> c)
+    }
+    Error(Nil) -> escaped
+  }
 }

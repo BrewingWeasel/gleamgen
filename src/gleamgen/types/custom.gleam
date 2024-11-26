@@ -108,13 +108,13 @@ pub fn to_unchecked(
 }
 
 pub type CustomType(repr, generics) {
-  CustomType(name: String)
+  CustomType(module: option.Option(String), name: String)
 }
 
 pub fn to_type(
   input: CustomType(repr, #()),
 ) -> types.GeneratedType(CustomType(repr, #())) {
-  types.unchecked_ident(input.name)
+  types.custom_type(input.module, input.name, [])
 }
 
 pub fn to_type1(
@@ -123,7 +123,7 @@ pub fn to_type1(
 ) -> types.GeneratedType(
   CustomType(repr, Generics1(types.GeneratedType(type_a))),
 ) {
-  types.custom_type(input.name, [type1 |> types.to_unchecked()])
+  types.custom_type(input.module, input.name, [type1 |> types.to_unchecked()])
 }
 
 pub fn to_type2(
@@ -139,7 +139,7 @@ pub fn to_type2(
     Generics2(types.GeneratedType(type_a), types.GeneratedType(type_b)),
   ),
 ) {
-  types.custom_type(input.name, [
+  types.custom_type(input.module, input.name, [
     type1 |> types.to_unchecked(),
     type2 |> types.to_unchecked(),
   ])
@@ -167,7 +167,7 @@ pub fn to_type3(
     ),
   ),
 ) {
-  types.custom_type(input.name, [
+  types.custom_type(input.module, input.name, [
     type1 |> types.to_unchecked(),
     type2 |> types.to_unchecked(),
     type3 |> types.to_unchecked(),
@@ -199,7 +199,7 @@ pub fn to_type4(
     ),
   ),
 ) {
-  types.custom_type(input.name, [
+  types.custom_type(input.module, input.name, [
     type1 |> types.to_unchecked(),
     type2 |> types.to_unchecked(),
     type3 |> types.to_unchecked(),
@@ -235,7 +235,7 @@ pub fn to_type5(
     ),
   ),
 ) {
-  types.custom_type(input.name, [
+  types.custom_type(input.module, input.name, [
     type1 |> types.to_unchecked(),
     type2 |> types.to_unchecked(),
     type3 |> types.to_unchecked(),
@@ -247,36 +247,51 @@ pub fn to_type5(
 pub fn render(
   type_: CustomTypeBuilder(repr, variants, generics),
 ) -> render.Rendered {
-  type_.variants
-  |> list.reverse()
-  |> list.map(fn(var) {
-    doc.from_string(var.name)
-    |> doc.append(case var.arguments {
-      [] -> doc.empty
-      _ ->
-        var.arguments
-        |> list.reverse()
-        |> list.map(fn(arg) {
-          case arg.0 {
-            option.None ->
-              types.render_type(arg.1)
-              |> result.map(fn(v) { v.doc })
-              |> result.unwrap(doc.from_string("??"))
-            option.Some(name) ->
-              doc.concat([
-                doc.from_string(name),
-                doc.from_string(":"),
-                doc.space,
-                types.render_type(arg.1)
-                  |> result.map(fn(v) { v.doc })
-                  |> result.unwrap(doc.from_string("??")),
-              ])
-              |> doc.group()
-          }
-        })
-        |> render.pretty_list()
+  let #(details, variants) =
+    type_.variants
+    |> list.reverse()
+    |> list.map_fold(render.empty_details, fn(old_details, var) {
+      let #(details, variant) = case var.arguments {
+        [] -> #(render.empty_details, doc.empty)
+        _ -> {
+          let #(details, arguments) =
+            var.arguments
+            |> list.reverse()
+            |> list.map_fold(render.empty_details, fn(acc_details, arg) {
+              let rendered = types.render_type(arg.1)
+              let type_doc =
+                rendered
+                |> result.map(fn(v) { v.doc })
+                |> result.unwrap(doc.from_string("??"))
+              let details = case rendered {
+                Ok(render.Render(details:, ..)) ->
+                  render.merge_details(acc_details, details)
+                Error(_) -> acc_details
+              }
+              let doc = case arg.0 {
+                option.None -> type_doc
+                option.Some(name) ->
+                  doc.concat([
+                    doc.from_string(name),
+                    doc.from_string(":"),
+                    doc.space,
+                    type_doc,
+                  ])
+                  |> doc.group()
+              }
+              #(details, doc)
+            })
+          #(details, arguments |> render.pretty_list())
+        }
+      }
+      #(
+        render.merge_details(old_details, details),
+        doc.from_string(var.name)
+          |> doc.append(variant),
+      )
     })
-  })
+
+  variants
   |> doc.join(doc.line)
   |> render.body(force_newlines: True)
   |> doc.prepend(
@@ -292,5 +307,5 @@ pub fn render(
       doc.space,
     ]),
   )
-  |> render.Render
+  |> render.Render(details:)
 }

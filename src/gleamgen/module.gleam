@@ -93,7 +93,11 @@ pub fn with_custom_type1(
     Module,
 ) -> Module {
   let assert [variant1] = type_.variants
-  let rest = handler(custom.CustomType(details.name), constructor.new(variant1))
+  let rest =
+    handler(
+      custom.CustomType(option.None, details.name),
+      constructor.new(variant1),
+    )
   Module(
     ..rest,
     definitions: [
@@ -121,7 +125,7 @@ pub fn with_custom_type2(
   let assert [variant2, variant1] = type_.variants
   let rest =
     handler(
-      custom.CustomType(details.name),
+      custom.CustomType(option.None, details.name),
       constructor.new(variant1),
       constructor.new(variant2),
     )
@@ -151,7 +155,7 @@ pub fn with_custom_type3(
   let assert [variant3, variant2, variant1] = type_.variants
   let rest =
     handler(
-      custom.CustomType(details.name),
+      custom.CustomType(option.None, details.name),
       constructor.new(variant1),
       constructor.new(variant2),
       constructor.new(variant3),
@@ -183,7 +187,7 @@ pub fn with_custom_type4(
   let assert [variant4, variant3, variant2, variant1] = type_.variants
   let rest =
     handler(
-      custom.CustomType(details.name),
+      custom.CustomType(option.None, details.name),
       constructor.new(variant1),
       constructor.new(variant2),
       constructor.new(variant3),
@@ -221,7 +225,7 @@ pub fn with_custom_type5(
   let assert [variant5, variant4, variant3, variant2, variant1] = type_.variants
   let rest =
     handler(
-      custom.CustomType(details.name),
+      custom.CustomType(option.None, details.name),
       constructor.new(variant1),
       constructor.new(variant2),
       constructor.new(variant3),
@@ -262,7 +266,7 @@ pub fn with_custom_type6(
     type_.variants
   let rest =
     handler(
-      custom.CustomType(details.name),
+      custom.CustomType(option.None, details.name),
       constructor.new(variant1),
       constructor.new(variant2),
       constructor.new(variant3),
@@ -312,7 +316,7 @@ pub fn with_custom_type7(
   ] = type_.variants
   let rest =
     handler(
-      custom.CustomType(details.name),
+      custom.CustomType(option.None, details.name),
       constructor.new(variant1),
       constructor.new(variant2),
       constructor.new(variant3),
@@ -365,7 +369,7 @@ pub fn with_custom_type8(
   ] = type_.variants
   let rest =
     handler(
-      custom.CustomType(details.name),
+      custom.CustomType(option.None, details.name),
       constructor.new(variant1),
       constructor.new(variant2),
       constructor.new(variant3),
@@ -421,7 +425,7 @@ pub fn with_custom_type9(
   ] = type_.variants
   let rest =
     handler(
-      custom.CustomType(details.name),
+      custom.CustomType(option.None, details.name),
       constructor.new(variant1),
       constructor.new(variant2),
       constructor.new(variant3),
@@ -457,7 +461,7 @@ pub fn with_custom_type_unchecked(
 ) -> Module {
   let rest =
     handler(
-      custom.CustomType(details.name),
+      custom.CustomType(option.None, details.name),
       type_.variants |> list.reverse() |> list.map(constructor.new),
     )
   Module(
@@ -492,50 +496,83 @@ pub fn eof() -> Module {
 }
 
 pub fn render(module: Module, context: render.Context) -> render.Rendered {
-  let rendered_defs =
-    list.map(module.definitions, fn(def) {
-      doc.join(list.map(def.details.attributes, render_attribute), doc.line)
-      |> doc.append(case list.is_empty(def.details.attributes) {
-        True -> doc.empty
-        False -> doc.line
-      })
-      |> doc.append(case def.details.is_public {
-        True -> doc.concat([doc.from_string("pub"), doc.space])
-        False -> doc.empty
-      })
-      |> doc.append(case def.value {
-        Constant(value) ->
-          doc.concat([
-            doc.from_string("const "),
-            doc.from_string(def.details.name),
-            doc.space,
-            doc.from_string("="),
-            doc.space,
-            expression.render(value, context).doc,
-          ])
-        CustomTypeBuilder(type_) ->
-          doc.concat([
-            doc.from_string("type "),
-            doc.from_string(def.details.name),
-            custom.render(type_).doc,
-          ])
-        TypeAlias(type_) ->
-          doc.concat([
-            doc.from_string("type "),
-            doc.from_string(def.details.name),
-            doc.space,
-            doc.from_string("="),
-            doc.space,
-            types.render_type(type_)
-              |> result.map(fn(v) { v.doc })
-              |> result.unwrap(doc.from_string("??")),
-          ])
-        Function(func) -> render_function(func, context, def.details.name).doc
-      })
-    })
+  let #(details, rendered_defs) =
+    list.map_fold(
+      module.definitions,
+      render.empty_details,
+      fn(previous_details, def) {
+        let #(definition, details) = case def.value {
+          Constant(value) -> {
+            let rendered_expr = expression.render(value, context)
+            #(
+              doc.concat([
+                doc.from_string("const "),
+                doc.from_string(def.details.name),
+                doc.space,
+                doc.from_string("="),
+                doc.space,
+                rendered_expr.doc,
+              ]),
+              rendered_expr.details,
+            )
+          }
+          CustomTypeBuilder(type_) -> {
+            let rendered_type = custom.render(type_)
+            #(
+              doc.concat([
+                doc.from_string("type "),
+                doc.from_string(def.details.name),
+                rendered_type.doc,
+              ]),
+              rendered_type.details,
+            )
+          }
+          TypeAlias(type_) -> {
+            let rendered_type = types.render_type(type_)
+            #(
+              doc.concat([
+                doc.from_string("type "),
+                doc.from_string(def.details.name),
+                doc.space,
+                doc.from_string("="),
+                doc.space,
+                rendered_type
+                  |> result.map(fn(v) { v.doc })
+                  |> result.unwrap(doc.from_string("??")),
+              ]),
+              rendered_type
+                |> result.map(fn(v) { v.details })
+                |> result.unwrap(render.empty_details),
+            )
+          }
+          Function(func) -> {
+            let rendered = render_function(func, context, def.details.name)
+            #(rendered.doc, rendered.details)
+          }
+        }
+
+        let full_doc =
+          doc.join(list.map(def.details.attributes, render_attribute), doc.line)
+          |> doc.append(case list.is_empty(def.details.attributes) {
+            True -> doc.empty
+            False -> doc.line
+          })
+          |> doc.append(case def.details.is_public {
+            True -> doc.concat([doc.from_string("pub"), doc.space])
+            False -> doc.empty
+          })
+          |> doc.append(definition)
+
+        #(render.merge_details(details, previous_details), full_doc)
+      },
+    )
 
   let rendered_imports =
     module.imports
+    |> list.filter(fn(m) {
+      details.used_imports
+      |> list.contains(import_.get_reference(m))
+    })
     |> list.map(fn(x) { x |> render_imported_module |> render.to_string() })
     |> list.sort(string.compare)
     |> list.map(doc.from_string)
@@ -547,7 +584,7 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
 
   rendered_imports
   |> doc.append(doc.concat_join(rendered_defs, [doc.line, doc.line]))
-  |> render.Render
+  |> render.Render(details:)
 }
 
 fn render_attribute(attribute: Attribute) -> doc.Document {
@@ -573,25 +610,32 @@ pub fn render_function(
     func.args
     |> list.map(expression.render_attribute(_, context))
     |> render.pretty_list()
+
+  let rendered_type = types.render_type(func.returns)
+  let rendered_body =
+    expression.render(
+      func.body,
+      render.Context(..context, include_brackets_current_level: False),
+    )
+
   doc.concat([
     doc.from_string("fn "),
     doc.from_string(name),
     rendered_args,
     doc.space,
-    case types.render_type(func.returns) {
+    case rendered_type {
       Ok(returned) ->
         doc.concat([doc.from_string("->"), doc.space, returned.doc, doc.space])
       Error(_) -> doc.empty
     },
-    render.body(
-      expression.render(
-        func.body,
-        render.Context(..context, include_brackets_current_level: False),
-      ).doc,
-      force_newlines: True,
-    ),
+    render.body(rendered_body.doc, force_newlines: True),
   ])
-  |> render.Render
+  |> render.Render(details: render.merge_details(
+    rendered_type
+      |> result.map(fn(t) { t.details })
+      |> result.unwrap(render.empty_details),
+    rendered_body.details,
+  ))
 }
 
 pub fn render_imported_module(module: import_.ImportedModule) -> render.Rendered {
@@ -609,5 +653,5 @@ pub fn render_imported_module(module: import_.ImportedModule) -> render.Rendered
       option.None -> doc.empty
     },
   ])
-  |> render.Render
+  |> render.Render(details: render.empty_details)
 }

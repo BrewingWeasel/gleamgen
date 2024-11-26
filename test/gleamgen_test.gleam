@@ -626,6 +626,87 @@ pub fn main() -> Nil {
   )
 }
 
+pub fn module_unused_import_test() {
+  let mod = {
+    use io <- module.with_import(import_.new_with_alias(
+      ["gleam", "io"],
+      "only_o",
+    ))
+    use int_mod <- module.with_import(import_.new(["gleam", "int"]))
+    use _ <- module.with_import(import_.new(["gleam", "string"]))
+
+    let io_print = import_.function1(io, io.println)
+    let int_string = import_.function1(int_mod, int.to_string)
+
+    use _main <- module.with_function(
+      module.DefinitionDetails(name: "main", is_public: True, attributes: []),
+      function.new0(returns: types.nil, handler: fn() {
+        expression.call1(
+          io_print,
+          expression.call1(int_string, expression.int(23)),
+        )
+      }),
+    )
+    module.eof()
+  }
+
+  mod
+  |> module.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "import gleam/int
+import gleam/io as only_o
+
+pub fn main() -> Nil {
+  only_o.println(int.to_string(23))
+}",
+  )
+}
+
+pub fn module_sometimes_unused_import_test() {
+  let mod = {
+    use io <- module.with_import(import_.new_with_alias(
+      ["gleam", "io"],
+      "only_o",
+    ))
+    use int_mod <- module.with_import(import_.new(["gleam", "int"]))
+    use string_mod <- module.with_import(import_.new(["gleam", "string"]))
+
+    let io_print = import_.function1(io, io.println)
+    let int_string = import_.function1(int_mod, int.to_string)
+    let string_length = import_.function1(string_mod, string.length)
+
+    // Because this is False, we don't use the string module, 
+    // therefore it should not be rendered in the final string
+    let use_string_mod_this_time = False
+
+    let int_value = case use_string_mod_this_time {
+      True -> expression.call1(string_length, expression.string("hi"))
+      False -> expression.int(23)
+    }
+
+    use _main <- module.with_function(
+      module.DefinitionDetails(name: "main", is_public: True, attributes: []),
+      function.new0(returns: types.nil, handler: fn() {
+        expression.call1(io_print, expression.call1(int_string, int_value))
+      }),
+    )
+    module.eof()
+  }
+
+  mod
+  |> module.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "import gleam/int
+import gleam/io as only_o
+
+pub fn main() -> Nil {
+  only_o.println(int.to_string(23))
+}",
+  )
+}
+
 pub type ExampleAnimal {
   ExampleAnimal
 }

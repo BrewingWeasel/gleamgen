@@ -658,38 +658,72 @@ pub fn to_unchecked(
 
 pub fn render(matcher: Matcher(_, _)) -> render.Rendered {
   case matcher {
-    Variable(name, ..) -> doc.from_string(name)
-    StringLiteral(literal, ..) -> render.escape_string(literal)
-    IntLiteral(literal, ..) -> literal |> int.to_string() |> doc.from_string()
-    BoolLiteral(True, ..) -> doc.from_string("True")
-    BoolLiteral(False, ..) -> doc.from_string("False")
-    Or(#(first, second), ..) ->
+    Variable(name, ..) ->
+      doc.from_string(name) |> render.Render(details: render.empty_details)
+    StringLiteral(literal, ..) ->
+      render.escape_string(literal)
+      |> render.Render(details: render.empty_details)
+    IntLiteral(literal, ..) ->
+      literal
+      |> int.to_string()
+      |> doc.from_string()
+      |> render.Render(details: render.empty_details)
+    BoolLiteral(True, ..) ->
+      doc.from_string("True") |> render.Render(details: render.empty_details)
+    BoolLiteral(False, ..) ->
+      doc.from_string("False") |> render.Render(details: render.empty_details)
+    Or(#(first, second), ..) -> {
+      let rendered_first = render(first)
+      let rendered_second = render(second)
       doc.concat([
-        render(first).doc,
+        rendered_first.doc,
         doc.space,
         doc.from_string("|"),
         doc.space,
-        render(second).doc,
+        rendered_second.doc,
       ])
-    As(#(original, name), ..) ->
+      |> render.Render(details: render.merge_details(
+        rendered_first.details,
+        rendered_second.details,
+      ))
+    }
+    As(#(original, name), ..) -> {
+      let original = render(original)
       doc.concat([
-        render(original).doc,
+        original.doc,
         doc.space,
         doc.from_string("as"),
         doc.space,
         doc.from_string(name),
       ])
-    Constructor(#(name, matchers), ..) ->
-      matchers
-      |> list.map(fn(m) { render(m).doc })
+      |> render.Render(details: original.details)
+    }
+    Constructor(#(name, matchers), ..) -> {
+      let #(details, rendered_matchers) =
+        matchers
+        |> list.map_fold(render.empty_details, fn(acc, m) {
+          let rendered = render(m)
+          #(render.merge_details(acc, rendered.details), rendered.doc)
+        })
+
+      rendered_matchers
       |> render.pretty_list()
       |> doc.prepend(doc.from_string(name))
-    Tuple(matchers, ..) ->
-      matchers
-      |> list.map(fn(m) { render(m).doc })
+      |> render.Render(details:)
+    }
+    Tuple(matchers, ..) -> {
+      let #(details, rendered_matchers) =
+        matchers
+        |> list.map_fold(render.empty_details, fn(acc, m) {
+          let rendered = render(m)
+          #(render.merge_details(acc, rendered.details), rendered.doc)
+        })
+
+      rendered_matchers
       |> render.pretty_list()
       |> doc.prepend(doc.from_string("#"))
+      |> render.Render(details:)
+    }
   }
-  |> render.Render
 }
 // vim: foldmethod=marker foldlevel=0

@@ -1,8 +1,22 @@
 import glam/doc
+import gleam/list
 import gleam/string
 
 pub type Rendered {
-  Render(doc: doc.Document)
+  Render(doc: doc.Document, details: RenderedDetails)
+}
+
+pub type RenderedDetails {
+  RenderedDetails(used_imports: List(String))
+}
+
+pub const empty_details = RenderedDetails([])
+
+pub fn merge_details(
+  first: RenderedDetails,
+  second: RenderedDetails,
+) -> RenderedDetails {
+  RenderedDetails(list.append(first.used_imports, second.used_imports))
 }
 
 pub type Context {

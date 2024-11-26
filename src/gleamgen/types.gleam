@@ -1,6 +1,8 @@
 import glam/doc
 import gleam/list
+import gleam/option
 import gleam/result
+import gleam/string
 import gleamgen/render
 
 pub type Unchecked
@@ -15,7 +17,7 @@ pub opaque type GeneratedType(type_) {
   GeneratedTuple(List(GeneratedType(Unchecked)))
   GeneratedFunction(List(GeneratedType(Unchecked)), GeneratedType(Unchecked))
   Unchecked
-  CustomType(String, List(GeneratedType(Unchecked)))
+  CustomType(option.Option(String), String, List(GeneratedType(Unchecked)))
   UncheckedIdent(String)
   Generic(String)
 }
@@ -187,7 +189,10 @@ pub fn result(
   ok_type: GeneratedType(ok),
   err_type: GeneratedType(err),
 ) -> GeneratedType(Result(ok, err)) {
-  CustomType("Result", [ok_type |> to_unchecked, err_type |> to_unchecked])
+  CustomType(option.None, "Result", [
+    ok_type |> to_unchecked,
+    err_type |> to_unchecked,
+  ])
 }
 
 pub fn function0(returns: GeneratedType(ret)) -> GeneratedType(fn() -> ret) {
@@ -214,10 +219,11 @@ pub fn function2(
 
 @internal
 pub fn custom_type(
+  module: option.Option(String),
   name: String,
   types: List(GeneratedType(Unchecked)),
 ) -> GeneratedType(a) {
-  CustomType(name, types)
+  CustomType(module, name, types)
 }
 
 @external(erlang, "gleamgen_ffi", "identity")
@@ -232,69 +238,115 @@ pub fn unsafe_from_unchecked(
 
 pub fn render_type(type_: GeneratedType(a)) -> Result(render.Rendered, Nil) {
   case type_ {
-    GeneratedBool -> doc.from_string("Bool") |> render.Render |> Ok
-    GeneratedString -> doc.from_string("String") |> render.Render |> Ok
-    GeneratedInt -> doc.from_string("Int") |> render.Render |> Ok
-    GeneratedFloat -> doc.from_string("Float") |> render.Render |> Ok
-    GeneratedNil -> doc.from_string("Nil") |> render.Render |> Ok
-    GeneratedList(t) -> render_custom("List", [t])
+    GeneratedBool ->
+      doc.from_string("Bool")
+      |> render.Render(details: render.empty_details)
+      |> Ok
+    GeneratedString ->
+      doc.from_string("String")
+      |> render.Render(details: render.empty_details)
+      |> Ok
+    GeneratedInt ->
+      doc.from_string("Int")
+      |> render.Render(details: render.empty_details)
+      |> Ok
+    GeneratedFloat ->
+      doc.from_string("Float")
+      |> render.Render(details: render.empty_details)
+      |> Ok
+    GeneratedNil ->
+      doc.from_string("Nil")
+      |> render.Render(details: render.empty_details)
+      |> Ok
+    GeneratedList(t) -> render_custom(option.None, "List", [t])
     GeneratedTuple(t) -> render_tuple(t)
-    CustomType(name, types) -> render_custom(name, types)
+    CustomType(module, name, types) -> render_custom(module, name, types)
     Unchecked -> Error(Nil)
-    UncheckedIdent(t) -> doc.from_string(t) |> render.Render |> Ok
-    Generic(t) -> doc.from_string(t) |> render.Render |> Ok
+    UncheckedIdent(t) -> {
+      let used_imports = case string.split_once(t, ".") {
+        Ok(#(module, _)) -> [module]
+        Error(Nil) -> []
+      }
+      doc.from_string(t)
+      |> render.Render(details: render.RenderedDetails(used_imports:))
+      |> Ok
+    }
+    Generic(t) ->
+      doc.from_string(t) |> render.Render(details: render.empty_details) |> Ok
     GeneratedFunction(args, return) -> {
       render_function(args, return)
     }
   }
 }
 
+fn render_type_list(types: List(GeneratedType(Unchecked))) {
+  let possibly_rendered =
+    types
+    |> list.try_fold(#([], render.empty_details), fn(acc, t) {
+      render_type(t)
+      |> result.map(fn(rendered) {
+        #(
+          [rendered.doc, ..acc.0],
+          render.merge_details(rendered.details, acc.1),
+        )
+      })
+    })
+  possibly_rendered |> result.map(fn(r) { #(r.0 |> list.reverse(), r.1) })
+}
+
 fn render_custom(
+  module: option.Option(String),
   name: String,
   types: List(GeneratedType(Unchecked)),
 ) -> Result(render.Rendered, Nil) {
-  let rendered_types =
-    types
-    |> list.map(fn(t) {
-      render_type(t) |> result.map(fn(rendered) { rendered.doc })
-    })
-    |> result.all()
-  use rendered <- result.try(rendered_types)
+  let rendered = render_type_list(types)
+  use #(rendered_types, details) <- result.try(rendered)
 
-  doc.from_string(name)
-  |> doc.append(render.pretty_list(rendered))
-  |> render.Render
+  let #(used_imports, import_details) = case module {
+    option.Some(m) -> #([m, ..details.used_imports], doc.from_string(m <> "."))
+    option.None -> #(details.used_imports, doc.empty)
+  }
+
+  import_details
+  |> doc.append(doc.from_string(name))
+  |> doc.append(case types {
+    [] -> doc.empty
+    _ -> render.pretty_list(rendered_types)
+  })
+  |> render.Render(details: render.RenderedDetails(used_imports:))
   |> Ok
 }
 
 fn render_tuple(
   types: List(GeneratedType(Unchecked)),
 ) -> Result(render.Rendered, Nil) {
-  let rendered_types =
-    types
-    |> list.map(fn(t) {
-      render_type(t)
-      |> result.map(fn(x) { x.doc })
-      |> result.unwrap(doc.from_string("??"))
-    })
+  let rendered = render_type_list(types)
+  use #(rendered_types, details) <- result.try(rendered)
   doc.from_string("#")
   |> doc.append(render.pretty_list(rendered_types))
-  |> render.Render
+  |> render.Render(details:)
   |> Ok
 }
 
 fn render_function(args, return) {
-  use args <- result.try(list.try_map(args, render_type))
+  let rendered = render_type_list(args)
+  use #(rendered_types, details) <- result.try(rendered)
   let return = render_type(return)
+
+  let used_imports = case return {
+    Ok(ret) -> list.append(ret.details.used_imports, details.used_imports)
+    Error(Nil) -> details.used_imports
+  }
+
   doc.concat([
     doc.from_string("fn"),
-    render.pretty_list(list.map(args, fn(v) { v.doc })),
+    render.pretty_list(rendered_types),
     doc.space,
     case return {
       Ok(ret) -> doc.concat([doc.from_string("->"), doc.space, ret.doc])
       Error(_) -> doc.empty
     },
   ])
-  |> render.Render
+  |> render.Render(details: render.RenderedDetails(used_imports:))
   |> Ok
 }

@@ -8,6 +8,7 @@
 - add equals expression
 - add support for builtin result type
 - replace type functions with constants where possible
+- do not render imports that are not used in the final generated code
 
 ## v0.2.1 - 2024-11-13
 

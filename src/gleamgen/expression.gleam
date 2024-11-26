@@ -4,6 +4,7 @@ import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
+import gleam/string
 import gleamgen/render
 import gleamgen/types
 
@@ -35,7 +36,7 @@ type InternalExpression(type_) {
   Call(Expression(types.Unchecked), List(Expression(types.Unchecked)))
   SingleConstructor(Expression(types.Unchecked))
   Block(List(Statement))
-  Case(Expression(types.Unchecked), List(doc.Document))
+  Case(Expression(types.Unchecked), List(fn(render.Context) -> render.Rendered))
 }
 
 // ----------------------------------------------------------------------------
@@ -706,18 +707,42 @@ pub fn render(
   context: render.Context,
 ) -> render.Rendered {
   case expression.internal {
-    IntLiteral(value) -> value |> int.to_string() |> doc.from_string()
-    FloatLiteral(value) -> value |> float.to_string() |> doc.from_string()
-    StrLiteral(value) -> render.escape_string(value)
-    BoolLiteral(True) -> doc.from_string("True")
-    BoolLiteral(False) -> doc.from_string("False")
-    NilLiteral -> doc.from_string("Nil")
+    IntLiteral(value) ->
+      value
+      |> int.to_string()
+      |> doc.from_string()
+      |> render.Render(details: render.empty_details)
+    FloatLiteral(value) ->
+      value
+      |> float.to_string()
+      |> doc.from_string()
+      |> render.Render(details: render.empty_details)
+    StrLiteral(value) ->
+      render.escape_string(value)
+      |> render.Render(details: render.empty_details)
+    BoolLiteral(True) ->
+      doc.from_string("True") |> render.Render(details: render.empty_details)
+    BoolLiteral(False) ->
+      doc.from_string("False") |> render.Render(details: render.empty_details)
+    NilLiteral ->
+      doc.from_string("Nil") |> render.Render(details: render.empty_details)
     ListLiteral(values, initial_list) ->
       render_list(values, initial_list, context)
     TupleLiteral(values) -> render_tuple(values, context)
-    Ident(value) -> doc.from_string(value)
-    Todo(as_string) -> render_panicking_expression("todo", as_string)
-    Panic(as_string) -> render_panicking_expression("panic", as_string)
+    Ident(value) -> {
+      let used_imports = case string.split_once(value, ".") {
+        Ok(#(module, _)) -> [module]
+        Error(Nil) -> []
+      }
+      doc.from_string(value)
+      |> render.Render(details: render.RenderedDetails(used_imports:))
+    }
+    Todo(as_string) ->
+      render_panicking_expression("todo", as_string)
+      |> render.Render(details: render.empty_details)
+    Panic(as_string) ->
+      render_panicking_expression("panic", as_string)
+      |> render.Render(details: render.empty_details)
     ConcatString(expr1, expr2) ->
       render_operator(expr1, expr2, doc.from_string("<>"), context)
     MathOperator(expr1, op, expr2) ->
@@ -759,7 +784,6 @@ pub fn render(
       render_operator(expr1, expr2, doc.from_string("=="), context)
     Case(to_match_on, matchers) -> render_case(to_match_on, matchers, context)
   }
-  |> render.Render
 }
 
 fn render_panicking_expression(name: String, as_string: Option(String)) {
@@ -776,23 +800,39 @@ fn render_panicking_expression(name: String, as_string: Option(String)) {
 }
 
 fn render_case(to_match_on, matchers, context) {
+  let rendered_match_on = render(to_match_on, context)
+  let matchers = list.map(matchers, fn(m) { m(context) })
+  let matcher_details =
+    list.fold(
+      matchers |> list.map(fn(m) { m.details }),
+      render.empty_details,
+      render.merge_details,
+    )
   doc.concat([
     doc.from_string("case "),
-    render(to_match_on, context).doc,
+    rendered_match_on.doc,
     doc.space,
     render.body(
       matchers
+        |> list.map(fn(m) { m.doc })
         |> doc.join(doc.line),
       force_newlines: True,
     ),
   ])
+  |> render.Render(
+    details: render.RenderedDetails(used_imports: list.append(
+      rendered_match_on.details.used_imports,
+      matcher_details.used_imports,
+    )),
+  )
 }
 
 fn render_tuple(values, context) {
-  values
-  |> list.map(fn(x) { render(x, context).doc })
+  let #(rendered_values, details) = render_expressions(values, context)
+  rendered_values
   |> render.pretty_list()
   |> doc.prepend(doc.from_string("#"))
+  |> render.Render(details: details)
 }
 
 fn render_list(values, initial_list, context) {
@@ -814,58 +854,80 @@ fn render_list(values, initial_list, context) {
   let open_bracket = doc.concat([doc.from_string("["), doc.soft_break])
   let close_bracket = doc.concat([trailing_comma, doc.from_string("]")])
 
-  values
-  |> list.map(fn(x) { render(x, context).doc })
+  let #(rendered_values, details) = render_expressions(values, context)
+
+  rendered_values
   |> doc.join(with: comma)
   |> doc.prepend(open_bracket)
   |> doc.append(ending)
   |> doc.nest(2)
   |> doc.append(close_bracket)
   |> doc.group
+  |> render.Render(details: details)
 }
 
 pub fn render_statement(statement: Statement, context) -> render.Rendered {
   case statement {
-    LetDeclaration(variable, value) ->
+    LetDeclaration(variable, value) -> {
+      let rendered_value = render(value, context)
       doc.concat([
         doc.from_string("let "),
         doc.from_string(variable),
         doc.space,
         doc.from_string("="),
         doc.space,
-        render(value, context).doc,
+        rendered_value.doc,
       ])
-      |> render.Render
+      |> render.Render(details: rendered_value.details)
+    }
     ExpressionStatement(expr) -> render(expr, context)
   }
 }
 
 fn render_block(statements, context) {
-  let inner =
-    statements
-    |> list.map(fn(statement) {
-      render_statement(
-        statement,
-        render.Context(..context, include_brackets_current_level: True),
-      ).doc
+  let #(inner_statements, details) =
+    list.fold(statements, #([], render.empty_details), fn(acc, statement) {
+      let rendered =
+        render_statement(
+          statement,
+          render.Context(..context, include_brackets_current_level: True),
+        )
+      #([rendered.doc, ..acc.0], render.merge_details(rendered.details, acc.1))
     })
+
+  let inner =
+    inner_statements
+    |> list.reverse()
     |> doc.join(doc.line)
 
   case context.include_brackets_current_level {
     True -> render.body(inner, force_newlines: True)
     False -> inner
   }
+  |> render.Render(details: details)
+}
+
+fn render_expressions(
+  expressions,
+  context,
+) -> #(List(doc.Document), render.RenderedDetails) {
+  let #(rendered, details) =
+    list.fold(expressions, #([], render.empty_details), fn(acc, expr) {
+      let rendered = render(expr, context)
+      #([rendered.doc, ..acc.0], render.merge_details(rendered.details, acc.1))
+    })
+  #(rendered |> list.reverse(), details)
 }
 
 fn render_call(func, args, context) {
-  doc.concat([
-    render(func, context).doc,
-    render.pretty_list(list.map(args, fn(arg) { render(arg, context).doc })),
-  ])
+  let #(rendered_args, details) = render_expressions(args, context)
+  let caller = render(func, context)
+  doc.concat([caller.doc, render.pretty_list(rendered_args)])
+  |> render.Render(details: render.merge_details(details, caller.details))
 }
 
 fn render_constructor(func, context) {
-  render(func, context).doc
+  render(func, context)
 }
 
 fn render_operator(
@@ -874,13 +936,19 @@ fn render_operator(
   rendered_op: doc.Document,
   context: render.Context,
 ) {
+  let first_rendered = render(expr1, context)
+  let second_rendered = render(expr2, context)
   doc.concat([
-    render(expr1, context).doc,
+    first_rendered.doc,
     doc.space,
     rendered_op,
     doc.space,
-    render(expr2, context).doc,
+    second_rendered.doc,
   ])
+  |> render.Render(details: render.merge_details(
+    first_rendered.details,
+    second_rendered.details,
+  ))
 }
 
 @internal

@@ -36,10 +36,20 @@ pub fn build_expression(
     case_.cases
       |> list.reverse()
       |> list.map(fn(c) {
-        matcher.render(c.0).doc
-        |> doc.append(doc.concat([doc.space, doc.from_string("->"), doc.space]))
-        |> doc.group()
-        |> doc.append(expression.render(c.1, render.default_context()).doc)
+        fn(context) {
+          let rendered_match = matcher.render(c.0)
+          let rendered_response = expression.render(c.1, context)
+          rendered_match.doc
+          |> doc.append(
+            doc.concat([doc.space, doc.from_string("->"), doc.space]),
+          )
+          |> doc.group()
+          |> doc.append(rendered_response.doc)
+          |> render.Render(details: render.merge_details(
+            rendered_match.details,
+            rendered_response.details,
+          ))
+        }
       }),
     case_.cases
       |> list.first()

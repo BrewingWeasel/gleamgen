@@ -17,7 +17,8 @@ pub fn new_with_alias(name: List(String), alias: String) -> ImportedModule {
   ImportedModule(name: name, alias: option.Some(alias))
 }
 
-fn get_reference(imported: ImportedModule) -> String {
+@internal
+pub fn get_reference(imported: ImportedModule) -> String {
   case imported.alias {
     option.Some(alias) -> alias
     option.None -> {
@@ -46,7 +47,7 @@ pub fn unchecked_type(
   imported: ImportedModule,
   name: String,
 ) -> custom.CustomType(t, generics) {
-  custom.CustomType(get_reference(imported) <> "." <> name)
+  custom.CustomType(option.Some(get_reference(imported)), name)
 }
 
 /// Import an existing function from the module.

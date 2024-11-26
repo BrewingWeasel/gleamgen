@@ -1,5 +1,6 @@
 import gleam/io
 import gleam/list
+import gleam/string
 import gleamgen/expression
 import gleamgen/expression/block
 import gleamgen/function
@@ -11,6 +12,7 @@ import gleamgen/types
 pub fn generate() {
   let mod = {
     use imported_io <- module.with_import(import_.new(["gleam", "io"]))
+    use imported_string <- module.with_import(import_.new(["gleam", "string"]))
 
     // module_used is of type Expression(String)
     use module_used <- module.with_constant(
@@ -43,7 +45,18 @@ pub fn generate() {
     )
 
     // Let's pick a greeting that we will use inside the generated code
-    let assert [outer_greeting, ..] = list.shuffle(["Howdy", "Hello", "Hi"])
+    let assert [outer_greeting, ..] =
+      list.shuffle([
+        expression.string("Howdy"),
+        expression.string("Hello"),
+        expression.call2(
+          // If this is not the selected greeting, gleam/string will not be
+          // imported in the final code
+          import_.function2(imported_string, string.repeat),
+          expression.string("Hi"),
+          expression.int(5),
+        ),
+      ])
 
     use _main <- module.with_function(
       module.DefinitionDetails(name: "main", is_public: True, attributes: []),
@@ -51,7 +64,7 @@ pub fn generate() {
         {
           use greeting <- block.with_let_declaration(
             "greeting",
-            expression.call1(greeter, expression.string(outer_greeting)),
+            expression.call1(greeter, outer_greeting),
           )
           block.ending_block(expression.call1(
             // reference the actual io.println function to get the name and

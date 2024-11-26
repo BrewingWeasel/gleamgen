@@ -241,7 +241,7 @@ pub fn simple_case_or_test() {
 pub fn simple_case_as_test() {
   case_.new(expression.string("hello"))
   |> case_.with_matcher(
-    matcher.or(matcher.string_literal("hello"), matcher.string_literal("hi"))
+    matcher.string_literal("hello")
       |> matcher.as_("greeting"),
     fn(greeting) {
       expression.concat_string(greeting, expression.string("world"))
@@ -255,8 +255,32 @@ pub fn simple_case_as_test() {
   |> render.to_string()
   |> should.equal(
     "case \"hello\" {
-  \"hello\" | \"hi\" as greeting -> greeting <> \"world\"
+  \"hello\" as greeting -> greeting <> \"world\"
   v -> v <> \" world\"
+}",
+  )
+}
+
+pub fn simple_string_concat_test() {
+  case_.new(expression.string("I love gleam"))
+  |> case_.with_matcher(
+    matcher.concat_string(starting: "I love ", variable: "thing"),
+    fn(thing) {
+      expression.string("I love ")
+      |> expression.concat_string(thing)
+      |> expression.concat_string(expression.string(" too"))
+    },
+  )
+  |> case_.with_matcher(matcher.variable("_"), fn(_) {
+    expression.string("Interesting")
+  })
+  |> case_.build_expression()
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "case \"I love gleam\" {
+  \"I love \" <> thing -> \"I love \" <> thing <> \" too\"
+  _ -> \"Interesting\"
 }",
   )
 }

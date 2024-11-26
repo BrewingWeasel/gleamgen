@@ -10,6 +10,7 @@ import gleamgen/types/custom
 pub opaque type Matcher(input, match_output) {
   Variable(name: String, output: match_output)
   StringLiteral(contents: String, output: match_output)
+  StringConcat(contents: #(String, String), output: match_output)
   IntLiteral(contents: Int, output: match_output)
   BoolLiteral(contents: Bool, output: match_output)
   Tuple(
@@ -44,6 +45,38 @@ pub fn int_literal(literal: Int) -> Matcher(Int, Nil) {
 
 pub fn bool_literal(literal: Bool) -> Matcher(Bool, Nil) {
   BoolLiteral(literal, output: Nil)
+}
+
+/// Match a string that starts with `initial`
+/// ```gleam
+/// case_.new(expression.string("I love gleam"))
+/// |> case_.with_matcher(
+///   matcher.concat_string(starting: "I love ", variable: "thing"),
+///   fn(thing) {
+///     expression.string("I love ")
+///     |> expression.concat_string(thing)
+///     |> expression.concat_string(expression.string(" too"))
+///   },
+/// )
+/// |> case_.with_matcher(matcher.variable("_"), fn(_) {
+///   expression.string("interesting")
+/// })
+/// |> case_.build_expression()
+/// |> expression.render(render.default_context())
+/// |> render.to_string()
+/// // -> "case \"I love gleam\" {
+///  \"I love \" <> thing -> \"I love \" <> thing <> \" too\"
+///  _ -> \"Interesting\"
+/// }"
+/// ```
+pub fn concat_string(
+  starting initial: String,
+  variable variable: String,
+) -> Matcher(String, Expression(a)) {
+  StringConcat(
+    #(initial, variable),
+    output: expression.unchecked_ident(variable),
+  )
 }
 
 pub fn ok(ok_matcher: Matcher(a, a_output)) -> Matcher(Result(a, err), a_output) {
@@ -662,6 +695,18 @@ pub fn render(matcher: Matcher(_, _)) -> render.Rendered {
       doc.from_string(name) |> render.Render(details: render.empty_details)
     StringLiteral(literal, ..) ->
       render.escape_string(literal)
+      |> render.Render(details: render.empty_details)
+    StringConcat(#(literal, variable), ..) ->
+      render.escape_string(literal)
+      |> doc.append(
+        doc.concat([
+          doc.space,
+          doc.from_string("<>"),
+          doc.space,
+          doc.from_string(variable),
+        ]),
+      )
+      |> doc.group()
       |> render.Render(details: render.empty_details)
     IntLiteral(literal, ..) ->
       literal

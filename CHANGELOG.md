@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.3.0 - 2024-11-26
 
 - added support for prepending to lists `[x, ..xs]`
 - reworked generics for custom types to be more flexible and type-safe

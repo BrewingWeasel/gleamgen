@@ -217,6 +217,158 @@ pub fn function2(
   )
 }
 
+pub fn function3(
+  arg1: GeneratedType(arg1),
+  arg2: GeneratedType(arg2),
+  arg3: GeneratedType(arg3),
+  returns: GeneratedType(ret),
+) -> GeneratedType(fn(arg1, arg2, arg3) -> ret) {
+  GeneratedFunction(
+    [arg1 |> to_unchecked, arg2 |> to_unchecked, arg3 |> to_unchecked],
+    returns |> to_unchecked,
+  )
+}
+
+pub fn function4(
+  arg1: GeneratedType(arg1),
+  arg2: GeneratedType(arg2),
+  arg3: GeneratedType(arg3),
+  arg4: GeneratedType(arg4),
+  returns: GeneratedType(ret),
+) -> GeneratedType(fn(arg1, arg2, arg3, arg4) -> ret) {
+  GeneratedFunction(
+    [
+      arg1 |> to_unchecked,
+      arg2 |> to_unchecked,
+      arg3 |> to_unchecked,
+      arg4 |> to_unchecked,
+    ],
+    returns |> to_unchecked,
+  )
+}
+
+pub fn function5(
+  arg1: GeneratedType(arg1),
+  arg2: GeneratedType(arg2),
+  arg3: GeneratedType(arg3),
+  arg4: GeneratedType(arg4),
+  arg5: GeneratedType(arg5),
+  returns: GeneratedType(ret),
+) -> GeneratedType(fn(arg1, arg2, arg3, arg4, arg5) -> ret) {
+  GeneratedFunction(
+    [
+      arg1 |> to_unchecked,
+      arg2 |> to_unchecked,
+      arg3 |> to_unchecked,
+      arg4 |> to_unchecked,
+      arg5 |> to_unchecked,
+    ],
+    returns |> to_unchecked,
+  )
+}
+
+pub fn function6(
+  arg1: GeneratedType(arg1),
+  arg2: GeneratedType(arg2),
+  arg3: GeneratedType(arg3),
+  arg4: GeneratedType(arg4),
+  arg5: GeneratedType(arg5),
+  arg6: GeneratedType(arg6),
+  returns: GeneratedType(ret),
+) -> GeneratedType(fn(arg1, arg2, arg3, arg4, arg5, arg6) -> ret) {
+  GeneratedFunction(
+    [
+      arg1 |> to_unchecked,
+      arg2 |> to_unchecked,
+      arg3 |> to_unchecked,
+      arg4 |> to_unchecked,
+      arg5 |> to_unchecked,
+      arg6 |> to_unchecked,
+    ],
+    returns |> to_unchecked,
+  )
+}
+
+pub fn function7(
+  arg1: GeneratedType(arg1),
+  arg2: GeneratedType(arg2),
+  arg3: GeneratedType(arg3),
+  arg4: GeneratedType(arg4),
+  arg5: GeneratedType(arg5),
+  arg6: GeneratedType(arg6),
+  arg7: GeneratedType(arg7),
+  returns: GeneratedType(ret),
+) -> GeneratedType(fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7) -> ret) {
+  GeneratedFunction(
+    [
+      arg1 |> to_unchecked,
+      arg2 |> to_unchecked,
+      arg3 |> to_unchecked,
+      arg4 |> to_unchecked,
+      arg5 |> to_unchecked,
+      arg6 |> to_unchecked,
+      arg7 |> to_unchecked,
+    ],
+    returns |> to_unchecked,
+  )
+}
+
+pub fn function8(
+  arg1: GeneratedType(arg1),
+  arg2: GeneratedType(arg2),
+  arg3: GeneratedType(arg3),
+  arg4: GeneratedType(arg4),
+  arg5: GeneratedType(arg5),
+  arg6: GeneratedType(arg6),
+  arg7: GeneratedType(arg7),
+  arg8: GeneratedType(arg8),
+  returns: GeneratedType(ret),
+) -> GeneratedType(fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) -> ret) {
+  GeneratedFunction(
+    [
+      arg1 |> to_unchecked,
+      arg2 |> to_unchecked,
+      arg3 |> to_unchecked,
+      arg4 |> to_unchecked,
+      arg5 |> to_unchecked,
+      arg6 |> to_unchecked,
+      arg7 |> to_unchecked,
+      arg8 |> to_unchecked,
+    ],
+    returns |> to_unchecked,
+  )
+}
+
+pub fn function9(
+  arg1: GeneratedType(arg1),
+  arg2: GeneratedType(arg2),
+  arg3: GeneratedType(arg3),
+  arg4: GeneratedType(arg4),
+  arg5: GeneratedType(arg5),
+  arg6: GeneratedType(arg6),
+  arg7: GeneratedType(arg7),
+  arg8: GeneratedType(arg8),
+  arg9: GeneratedType(arg9),
+  returns: GeneratedType(ret),
+) -> GeneratedType(
+  fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) -> ret,
+) {
+  GeneratedFunction(
+    [
+      arg1 |> to_unchecked,
+      arg2 |> to_unchecked,
+      arg3 |> to_unchecked,
+      arg4 |> to_unchecked,
+      arg5 |> to_unchecked,
+      arg6 |> to_unchecked,
+      arg7 |> to_unchecked,
+      arg8 |> to_unchecked,
+      arg9 |> to_unchecked,
+    ],
+    returns |> to_unchecked,
+  )
+}
+
 pub fn get_return_type(function: GeneratedType(any)) {
   case function {
     GeneratedFunction(_, ret) -> ret

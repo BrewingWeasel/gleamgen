@@ -37,6 +37,11 @@ type InternalExpression(type_) {
   SingleConstructor(Expression(types.Unchecked))
   Block(List(Statement))
   Case(Expression(types.Unchecked), List(fn(render.Context) -> render.Rendered))
+  Use(
+    function: Expression(types.Unchecked),
+    args: List(Expression(types.Unchecked)),
+    callback_args: List(String),
+  )
 }
 
 // ----------------------------------------------------------------------------
@@ -667,6 +672,19 @@ pub fn new_block(expressions, return) -> Expression(type_) {
 }
 
 @internal
+pub fn new_use(
+  function: Expression(a),
+  args,
+  callback_args,
+) -> Expression(types.Unchecked) {
+  let return = types.get_return_type(function.type_)
+  Expression(
+    internal: Use(function |> to_unchecked(), args, callback_args),
+    type_: return,
+  )
+}
+
+@internal
 pub fn new_case(to_match_on, matchers, return) -> Expression(type_) {
   Expression(internal: Case(to_match_on, matchers), type_: return)
 }
@@ -783,6 +801,8 @@ pub fn render(
     Equals(expr1, expr2) ->
       render_operator(expr1, expr2, doc.from_string("=="), context)
     Case(to_match_on, matchers) -> render_case(to_match_on, matchers, context)
+    Use(func, args, callback_args) ->
+      render_use(func, args, callback_args, context)
   }
 }
 
@@ -797,6 +817,28 @@ fn render_panicking_expression(name: String, as_string: Option(String)) {
       |> doc.group
     None -> doc.from_string(name)
   }
+}
+
+fn render_use(func, args, callback_args, context) {
+  let use_args =
+    callback_args
+    |> list.map(doc.from_string)
+    |> doc.join(with: doc.concat([doc.from_string(","), doc.space]))
+    |> doc.append(case list.is_empty(callback_args) {
+      True -> doc.empty
+      False -> doc.space
+    })
+  let call = render_call(func, args, context)
+
+  doc.concat([
+    doc.from_string("use"),
+    doc.space,
+    use_args,
+    doc.from_string("<-"),
+    doc.space,
+    call.doc,
+  ])
+  |> render.Render(details: call.details)
 }
 
 fn render_case(to_match_on, matchers, context) {

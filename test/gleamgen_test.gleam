@@ -1,3 +1,4 @@
+import gleam/bool
 import gleam/int
 import gleam/io
 import gleam/list
@@ -490,6 +491,124 @@ pub fn option_from_string(str: String) -> option.Option(String) {
     \"\" -> option.None
     value -> option.Some(value)
   }
+}",
+  )
+}
+
+pub fn basic_use_test() {
+  let mod = {
+    use result_module <- module.with_import(import_.new(["gleam", "result"]))
+
+    use _ <- module.with_function(
+      module.DefinitionDetails(
+        name: "do_result",
+        is_public: True,
+        attributes: [],
+      ),
+      function.new0(
+        returns: types.result(types.int, types.string),
+        handler: fn() {
+          let block = {
+            use res <- block.with_let_declaration(
+              "res",
+              expression.ok(expression.int(3)),
+            )
+            use ok_value <- block.with_use1(
+              block.use_function1(
+                import_.function2(result_module, result.try),
+                res,
+              ),
+              "ok_value",
+            )
+
+            block.ending_block(
+              ok_value
+              |> expression.math_operator(expression.Add, expression.int(5))
+              |> expression.ok,
+            )
+          }
+          block.build(block)
+        },
+      ),
+    )
+
+    module.eof()
+  }
+
+  mod
+  |> module.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "import gleam/result
+
+pub fn do_result() -> Result(Int, String) {
+  let res = Ok(3)
+  use ok_value <- result.try(res)
+  Ok(ok_value + 5)
+}",
+  )
+}
+
+pub fn two_use_test() {
+  let mod = {
+    use result_module <- module.with_import(import_.new(["gleam", "result"]))
+    use bool_module <- module.with_import(import_.new(["gleam", "bool"]))
+
+    use _ <- module.with_function(
+      module.DefinitionDetails(
+        name: "do_result",
+        is_public: True,
+        attributes: [],
+      ),
+      function.new0(
+        returns: types.result(types.int, types.string),
+        handler: fn() {
+          let block = {
+            use res <- block.with_let_declaration(
+              "res",
+              expression.ok(expression.int(3)),
+            )
+
+            use ok_value <- block.with_use1(
+              block.use_function1(
+                import_.function2(result_module, result.try),
+                res,
+              ),
+              "ok_value",
+            )
+
+            use <- block.with_use0(block.use_function2(
+              import_.function3(bool_module, bool.guard),
+              expression.equals(ok_value, expression.int(2)),
+              expression.error(expression.string("not equal to 2")),
+            ))
+
+            block.ending_block(
+              ok_value
+              |> expression.math_operator(expression.Add, expression.int(5))
+              |> expression.ok,
+            )
+          }
+          block.build(block)
+        },
+      ),
+    )
+
+    module.eof()
+  }
+
+  mod
+  |> module.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "import gleam/bool
+import gleam/result
+
+pub fn do_result() -> Result(Int, String) {
+  let res = Ok(3)
+  use ok_value <- result.try(res)
+  use <- bool.guard(ok_value == 2, Error(\"not equal to 2\"))
+  Ok(ok_value + 5)
 }",
   )
 }

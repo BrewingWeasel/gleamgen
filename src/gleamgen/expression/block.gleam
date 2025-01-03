@@ -116,3 +116,79 @@ pub fn with_expression(
 pub fn build(builder: BlockBuilder(ret)) -> Expression(ret) {
   expression.new_block(builder.contents, builder.return)
 }
+
+// Use expressions
+
+pub type UseFunction(callback_args, ret) {
+  UseFunction(
+    function: Expression(types.Unchecked),
+    args: List(Expression(types.Unchecked)),
+  )
+}
+
+pub fn use_function1(
+  func: Expression(fn(a, callback) -> ret),
+  arg1: Expression(a),
+) -> UseFunction(callback, ret) {
+  UseFunction(expression.to_unchecked(func), [expression.to_unchecked(arg1)])
+}
+
+pub fn use_function2(
+  func: Expression(fn(a, b, callback) -> ret),
+  arg1: Expression(a),
+  arg2: Expression(b),
+) -> UseFunction(callback, ret) {
+  UseFunction(expression.to_unchecked(func), [
+    expression.to_unchecked(arg1),
+    expression.to_unchecked(arg2),
+  ])
+}
+
+pub fn with_use0(
+  use_function: UseFunction(fn() -> ret, ret),
+  callback: fn() -> BlockBuilder(ret),
+) -> BlockBuilder(ret) {
+  let rest = callback()
+  BlockBuilder(
+    ..rest,
+    contents: [
+      expression.new_use(use_function.function, use_function.args, [])
+        |> expression.ExpressionStatement,
+      ..rest.contents
+    ],
+  )
+}
+
+pub fn with_use1(
+  use_function: UseFunction(fn(a) -> ret, ret),
+  arg1: String,
+  callback: fn(Expression(a)) -> BlockBuilder(ret),
+) -> BlockBuilder(ret) {
+  let rest = callback(expression.unchecked_ident(arg1))
+  BlockBuilder(
+    ..rest,
+    contents: [
+      expression.new_use(use_function.function, use_function.args, [arg1])
+        |> expression.ExpressionStatement,
+      ..rest.contents
+    ],
+  )
+}
+
+pub fn with_use2(
+  use_function: UseFunction(fn(a, b) -> ret, ret),
+  arg1: String,
+  arg2: String,
+  callback: fn(Expression(a), Expression(b)) -> BlockBuilder(ret),
+) -> BlockBuilder(ret) {
+  let rest =
+    callback(expression.unchecked_ident(arg1), expression.unchecked_ident(arg2))
+  BlockBuilder(
+    ..rest,
+    contents: [
+      expression.new_use(use_function.function, use_function.args, [arg1, arg2])
+        |> expression.ExpressionStatement,
+      ..rest.contents
+    ],
+  )
+}

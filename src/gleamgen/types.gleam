@@ -217,6 +217,13 @@ pub fn function2(
   )
 }
 
+pub fn get_return_type(function: GeneratedType(any)) {
+  case function {
+    GeneratedFunction(_, ret) -> ret
+    _ -> Unchecked
+  }
+}
+
 @internal
 pub fn custom_type(
   module: option.Option(String),

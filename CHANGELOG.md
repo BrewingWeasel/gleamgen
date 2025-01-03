@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- added support for use expressions
+
 ## v0.3.0 - 2024-11-26
 
 - added support for prepending to lists `[x, ..xs]`

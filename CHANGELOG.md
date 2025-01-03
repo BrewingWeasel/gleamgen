@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## v0.3.1 - 2025-01-03
 
 - added support for use expressions
+- added missing types.functionN functions
 
 ## v0.3.0 - 2024-11-26
 

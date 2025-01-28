@@ -5,7 +5,13 @@ export function identity(x) {
 }
 
 export function get_function_name(x) {
-  return x.name;
+  const name = x.name;
+  const final_char = name.length - 1;
+  if (name.charAt(final_char) == "$") {
+    return name.substring(0, final_char);
+  } else {
+    return x.name;
+  }
 }
 
 export function get_matcher_output(x) {

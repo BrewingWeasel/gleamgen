@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## v0.3.2 - 2025-01-27
 
 - added support for unchecked matchers
+- fixed functions with the same name as keywords in Javascript retaining the `$` in generated gleam code
 
 ## v0.3.1 - 2025-01-03
 

@@ -43,13 +43,10 @@ pub fn with_constant(
   handler: fn(Expression(t)) -> Module,
 ) -> Module {
   let rest = handler(expression.unchecked_ident(details.name))
-  Module(
-    ..rest,
-    definitions: [
-      Definition(details:, value: Constant(value |> expression.to_unchecked())),
-      ..rest.definitions
-    ],
-  )
+  Module(..rest, definitions: [
+    Definition(details:, value: Constant(value |> expression.to_unchecked())),
+    ..rest.definitions
+  ])
 }
 
 pub fn with_import(
@@ -74,13 +71,10 @@ pub fn with_function(
   handler: fn(Expression(func_type)) -> Module,
 ) -> Module {
   let rest = handler(expression.unchecked_ident(details.name))
-  Module(
-    ..rest,
-    definitions: [
-      Definition(details:, value: Function(func |> function.to_unchecked())),
-      ..rest.definitions
-    ],
-  )
+  Module(..rest, definitions: [
+    Definition(details:, value: Function(func |> function.to_unchecked())),
+    ..rest.definitions
+  ])
 }
 
 pub fn with_custom_type1(
@@ -98,16 +92,13 @@ pub fn with_custom_type1(
       custom.CustomType(option.None, details.name),
       constructor.new(variant1),
     )
-  Module(
-    ..rest,
-    definitions: [
-      Definition(
-        details:,
-        value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
-      ),
-      ..rest.definitions
-    ],
-  )
+  Module(..rest, definitions: [
+    Definition(
+      details:,
+      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+    ),
+    ..rest.definitions
+  ])
 }
 
 // {{{
@@ -129,16 +120,13 @@ pub fn with_custom_type2(
       constructor.new(variant1),
       constructor.new(variant2),
     )
-  Module(
-    ..rest,
-    definitions: [
-      Definition(
-        details:,
-        value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
-      ),
-      ..rest.definitions
-    ],
-  )
+  Module(..rest, definitions: [
+    Definition(
+      details:,
+      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+    ),
+    ..rest.definitions
+  ])
 }
 
 pub fn with_custom_type3(
@@ -160,16 +148,13 @@ pub fn with_custom_type3(
       constructor.new(variant2),
       constructor.new(variant3),
     )
-  Module(
-    ..rest,
-    definitions: [
-      Definition(
-        details:,
-        value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
-      ),
-      ..rest.definitions
-    ],
-  )
+  Module(..rest, definitions: [
+    Definition(
+      details:,
+      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+    ),
+    ..rest.definitions
+  ])
 }
 
 pub fn with_custom_type4(
@@ -193,16 +178,13 @@ pub fn with_custom_type4(
       constructor.new(variant3),
       constructor.new(variant4),
     )
-  Module(
-    ..rest,
-    definitions: [
-      Definition(
-        details:,
-        value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
-      ),
-      ..rest.definitions
-    ],
-  )
+  Module(..rest, definitions: [
+    Definition(
+      details:,
+      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+    ),
+    ..rest.definitions
+  ])
 }
 
 pub fn with_custom_type5(
@@ -232,16 +214,13 @@ pub fn with_custom_type5(
       constructor.new(variant4),
       constructor.new(variant5),
     )
-  Module(
-    ..rest,
-    definitions: [
-      Definition(
-        details:,
-        value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
-      ),
-      ..rest.definitions
-    ],
-  )
+  Module(..rest, definitions: [
+    Definition(
+      details:,
+      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+    ),
+    ..rest.definitions
+  ])
 }
 
 pub fn with_custom_type6(
@@ -274,16 +253,13 @@ pub fn with_custom_type6(
       constructor.new(variant5),
       constructor.new(variant6),
     )
-  Module(
-    ..rest,
-    definitions: [
-      Definition(
-        details:,
-        value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
-      ),
-      ..rest.definitions
-    ],
-  )
+  Module(..rest, definitions: [
+    Definition(
+      details:,
+      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+    ),
+    ..rest.definitions
+  ])
 }
 
 pub fn with_custom_type7(
@@ -325,16 +301,13 @@ pub fn with_custom_type7(
       constructor.new(variant6),
       constructor.new(variant7),
     )
-  Module(
-    ..rest,
-    definitions: [
-      Definition(
-        details:,
-        value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
-      ),
-      ..rest.definitions
-    ],
-  )
+  Module(..rest, definitions: [
+    Definition(
+      details:,
+      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+    ),
+    ..rest.definitions
+  ])
 }
 
 pub fn with_custom_type8(
@@ -379,16 +352,13 @@ pub fn with_custom_type8(
       constructor.new(variant7),
       constructor.new(variant8),
     )
-  Module(
-    ..rest,
-    definitions: [
-      Definition(
-        details:,
-        value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
-      ),
-      ..rest.definitions
-    ],
-  )
+  Module(..rest, definitions: [
+    Definition(
+      details:,
+      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+    ),
+    ..rest.definitions
+  ])
 }
 
 pub fn with_custom_type9(
@@ -436,16 +406,13 @@ pub fn with_custom_type9(
       constructor.new(variant8),
       constructor.new(variant9),
     )
-  Module(
-    ..rest,
-    definitions: [
-      Definition(
-        details:,
-        value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
-      ),
-      ..rest.definitions
-    ],
-  )
+  Module(..rest, definitions: [
+    Definition(
+      details:,
+      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+    ),
+    ..rest.definitions
+  ])
 }
 
 // }}}
@@ -464,16 +431,13 @@ pub fn with_custom_type_unchecked(
       custom.CustomType(option.None, details.name),
       type_.variants |> list.reverse() |> list.map(constructor.new),
     )
-  Module(
-    ..rest,
-    definitions: [
-      Definition(
-        details:,
-        value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
-      ),
-      ..rest.definitions
-    ],
-  )
+  Module(..rest, definitions: [
+    Definition(
+      details:,
+      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+    ),
+    ..rest.definitions
+  ])
 }
 
 pub fn with_type_alias(
@@ -482,13 +446,10 @@ pub fn with_type_alias(
   handler: fn(types.GeneratedType(repr)) -> Module,
 ) -> Module {
   let rest = handler(types.unchecked_ident(details.name))
-  Module(
-    ..rest,
-    definitions: [
-      Definition(details:, value: TypeAlias(type_ |> types.to_unchecked())),
-      ..rest.definitions
-    ],
-  )
+  Module(..rest, definitions: [
+    Definition(details:, value: TypeAlias(type_ |> types.to_unchecked())),
+    ..rest.definitions
+  ])
 }
 
 pub fn eof() -> Module {

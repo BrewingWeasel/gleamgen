@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- added support for unchecked matchers
+
 ## v0.3.1 - 2025-01-03
 
 - added support for use expressions

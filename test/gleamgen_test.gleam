@@ -821,7 +821,7 @@ pub fn module_sometimes_unused_import_test() {
 
     // Because this is False, we don't use the string module, 
     // therefore it should not be rendered in the final string
-    let use_string_mod_this_time = False
+    let use_string_mod_this_time = 1 == 0
 
     let int_value = case use_string_mod_this_time {
       True -> expression.call1(string_length, expression.string("hi"))
@@ -1230,6 +1230,134 @@ pub fn module_with_custom_type_generics_multiple_ways_test() {
 pub fn generate() -> MoreAwesomeResult(String, Bool) {
   let whoo = VeryOk(4)
   NotVeryOk(\"hi\", True)
+}",
+  )
+}
+
+pub fn case_unchecked_variant_test() {
+  let custom_variant =
+    variant.new("CustomVariant")
+    |> variant.with_arguments_unchecked(
+      list.range(0, 10)
+      |> list.map(fn(x) {
+        #(
+          option.Some("arg" <> int.to_string(x)),
+          types.int |> types.to_unchecked(),
+        )
+      }),
+    )
+    |> variant.to_unchecked()
+
+  let custom_type =
+    custom.new(#())
+    |> custom.with_unchecked_variants(fn(_) { [custom_variant] })
+
+  let mod = {
+    use int_module <- module.with_import(import_.new(["gleam", "int"]))
+
+    use _, custom_constructors <- module.with_custom_type_unchecked(
+      module.DefinitionDetails(
+        name: "VariantHolder",
+        is_public: True,
+        attributes: [],
+      ),
+      custom_type,
+    )
+    let assert [custom_variant, ..] = custom_constructors
+
+    let match_on =
+      expression.call_unchecked(
+        constructor.to_expression_unchecked(custom_variant),
+        list.range(0, 15)
+          |> list.map(fn(x) {
+            expression.int(x + 4) |> expression.to_unchecked()
+          }),
+      )
+
+    use _ <- module.with_function(
+      module.DefinitionDetails(name: "handle", is_public: True, attributes: []),
+      function.new0(returns: types.int, handler: fn() {
+        case_.new(match_on)
+        |> case_.with_matcher(
+          matcher.from_constructor_unchecked(
+            custom_variant,
+            list.range(0, 15)
+              |> list.map(fn(x) {
+                case x % 2 {
+                  0 ->
+                    matcher.int_literal(x + 4)
+                    |> matcher.to_unchecked()
+                  _ ->
+                    matcher.variable("value" <> int.to_string(x))
+                    |> matcher.to_unchecked()
+                }
+              }),
+          ),
+          fn(details) {
+            expression.call1(
+              import_.function1(int_module, int.sum),
+              expression.list(details)
+                |> expression.unsafe_from_unchecked(),
+            )
+          },
+        )
+        |> case_.with_matcher(matcher.variable("v"), fn(_) {
+          // expression.concat_string(v, expression.string(" world"))
+          expression.int(5)
+        })
+        |> case_.build_expression()
+      }),
+    )
+
+    module.eof()
+  }
+
+  mod
+  |> module.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "import gleam/int
+
+pub type VariantHolder {
+  CustomVariant(
+    arg0: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    arg5: Int,
+    arg6: Int,
+    arg7: Int,
+    arg8: Int,
+    arg9: Int,
+    arg10: Int,
+  )
+}
+
+pub fn handle() -> Int {
+  case CustomVariant(4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19) {
+    CustomVariant(
+      4,
+      value1,
+      6,
+      value3,
+      8,
+      value5,
+      10,
+      value7,
+      12,
+      value9,
+      14,
+      value11,
+      16,
+      value13,
+      18,
+      value15,
+    )
+    ->
+    int.sum([value1, value3, value5, value7, value9, value11, value13, value15])
+    v -> 5
+  }
 }",
   )
 }

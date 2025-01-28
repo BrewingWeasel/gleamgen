@@ -127,6 +127,22 @@ pub fn as_(
   )
 }
 
+pub fn from_constructor_unchecked(
+  constructor: constructor.Constructor(construct_to, any, generics),
+  constructors: List(Matcher(types.Unchecked, types.Unchecked)),
+) -> Matcher(construct, List(Expression(types.Unchecked))) {
+  Constructor(
+    #(constructor.name(constructor), list.map(constructors, to_unchecked)),
+    output: list.filter_map(constructors, get_matcher_output),
+  )
+}
+
+@external(erlang, "gleamgen_ffi", "get_matcher_output")
+@external(javascript, "../gleamgen_ffi.mjs", "get_matcher_output")
+fn get_matcher_output(
+  matcher: Matcher(types.Unchecked, types.Unchecked),
+) -> Result(Expression(types.Unchecked), Nil)
+
 pub fn from_constructor0(
   constructor: constructor.Constructor(construct_to, #(), generics),
 ) -> Matcher(construct_to, Nil) {

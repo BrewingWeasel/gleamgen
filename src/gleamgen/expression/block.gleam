@@ -1,6 +1,8 @@
 import gleam/list
 import gleam/result
 import gleamgen/expression.{type Expression}
+import gleamgen/matcher
+import gleamgen/render
 import gleamgen/types
 
 /// Blocks are used to group expressions together and are needed  to define local variables.
@@ -56,7 +58,7 @@ pub fn ending_unchecked(
         case s {
           expression.ExpressionStatement(expr) ->
             expression.type_(expr) |> types.unsafe_from_unchecked()
-          expression.LetDeclaration(_, _) -> types.unchecked()
+          expression.LetDeclaration(_, _, _) -> types.unchecked()
         }
       })
       |> result.unwrap(types.unchecked()),
@@ -82,13 +84,34 @@ pub fn with_let_declaration(
   handler: fn(Expression(type_)) -> BlockBuilder(ret),
 ) -> BlockBuilder(ret) {
   let rest = handler(expression.unchecked_ident(variable))
-  BlockBuilder(
-    ..rest,
-    contents: [
-      expression.LetDeclaration(variable, value |> expression.to_unchecked()),
-      ..rest.contents
-    ],
-  )
+  BlockBuilder(..rest, contents: [
+    expression.LetDeclaration(
+      variable,
+      value |> expression.to_unchecked(),
+      False,
+    ),
+    ..rest.contents
+  ])
+}
+
+pub fn with_matching_let_declaration(
+  matcher: matcher.Matcher(type_, output),
+  value: Expression(type_),
+  assert_ assert_: Bool,
+  handler handler: fn(output) -> BlockBuilder(ret),
+) -> BlockBuilder(ret) {
+  let rest = handler(matcher.get_output(matcher))
+  BlockBuilder(..rest, contents: [
+    expression.LetDeclaration(
+      matcher
+        |> matcher.to_unchecked()
+        |> matcher.render()
+        |> render.to_string(),
+      value |> expression.to_unchecked(),
+      assert_,
+    ),
+    ..rest.contents
+  ])
 }
 
 pub fn with_statements_unchecked(
@@ -104,13 +127,10 @@ pub fn with_expression(
   handler: fn() -> BlockBuilder(ret),
 ) -> BlockBuilder(ret) {
   let rest = handler()
-  BlockBuilder(
-    ..rest,
-    contents: [
-      expression |> expression.to_unchecked |> expression.ExpressionStatement,
-      ..rest.contents
-    ],
-  )
+  BlockBuilder(..rest, contents: [
+    expression |> expression.to_unchecked |> expression.ExpressionStatement,
+    ..rest.contents
+  ])
 }
 
 pub fn build(builder: BlockBuilder(ret)) -> Expression(ret) {
@@ -289,14 +309,11 @@ pub fn with_use0(
   callback: fn() -> BlockBuilder(ret),
 ) -> BlockBuilder(ret) {
   let rest = callback()
-  BlockBuilder(
-    ..rest,
-    contents: [
-      expression.new_use(use_function.function, use_function.args, [])
-        |> expression.ExpressionStatement,
-      ..rest.contents
-    ],
-  )
+  BlockBuilder(..rest, contents: [
+    expression.new_use(use_function.function, use_function.args, [])
+      |> expression.ExpressionStatement,
+    ..rest.contents
+  ])
 }
 
 pub fn with_use1(
@@ -305,14 +322,11 @@ pub fn with_use1(
   callback: fn(Expression(a)) -> BlockBuilder(ret),
 ) -> BlockBuilder(ret) {
   let rest = callback(expression.unchecked_ident(arg1))
-  BlockBuilder(
-    ..rest,
-    contents: [
-      expression.new_use(use_function.function, use_function.args, [arg1])
-        |> expression.ExpressionStatement,
-      ..rest.contents
-    ],
-  )
+  BlockBuilder(..rest, contents: [
+    expression.new_use(use_function.function, use_function.args, [arg1])
+      |> expression.ExpressionStatement,
+    ..rest.contents
+  ])
 }
 
 pub fn with_use2(
@@ -323,14 +337,11 @@ pub fn with_use2(
 ) -> BlockBuilder(ret) {
   let rest =
     callback(expression.unchecked_ident(arg1), expression.unchecked_ident(arg2))
-  BlockBuilder(
-    ..rest,
-    contents: [
-      expression.new_use(use_function.function, use_function.args, [arg1, arg2])
-        |> expression.ExpressionStatement,
-      ..rest.contents
-    ],
-  )
+  BlockBuilder(..rest, contents: [
+    expression.new_use(use_function.function, use_function.args, [arg1, arg2])
+      |> expression.ExpressionStatement,
+    ..rest.contents
+  ])
 }
 
 pub fn with_use3(
@@ -346,18 +357,15 @@ pub fn with_use3(
       expression.unchecked_ident(arg2),
       expression.unchecked_ident(arg3),
     )
-  BlockBuilder(
-    ..rest,
-    contents: [
-      expression.new_use(use_function.function, use_function.args, [
-        arg1,
-        arg2,
-        arg3,
-      ])
-        |> expression.ExpressionStatement,
-      ..rest.contents
-    ],
-  )
+  BlockBuilder(..rest, contents: [
+    expression.new_use(use_function.function, use_function.args, [
+      arg1,
+      arg2,
+      arg3,
+    ])
+      |> expression.ExpressionStatement,
+    ..rest.contents
+  ])
 }
 
 pub fn with_use4(
@@ -376,19 +384,16 @@ pub fn with_use4(
       expression.unchecked_ident(arg3),
       expression.unchecked_ident(arg4),
     )
-  BlockBuilder(
-    ..rest,
-    contents: [
-      expression.new_use(use_function.function, use_function.args, [
-        arg1,
-        arg2,
-        arg3,
-        arg4,
-      ])
-        |> expression.ExpressionStatement,
-      ..rest.contents
-    ],
-  )
+  BlockBuilder(..rest, contents: [
+    expression.new_use(use_function.function, use_function.args, [
+      arg1,
+      arg2,
+      arg3,
+      arg4,
+    ])
+      |> expression.ExpressionStatement,
+    ..rest.contents
+  ])
 }
 
 pub fn with_use5(
@@ -415,20 +420,17 @@ pub fn with_use5(
       expression.unchecked_ident(arg4),
       expression.unchecked_ident(arg5),
     )
-  BlockBuilder(
-    ..rest,
-    contents: [
-      expression.new_use(use_function.function, use_function.args, [
-        arg1,
-        arg2,
-        arg3,
-        arg4,
-        arg5,
-      ])
-        |> expression.ExpressionStatement,
-      ..rest.contents
-    ],
-  )
+  BlockBuilder(..rest, contents: [
+    expression.new_use(use_function.function, use_function.args, [
+      arg1,
+      arg2,
+      arg3,
+      arg4,
+      arg5,
+    ])
+      |> expression.ExpressionStatement,
+    ..rest.contents
+  ])
 }
 
 pub fn with_use6(
@@ -458,21 +460,18 @@ pub fn with_use6(
       expression.unchecked_ident(arg5),
       expression.unchecked_ident(arg6),
     )
-  BlockBuilder(
-    ..rest,
-    contents: [
-      expression.new_use(use_function.function, use_function.args, [
-        arg1,
-        arg2,
-        arg3,
-        arg4,
-        arg5,
-        arg6,
-      ])
-        |> expression.ExpressionStatement,
-      ..rest.contents
-    ],
-  )
+  BlockBuilder(..rest, contents: [
+    expression.new_use(use_function.function, use_function.args, [
+      arg1,
+      arg2,
+      arg3,
+      arg4,
+      arg5,
+      arg6,
+    ])
+      |> expression.ExpressionStatement,
+    ..rest.contents
+  ])
 }
 
 pub fn with_use7(
@@ -505,22 +504,19 @@ pub fn with_use7(
       expression.unchecked_ident(arg6),
       expression.unchecked_ident(arg7),
     )
-  BlockBuilder(
-    ..rest,
-    contents: [
-      expression.new_use(use_function.function, use_function.args, [
-        arg1,
-        arg2,
-        arg3,
-        arg4,
-        arg5,
-        arg6,
-        arg7,
-      ])
-        |> expression.ExpressionStatement,
-      ..rest.contents
-    ],
-  )
+  BlockBuilder(..rest, contents: [
+    expression.new_use(use_function.function, use_function.args, [
+      arg1,
+      arg2,
+      arg3,
+      arg4,
+      arg5,
+      arg6,
+      arg7,
+    ])
+      |> expression.ExpressionStatement,
+    ..rest.contents
+  ])
 }
 
 pub fn with_use8(
@@ -556,23 +552,20 @@ pub fn with_use8(
       expression.unchecked_ident(arg7),
       expression.unchecked_ident(arg8),
     )
-  BlockBuilder(
-    ..rest,
-    contents: [
-      expression.new_use(use_function.function, use_function.args, [
-        arg1,
-        arg2,
-        arg3,
-        arg4,
-        arg5,
-        arg6,
-        arg7,
-        arg8,
-      ])
-        |> expression.ExpressionStatement,
-      ..rest.contents
-    ],
-  )
+  BlockBuilder(..rest, contents: [
+    expression.new_use(use_function.function, use_function.args, [
+      arg1,
+      arg2,
+      arg3,
+      arg4,
+      arg5,
+      arg6,
+      arg7,
+      arg8,
+    ])
+      |> expression.ExpressionStatement,
+    ..rest.contents
+  ])
 }
 
 pub fn with_use9(
@@ -611,24 +604,21 @@ pub fn with_use9(
       expression.unchecked_ident(arg8),
       expression.unchecked_ident(arg9),
     )
-  BlockBuilder(
-    ..rest,
-    contents: [
-      expression.new_use(use_function.function, use_function.args, [
-        arg1,
-        arg2,
-        arg3,
-        arg4,
-        arg5,
-        arg6,
-        arg7,
-        arg8,
-        arg9,
-      ])
-        |> expression.ExpressionStatement,
-      ..rest.contents
-    ],
-  )
+  BlockBuilder(..rest, contents: [
+    expression.new_use(use_function.function, use_function.args, [
+      arg1,
+      arg2,
+      arg3,
+      arg4,
+      arg5,
+      arg6,
+      arg7,
+      arg8,
+      arg9,
+    ])
+      |> expression.ExpressionStatement,
+    ..rest.contents
+  ])
 }
 
 pub fn with_use_unchecked(
@@ -638,12 +628,9 @@ pub fn with_use_unchecked(
     BlockBuilder(ret),
 ) -> BlockBuilder(ret) {
   let rest = callback(list.map(args, expression.unchecked_ident))
-  BlockBuilder(
-    ..rest,
-    contents: [
-      expression.new_use(use_function.function, use_function.args, args)
-        |> expression.ExpressionStatement,
-      ..rest.contents
-    ],
-  )
+  BlockBuilder(..rest, contents: [
+    expression.new_use(use_function.function, use_function.args, args)
+      |> expression.ExpressionStatement,
+    ..rest.contents
+  ])
 }

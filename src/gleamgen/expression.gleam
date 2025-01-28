@@ -712,7 +712,7 @@ pub fn unsafe_from_unchecked(type_: Expression(t1)) -> Expression(t2)
 // ----------------------------------------------------------------------------
 
 pub type Statement {
-  LetDeclaration(String, Expression(types.Unchecked))
+  LetDeclaration(String, Expression(types.Unchecked), assert_: Bool)
   ExpressionStatement(Expression(types.Unchecked))
 }
 
@@ -910,10 +910,14 @@ fn render_list(values, initial_list, context) {
 
 pub fn render_statement(statement: Statement, context) -> render.Rendered {
   case statement {
-    LetDeclaration(variable, value) -> {
+    LetDeclaration(variable, value, assert_) -> {
       let rendered_value = render(value, context)
+      let let_def = case assert_ {
+        True -> "let assert "
+        False -> "let "
+      }
       doc.concat([
-        doc.from_string("let "),
+        doc.from_string(let_def),
         doc.from_string(variable),
         doc.space,
         doc.from_string("="),

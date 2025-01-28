@@ -375,6 +375,35 @@ pub fn simple_module_test() {
   |> should.equal("pub const based_number = 46")
 }
 
+pub fn block_with_let_matching_test() {
+  {
+    use x <- block.with_let_declaration("x", expression.ok(expression.int(4)))
+    use y <- block.with_matching_let_declaration(
+      matcher.or(
+        matcher.ok(matcher.variable("y")),
+        matcher.error(matcher.variable("y")),
+      ),
+      x,
+      False,
+    )
+    block.ending_block(expression.math_operator(
+      y,
+      expression.Add,
+      expression.int(3),
+    ))
+  }
+  |> block.build()
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "{
+  let x = Ok(4)
+  let Ok(y) | Error(y) = x
+  y + 3
+}",
+  )
+}
+
 pub fn module_with_function_test() {
   let mod = {
     use io <- module.with_import(import_.new(["gleam", "io"]))
@@ -1066,6 +1095,93 @@ pub fn main() -> Nil {
   describer(dog)
   let cat = Cat(\"jake\", True)
   describer(cat)
+}",
+  )
+}
+
+pub fn module_let_on_custom_type_test() {
+  let animals =
+    custom.new(ExampleAnimal)
+    |> custom.with_variant(fn(_) {
+      variant.new("Dog")
+      |> variant.with_argument(option.Some("bones"), types.int)
+    })
+    |> custom.with_variant(fn(_) {
+      variant.new("Cat")
+      |> variant.with_argument(option.Some("name"), types.string)
+      |> variant.with_argument(option.Some("has_catnip"), types.bool)
+    })
+
+  let mod = {
+    use int_mod <- module.with_import(import_.new(["gleam", "int"]))
+    use _animal_type, dog_constructor, cat_constructor <- module.with_custom_type2(
+      module.DefinitionDetails(name: "Animal", is_public: True, attributes: []),
+      animals,
+    )
+
+    use _describe <- module.with_function(
+      module.DefinitionDetails(
+        name: "describe",
+        is_public: True,
+        attributes: [],
+      ),
+      function.new0(returns: types.string, handler: fn() {
+        {
+          use bones <- block.with_matching_let_declaration(
+            matcher.from_constructor1(
+              dog_constructor,
+              matcher.variable("bones"),
+            ),
+            expression.construct1(
+              constructor.to_expression1(dog_constructor),
+              expression.int(4),
+            ),
+            True,
+          )
+
+          use #(name, Nil) <- block.with_matching_let_declaration(
+            matcher.from_constructor2(
+              cat_constructor,
+              matcher.as_(matcher.string_literal("jake"), "name"),
+              matcher.bool_literal(True),
+            ),
+            expression.construct2(
+              constructor.to_expression2(cat_constructor),
+              expression.string("jake"),
+              expression.bool(True),
+            ),
+            True,
+          )
+          block.ending_block(expression.concat_string(
+            expression.concat_string(
+              name,
+              expression.string(" knows a dog with this many bones: "),
+            ),
+            expression.call1(import_.function1(int_mod, int.to_string), bones),
+          ))
+        }
+        |> block.build()
+      }),
+    )
+
+    module.eof()
+  }
+
+  mod
+  |> module.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "import gleam/int
+
+pub type Animal {
+  Dog(bones: Int)
+  Cat(name: String, has_catnip: Bool)
+}
+
+pub fn describe() -> String {
+  let assert Dog(bones) = Dog(4)
+  let assert Cat(\"jake\" as name, True) = Cat(\"jake\", True)
+  name <> \" knows a dog with this many bones: \" <> int.to_string(bones)
 }",
   )
 }

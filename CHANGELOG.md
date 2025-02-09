@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.4.0 - 2025-02-08
 
 - added support for pattern matching in let declarations
 - added support for anonymous functions

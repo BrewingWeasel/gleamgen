@@ -37,6 +37,7 @@ type InternalExpression(type_) {
   SingleConstructor(Expression(types.Unchecked))
   Block(List(Statement))
   Case(Expression(types.Unchecked), List(fn(render.Context) -> render.Rendered))
+  AnonymousFunction(fn(render.Context) -> render.Rendered)
   Use(
     function: Expression(types.Unchecked),
     args: List(Expression(types.Unchecked)),
@@ -689,6 +690,14 @@ pub fn new_case(to_match_on, matchers, return) -> Expression(type_) {
   Expression(internal: Case(to_match_on, matchers), type_: return)
 }
 
+@internal
+pub fn new_anonymous_function(
+  function: fn(render.Context) -> render.Rendered,
+  return: types.GeneratedType(type_),
+) -> Expression(type_) {
+  Expression(internal: AnonymousFunction(function), type_: return)
+}
+
 /// Get the internal type of an expression
 pub fn type_(expr: Expression(unchecked)) -> types.GeneratedType(unchecked) {
   expr.type_
@@ -801,6 +810,7 @@ pub fn render(
     Equals(expr1, expr2) ->
       render_operator(expr1, expr2, doc.from_string("=="), context)
     Case(to_match_on, matchers) -> render_case(to_match_on, matchers, context)
+    AnonymousFunction(renderer) -> renderer(context)
     Use(func, args, callback_args) ->
       render_use(func, args, callback_args, context)
   }

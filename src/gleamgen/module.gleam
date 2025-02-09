@@ -507,7 +507,8 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
             )
           }
           Function(func) -> {
-            let rendered = render_function(func, context, def.details.name)
+            let rendered =
+              function.render(func, context, option.Some(def.details.name))
             #(rendered.doc, rendered.details)
           }
         }
@@ -560,43 +561,6 @@ fn render_attribute(attribute: Attribute) -> doc.Document {
       ])
     Internal -> doc.from_string("@internal")
   }
-}
-
-pub fn render_function(
-  func: function.Function(_, _),
-  context: render.Context,
-  name: String,
-) -> render.Rendered {
-  let rendered_args =
-    func.args
-    |> list.map(expression.render_attribute(_, context))
-    |> render.pretty_list()
-
-  let rendered_type = types.render_type(func.returns)
-  let rendered_body =
-    expression.render(
-      func.body,
-      render.Context(..context, include_brackets_current_level: False),
-    )
-
-  doc.concat([
-    doc.from_string("fn "),
-    doc.from_string(name),
-    rendered_args,
-    doc.space,
-    case rendered_type {
-      Ok(returned) ->
-        doc.concat([doc.from_string("->"), doc.space, returned.doc, doc.space])
-      Error(_) -> doc.empty
-    },
-    render.body(rendered_body.doc, force_newlines: True),
-  ])
-  |> render.Render(details: render.merge_details(
-    rendered_type
-      |> result.map(fn(t) { t.details })
-      |> result.unwrap(render.empty_details),
-    rendered_body.details,
-  ))
 }
 
 pub fn render_imported_module(module: import_.ImportedModule) -> render.Rendered {

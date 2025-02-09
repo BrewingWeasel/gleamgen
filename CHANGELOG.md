@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added support for pattern matching in let declarations
+- added support for anonymous functions
 
 ## v0.3.2 - 2025-01-27
 

@@ -1,4 +1,10 @@
+import glam/doc
+import gleam/list
+import gleam/option
+import gleam/pair
+import gleam/result
 import gleamgen/expression
+import gleamgen/render
 import gleamgen/types.{type Unchecked}
 
 pub type Function(type_, ret) {
@@ -353,4 +359,57 @@ pub fn to_unchecked(
 @external(javascript, "../gleamgen_ffi.mjs", "get_function_name")
 @internal
 pub fn get_function_name(type_: a) -> String
+
+pub fn anonymous(function: Function(type_, ret)) -> expression.Expression(type_) {
+  let type_ =
+    function.args
+    |> list.map(pair.second)
+    |> types.unchecked_function(function.returns |> types.to_unchecked())
+
+  let renderer = fn(context) { render(function, context, option.None) }
+
+  expression.new_anonymous_function(renderer, type_)
+}
+
+pub fn render(
+  func: Function(_, _),
+  context: render.Context,
+  name: option.Option(String),
+) -> render.Rendered {
+  let rendered_args =
+    func.args
+    |> list.map(expression.render_attribute(_, context))
+    |> render.pretty_list()
+
+  let rendered_type = types.render_type(func.returns)
+  let rendered_body =
+    expression.render(
+      func.body,
+      render.Context(..context, include_brackets_current_level: False),
+    )
+
+  let #(rendered_name, force_newlines) = case name {
+    option.Some(name) -> #(doc.from_string(" " <> name), True)
+    option.None -> #(doc.empty, False)
+  }
+
+  doc.concat([
+    doc.from_string("fn"),
+    rendered_name,
+    rendered_args,
+    doc.space,
+    case rendered_type {
+      Ok(returned) ->
+        doc.concat([doc.from_string("->"), doc.space, returned.doc, doc.space])
+      Error(_) -> doc.empty
+    },
+    render.body(rendered_body.doc, force_newlines:),
+  ])
+  |> render.Render(details: render.merge_details(
+    rendered_type
+      |> result.map(fn(t) { t.details })
+      |> result.unwrap(render.empty_details),
+    rendered_body.details,
+  ))
+}
 // vim: foldmethod=marker foldlevel=0

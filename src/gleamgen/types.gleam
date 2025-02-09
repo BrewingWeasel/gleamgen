@@ -199,6 +199,13 @@ pub fn function0(returns: GeneratedType(ret)) -> GeneratedType(fn() -> ret) {
   GeneratedFunction([], returns |> to_unchecked)
 }
 
+pub fn unchecked_function(
+  args: List(GeneratedType(Unchecked)),
+  returns: GeneratedType(Unchecked),
+) -> GeneratedType(a) {
+  GeneratedFunction(args, returns)
+}
+
 pub fn function1(
   arg1: GeneratedType(arg1),
   returns: GeneratedType(ret),

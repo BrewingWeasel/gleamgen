@@ -341,13 +341,43 @@ pub fn block_in_function_test() {
 
   function.new0(types.int, fn() { block_expr })
   |> function.to_unchecked()
-  |> module.render_function(render.default_context(), "test_function")
+  |> function.render(render.default_context(), option.Some("test_function"))
   |> render.to_string()
   |> should.equal(
     "fn test_function() -> Int {
   let x = 4
   let y = x + 5
   y
+}",
+  )
+}
+
+pub fn simple_anonymous_function_test() {
+  {
+    use func <- block.with_let_declaration(
+      "func",
+      function.anonymous(
+        function.new2(
+          #("x", types.int),
+          #("y", types.int),
+          types.int,
+          handler: fn(x, y) { expression.math_operator(x, expression.Add, y) },
+        ),
+      ),
+    )
+    block.ending_block(expression.call2(
+      func,
+      expression.int(2),
+      expression.int(3),
+    ))
+  }
+  |> block.build()
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "{
+  let func = fn(x: Int, y: Int) -> Int { x + y }
+  func(2, 3)
 }",
   )
 }

@@ -1,6 +1,10 @@
 # Changelog
 
-## v0.4.0 - 2025-02-08
+## v0.3.4 - 2025-02-09
+
+- added type.reference
+
+## v0.3.3 - 2025-02-08
 
 - added support for pattern matching in let declarations
 - added support for anonymous functions

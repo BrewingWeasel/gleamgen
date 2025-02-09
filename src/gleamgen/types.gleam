@@ -185,6 +185,10 @@ pub fn unchecked() -> GeneratedType(any) {
   Unchecked
 }
 
+pub fn reference(_: a) -> GeneratedType(a) {
+  Unchecked
+}
+
 pub fn result(
   ok_type: GeneratedType(ok),
   err_type: GeneratedType(err),

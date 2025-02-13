@@ -306,6 +306,60 @@ pub fn simple_case_tuple_test() {
   )
 }
 
+pub fn simple_case_merge_repeated_test() {
+  case_.new(expression.string("hello"))
+  |> case_.with_matcher(
+    matcher.or(matcher.string_literal("hello"), matcher.string_literal("hi")),
+    fn(_) { expression.string("...world!") },
+  )
+  |> case_.with_matcher(matcher.string_literal("hola"), fn(_) {
+    expression.string("...world!")
+  })
+  |> case_.with_matcher(matcher.string_literal("labas"), fn(_) {
+    expression.string("...world!")
+  })
+  |> case_.with_matcher(matcher.string_literal("sveiks"), fn(_) {
+    expression.string("Latvian????")
+  })
+  |> case_.with_matcher(matcher.variable("v"), fn(v) {
+    expression.concat_string(v, expression.string(" world"))
+  })
+  |> case_.build_expression()
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "case \"hello\" {
+  \"hello\" | \"hi\" | \"hola\" | \"labas\" -> \"...world!\"
+  \"sveiks\" -> \"Latvian????\"
+  v -> v <> \" world\"
+}",
+  )
+}
+
+pub fn case_merge_repeated_test() {
+  case_.new(expression.string("hello"))
+  |> case_.with_matcher(
+    matcher.concat_string(starting: "I love ", variable: "thing"),
+    fn(thing) { expression.concat_string(thing, expression.string("is good!")) },
+  )
+  |> case_.with_matcher(
+    matcher.concat_string(starting: "My favorite thing is ", variable: "thing"),
+    fn(thing) { expression.concat_string(thing, expression.string("is good!")) },
+  )
+  |> case_.with_matcher(matcher.variable("_"), fn(_) {
+    expression.string("I don't know!")
+  })
+  |> case_.build_expression()
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "case \"hello\" {
+  \"I love \" <> thing | \"My favorite thing is \" <> thing -> thing <> \"is good!\"
+  _ -> \"I don't know!\"
+}",
+  )
+}
+
 pub fn simple_block_test() {
   {
     use x <- block.with_let_declaration("x", expression.int(4))

@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.5 - 2025-02-12
+
+- added support for automatically combining alternate patterns in case statements
+
 ## v0.3.4 - 2025-02-09
 
 - added type.reference

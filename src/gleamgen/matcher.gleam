@@ -705,10 +705,15 @@ pub fn to_unchecked(
   type_: Matcher(input, handler_output),
 ) -> Matcher(types.Unchecked, types.Unchecked)
 
-pub fn render(matcher: Matcher(_, _)) -> render.Rendered {
+pub fn render(
+  matcher: Matcher(_, _),
+  number_of_subjects: Int,
+) -> render.Rendered {
   case matcher {
     Variable(name, ..) ->
-      doc.from_string(name) |> render.Render(details: render.empty_details)
+      list.repeat(doc.from_string(name), number_of_subjects)
+      |> doc.concat_join(with: [doc.from_string(","), doc.space])
+      |> render.Render(details: render.empty_details)
     StringLiteral(literal, ..) ->
       render.escape_string(literal)
       |> render.Render(details: render.empty_details)
@@ -734,8 +739,8 @@ pub fn render(matcher: Matcher(_, _)) -> render.Rendered {
     BoolLiteral(False, ..) ->
       doc.from_string("False") |> render.Render(details: render.empty_details)
     Or(#(first, second), ..) -> {
-      let rendered_first = render(first)
-      let rendered_second = render(second)
+      let rendered_first = render(first, 1)
+      let rendered_second = render(second, 1)
       doc.concat([
         rendered_first.doc,
         doc.space,
@@ -749,7 +754,7 @@ pub fn render(matcher: Matcher(_, _)) -> render.Rendered {
       ))
     }
     As(#(original, name), ..) -> {
-      let original = render(original)
+      let original = render(original, 1)
       doc.concat([
         original.doc,
         doc.space,
@@ -763,7 +768,7 @@ pub fn render(matcher: Matcher(_, _)) -> render.Rendered {
       let #(details, rendered_matchers) =
         matchers
         |> list.map_fold(render.empty_details, fn(acc, m) {
-          let rendered = render(m)
+          let rendered = render(m, 1)
           #(render.merge_details(acc, rendered.details), rendered.doc)
         })
 
@@ -776,15 +781,30 @@ pub fn render(matcher: Matcher(_, _)) -> render.Rendered {
       let #(details, rendered_matchers) =
         matchers
         |> list.map_fold(render.empty_details, fn(acc, m) {
-          let rendered = render(m)
+          let rendered = render(m, 1)
           #(render.merge_details(acc, rendered.details), rendered.doc)
         })
 
-      rendered_matchers
-      |> render.pretty_list()
-      |> doc.prepend(doc.from_string("#"))
+      case number_of_subjects {
+        1 ->
+          rendered_matchers
+          |> render.pretty_list()
+          |> doc.prepend(doc.from_string("#"))
+        _ ->
+          rendered_matchers
+          |> doc.concat_join([doc.from_string(","), doc.space])
+      }
       |> render.Render(details:)
     }
+  }
+}
+
+pub fn can_match_on_multiple(matcher: Matcher(_, _)) -> Bool {
+  case matcher {
+    // Or(..) -> True
+    Tuple(..) -> True
+    Variable(name: "_", ..) -> True
+    _ -> False
   }
 }
 // vim: foldmethod=marker foldlevel=0

@@ -18,6 +18,51 @@ pub type CaseExpression(input, output) {
   )
 }
 
+/// Create a new case expression that matches on the given input_expression
+///
+/// ```gleam
+/// case_.new(expression.string("hello"))
+/// |> case_.with_matcher(matcher.string_literal("hello"), fn(_) {
+///   expression.string("world")
+/// })
+/// |> case_.with_matcher(matcher.variable("v"), fn(v) {
+///   expression.concat_string(v, expression.string(" world"))
+/// })
+/// |> case_.build_expression()
+/// |> expression.render(render.default_context())
+/// |> render.to_string()
+/// ```
+///
+/// This creates:
+/// ```gleam
+/// case "hello" {
+///   "hello" -> "world"
+///   v -> v <> " world"
+/// }
+/// ```
+/// Note that providing a tuple literal as the case subject will expand into multiple subjects:
+///
+/// ```gleam
+/// case_.new(expression.tuple2(expression.string("hello"), expression.int(3)))
+/// |> case_.with_matcher(
+///   matcher.tuple2(matcher.string_literal("hello"), matcher.variable("_")),
+///   fn(_) { expression.string("world") },
+/// )
+/// |> case_.with_matcher(matcher.variable("_"), fn(_) {
+///   expression.string("other")
+/// })
+/// |> case_.build_expression()
+/// |> expression.render(render.default_context())
+/// |> render.to_string()
+/// ```
+///
+/// This creates:
+/// ```gleam
+/// case "hello", 3 {
+///   "hello", _ -> "world"
+///   _, _ -> "other"
+/// }
+/// ```
 pub fn new(input_expression: Expression(input)) -> CaseExpression(input, a) {
   CaseExpression(input_expression, [])
 }
@@ -50,7 +95,7 @@ pub fn build_expression(
           return: #(previously_matched, Error(Nil)),
         )
 
-        let renderer = fn(context) {
+        let renderer = fn(context, number_of_subjects) {
           let matcher = case dict.get(matchers_combined, output) {
             Ok([_, _, ..] as repeated_matchers) -> {
               let assert Ok(new_matcher) =
@@ -66,7 +111,7 @@ pub fn build_expression(
             }
             _ -> matcher
           }
-          let rendered_match = matcher.render(matcher)
+          let rendered_match = matcher.render(matcher, number_of_subjects)
           let rendered_response = expression.render(output, context)
 
           rendered_match.doc
@@ -86,9 +131,13 @@ pub fn build_expression(
     |> pair.second()
     |> list.filter_map(function.identity)
 
+  let all_can_match_on_multiple =
+    list.all(case_.cases, fn(m) { matcher.can_match_on_multiple(m.0) })
+
   expression.new_case(
     case_.input_expression |> expression.to_unchecked(),
     simplified_matchers,
+    all_can_match_on_multiple,
     case_.cases
       |> list.first()
       |> result.map(fn(c) { expression.type_(c.1) })

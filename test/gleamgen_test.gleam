@@ -213,7 +213,7 @@ pub fn simple_case_string_test() {
   |> render.to_string()
   |> should.equal(
     "case \"hello\" {
-  \"hello\" -> \"world\"
+  \"hello\" -> \"world\"d
   v -> v <> \" world\"
 }",
   )
@@ -286,7 +286,7 @@ pub fn simple_string_concat_test() {
   )
 }
 
-pub fn simple_case_tuple_test() {
+pub fn simple_case_tuple_to_multiple_subjects_test() {
   case_.new(expression.tuple2(expression.string("hello"), expression.int(3)))
   |> case_.with_matcher(
     matcher.tuple2(matcher.string_literal("hello"), matcher.variable("_")),
@@ -299,9 +299,69 @@ pub fn simple_case_tuple_test() {
   |> expression.render(render.default_context())
   |> render.to_string()
   |> should.equal(
+    "case \"hello\", 3 {
+  \"hello\", _ -> \"world\"
+  _, _ -> \"other\"
+}",
+  )
+}
+
+pub fn simple_case_tuple_not_multiple_subjects_test() {
+  case_.new(expression.tuple2(expression.string("hello"), expression.int(3)))
+  |> case_.with_matcher(
+    matcher.tuple2(matcher.string_literal("hello"), matcher.variable("num")),
+    fn(patterns) {
+      let #(_, num) = patterns
+      expression.tuple2(
+        expression.string("world"),
+        expression.math_operator(num, expression.Add, expression.int(2)),
+      )
+    },
+  )
+  |> case_.with_matcher(
+    matcher.variable("my_favorite_variable"),
+    fn(my_favorite_variable) { my_favorite_variable },
+  )
+  |> case_.build_expression()
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
     "case #(\"hello\", 3) {
-  #(\"hello\", _) -> \"world\"
-  _ -> \"other\"
+  #(\"hello\", num) -> #(\"world\", num + 2)
+  my_favorite_variable -> my_favorite_variable
+}",
+  )
+}
+
+pub fn simple_case_tuple_to_multiple_subjects_multiple_vars_test() {
+  case_.new(expression.tuple2(expression.string("hello"), expression.int(3)))
+  |> case_.with_matcher(
+    matcher.tuple2(matcher.string_literal("hello"), matcher.variable("num")),
+    fn(patterns) {
+      let #(_, num) = patterns
+      expression.tuple2(
+        expression.string("world"),
+        expression.math_operator(num, expression.Add, expression.int(2)),
+      )
+    },
+  )
+  |> case_.with_matcher(
+    matcher.tuple2(matcher.variable("greeting"), matcher.variable("num")),
+    fn(patterns) {
+      let #(greeting, num) = patterns
+      expression.tuple2(
+        greeting,
+        expression.math_operator(num, expression.Sub, expression.int(2)),
+      )
+    },
+  )
+  |> case_.build_expression()
+  |> expression.render(render.default_context())
+  |> render.to_string()
+  |> should.equal(
+    "case \"hello\", 3 {
+  \"hello\", num -> #(\"world\", num + 2)
+  greeting, num -> #(greeting, num - 2)
 }",
   )
 }

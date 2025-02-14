@@ -36,7 +36,11 @@ type InternalExpression(type_) {
   Call(Expression(types.Unchecked), List(Expression(types.Unchecked)))
   SingleConstructor(Expression(types.Unchecked))
   Block(List(Statement))
-  Case(Expression(types.Unchecked), List(fn(render.Context) -> render.Rendered))
+  Case(
+    Expression(types.Unchecked),
+    List(fn(render.Context, Int) -> render.Rendered),
+    Bool,
+  )
   AnonymousFunction(fn(render.Context) -> render.Rendered)
   Use(
     function: Expression(types.Unchecked),
@@ -686,8 +690,16 @@ pub fn new_use(
 }
 
 @internal
-pub fn new_case(to_match_on, matchers, return) -> Expression(type_) {
-  Expression(internal: Case(to_match_on, matchers), type_: return)
+pub fn new_case(
+  to_match_on,
+  matchers,
+  all_can_match_on_multiple,
+  return,
+) -> Expression(type_) {
+  Expression(
+    internal: Case(to_match_on, matchers, all_can_match_on_multiple),
+    type_: return,
+  )
 }
 
 @internal
@@ -809,7 +821,8 @@ pub fn render(
     Block(expressions) -> render_block(expressions, context)
     Equals(expr1, expr2) ->
       render_operator(expr1, expr2, doc.from_string("=="), context)
-    Case(to_match_on, matchers) -> render_case(to_match_on, matchers, context)
+    Case(to_match_on, matchers, all_can_match_on_multiple) ->
+      render_case(to_match_on, matchers, all_can_match_on_multiple, context)
     AnonymousFunction(renderer) -> renderer(context)
     Use(func, args, callback_args) ->
       render_use(func, args, callback_args, context)
@@ -851,15 +864,28 @@ fn render_use(func, args, callback_args, context) {
   |> render.Render(details: call.details)
 }
 
-fn render_case(to_match_on, matchers, context) {
-  let rendered_match_on = render(to_match_on, context)
-  let matchers = list.map(matchers, fn(m) { m(context) })
+fn render_case(to_match_on, matchers, all_can_match_on_multiple, context) {
+  let #(rendered_match_on, subject_count) = case to_match_on.internal {
+    TupleLiteral(expressions) if all_can_match_on_multiple -> {
+      let #(expressions, details) = render_expressions(expressions, context)
+      let rendered_match_on =
+        expressions
+        |> doc.concat_join([doc.from_string(","), doc.space])
+        |> render.Render(details)
+
+      #(rendered_match_on, list.length(expressions))
+    }
+    _ -> #(render(to_match_on, context), 1)
+  }
+
+  let matchers = list.map(matchers, fn(m) { m(context, subject_count) })
   let matcher_details =
     list.fold(
-      matchers |> list.map(fn(m) { m.details }),
+      list.map(matchers, fn(m) { m.details }),
       render.empty_details,
       render.merge_details,
     )
+
   doc.concat([
     doc.from_string("case "),
     rendered_match_on.doc,

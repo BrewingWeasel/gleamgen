@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- added support for automatically converting case expressions with tuples into case expressions with multiple subjects
+
 ## v0.3.5 - 2025-02-12
 
 - added support for automatically combining alternate patterns in case statements

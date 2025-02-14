@@ -105,7 +105,7 @@ pub fn with_matching_let_declaration(
     expression.LetDeclaration(
       matcher
         |> matcher.to_unchecked()
-        |> matcher.render()
+        |> matcher.render(1)
         |> render.to_string(),
       value |> expression.to_unchecked(),
       assert_,

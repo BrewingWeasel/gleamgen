@@ -1,10 +1,10 @@
 name = "gleamgen"
-version = "0.3.5"
+version = "0.3.6"
 
 # Fill out these fields if you intend to generate HTML documentation or publish
 # your project to the Hex package manager.
 #
-description = "Generate type-safe gleam code (in gleam!)"
+description = "Type-safe gleam codegen (in gleam!)"
 licences = ["Apache-2.0"]
 repository = { type = "github", user = "Brewingweasel", repo = "gleamgen" }
 # links = [{ title = "Website", href = "" }]

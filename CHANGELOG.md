@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.3.6 - 2025-02-13
 
 - added support for automatically converting case expressions with tuples into case expressions with multiple subjects
 - added explicit discard functions for matchers

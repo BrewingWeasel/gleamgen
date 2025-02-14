@@ -213,7 +213,7 @@ pub fn simple_case_string_test() {
   |> render.to_string()
   |> should.equal(
     "case \"hello\" {
-  \"hello\" -> \"world\"d
+  \"hello\" -> \"world\"
   v -> v <> \" world\"
 }",
   )
@@ -289,10 +289,13 @@ pub fn simple_string_concat_test() {
 pub fn simple_case_tuple_to_multiple_subjects_test() {
   case_.new(expression.tuple2(expression.string("hello"), expression.int(3)))
   |> case_.with_matcher(
-    matcher.tuple2(matcher.string_literal("hello"), matcher.variable("_")),
+    matcher.tuple2(
+      matcher.string_literal("hello"),
+      matcher.named_discard("other"),
+    ),
     fn(_) { expression.string("world") },
   )
-  |> case_.with_matcher(matcher.variable("_"), fn(_) {
+  |> case_.with_matcher(matcher.discard(), fn(_: Nil) {
     expression.string("other")
   })
   |> case_.build_expression()
@@ -300,7 +303,7 @@ pub fn simple_case_tuple_to_multiple_subjects_test() {
   |> render.to_string()
   |> should.equal(
     "case \"hello\", 3 {
-  \"hello\", _ -> \"world\"
+  \"hello\", _other -> \"world\"
   _, _ -> \"other\"
 }",
   )

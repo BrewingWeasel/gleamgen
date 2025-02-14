@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added support for automatically converting case expressions with tuples into case expressions with multiple subjects
+- added explicit discard functions for matchers
 
 ## v0.3.5 - 2025-02-12
 

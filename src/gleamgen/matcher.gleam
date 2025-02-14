@@ -35,8 +35,16 @@ pub fn variable(name: String) -> Matcher(a, Expression(a)) {
   Variable(name, output: expression.unchecked_ident(name))
 }
 
-pub fn string_literal(literal: String) -> Matcher(String, Nil) {
+pub fn string_literal(literal: String) -> Matcher(a, Nil) {
   StringLiteral(literal, output: Nil)
+}
+
+pub fn discard() -> Matcher(a, Nil) {
+  Variable("_", output: Nil)
+}
+
+pub fn named_discard(name: String) -> Matcher(a, Nil) {
+  Variable("_" <> name, output: Nil)
 }
 
 pub fn int_literal(literal: Int) -> Matcher(Int, Nil) {

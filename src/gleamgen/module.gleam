@@ -1,4 +1,5 @@
 import glam/doc
+import gleam/dict
 import gleam/list
 import gleam/option
 import gleam/result
@@ -7,38 +8,32 @@ import gleamgen/expression.{type Expression}
 import gleamgen/expression/constructor
 import gleamgen/function
 import gleamgen/import_
+import gleamgen/module/definition
 import gleamgen/render
 import gleamgen/types.{type Unchecked}
 import gleamgen/types/custom
 
-pub type Definition {
-  Definition(details: DefinitionDetails, value: Definable)
+
+pub type Module {
+  Module(
+    definitions: List(ModuleDefinition),
+    imports: List(import_.ImportedModule),
+  )
 }
 
-pub type Attribute {
-  ExternalErlang
-  ExternalJavascript
-  Deprecated(String)
-  Internal
+pub type ModuleDefinition {
+  Definition(details: definition.Definition, value: Definable)
 }
 
-pub type DefinitionDetails {
-  DefinitionDetails(name: String, is_public: Bool, attributes: List(Attribute))
-}
-
-pub type Definable {
+pub opaque type Definable {
   Function(function.Function(Unchecked, Unchecked))
   CustomTypeBuilder(custom.CustomTypeBuilder(Unchecked, Nil, Nil))
   Constant(Expression(Unchecked))
   TypeAlias(types.GeneratedType(Unchecked))
 }
 
-pub type Module {
-  Module(definitions: List(Definition), imports: List(import_.ImportedModule))
-}
-
 pub fn with_constant(
-  details: DefinitionDetails,
+  details: definition.Definition,
   value: Expression(t),
   handler: fn(Expression(t)) -> Module,
 ) -> Module {
@@ -66,7 +61,7 @@ pub fn with_imports_unchecked(
 }
 
 pub fn with_function(
-  details: DefinitionDetails,
+  details: definition.Definition,
   func: function.Function(func_type, ret),
   handler: fn(Expression(func_type)) -> Module,
 ) -> Module {
@@ -78,7 +73,7 @@ pub fn with_function(
 }
 
 pub fn with_custom_type1(
-  details: DefinitionDetails,
+  details: definition.Definition,
   type_: custom.CustomTypeBuilder(repr, custom.Generics1(a), generics),
   handler: fn(
     custom.CustomType(repr, generics),
@@ -104,7 +99,7 @@ pub fn with_custom_type1(
 // {{{
 
 pub fn with_custom_type2(
-  details: DefinitionDetails,
+  details: definition.Definition,
   type_: custom.CustomTypeBuilder(repr, custom.Generics2(a, b), generics),
   handler: fn(
     custom.CustomType(repr, generics),
@@ -130,7 +125,7 @@ pub fn with_custom_type2(
 }
 
 pub fn with_custom_type3(
-  details: DefinitionDetails,
+  details: definition.Definition,
   type_: custom.CustomTypeBuilder(repr, custom.Generics3(a, b, c), generics),
   handler: fn(
     custom.CustomType(repr, generics),
@@ -158,7 +153,7 @@ pub fn with_custom_type3(
 }
 
 pub fn with_custom_type4(
-  details: DefinitionDetails,
+  details: definition.Definition,
   type_: custom.CustomTypeBuilder(repr, custom.Generics4(a, b, c, d), generics),
   handler: fn(
     custom.CustomType(repr, generics),
@@ -188,7 +183,7 @@ pub fn with_custom_type4(
 }
 
 pub fn with_custom_type5(
-  details: DefinitionDetails,
+  details: definition.Definition,
   type_: custom.CustomTypeBuilder(
     repr,
     custom.Generics5(a, b, c, d, e),
@@ -224,7 +219,7 @@ pub fn with_custom_type5(
 }
 
 pub fn with_custom_type6(
-  details: DefinitionDetails,
+  details: definition.Definition,
   type_: custom.CustomTypeBuilder(
     repr,
     custom.Generics6(a, b, c, d, e, f),
@@ -263,7 +258,7 @@ pub fn with_custom_type6(
 }
 
 pub fn with_custom_type7(
-  details: DefinitionDetails,
+  details: definition.Definition,
   type_: custom.CustomTypeBuilder(
     repr,
     custom.Generics7(a, b, c, d, e, f, g),
@@ -311,7 +306,7 @@ pub fn with_custom_type7(
 }
 
 pub fn with_custom_type8(
-  details: DefinitionDetails,
+  details: definition.Definition,
   type_: custom.CustomTypeBuilder(
     repr,
     custom.Generics8(a, b, c, d, e, f, g, h),
@@ -362,7 +357,7 @@ pub fn with_custom_type8(
 }
 
 pub fn with_custom_type9(
-  details: DefinitionDetails,
+  details: definition.Definition,
   type_: custom.CustomTypeBuilder(
     repr,
     custom.Generics9(a, b, c, d, e, f, g, h, i),
@@ -418,7 +413,7 @@ pub fn with_custom_type9(
 // }}}
 
 pub fn with_custom_type_unchecked(
-  details: DefinitionDetails,
+  details: definition.Definition,
   type_: custom.CustomTypeBuilder(repr, Unchecked, generics),
   handler: fn(
     custom.CustomType(repr, generics),
@@ -441,7 +436,7 @@ pub fn with_custom_type_unchecked(
 }
 
 pub fn with_type_alias(
-  details: DefinitionDetails,
+  details: definition.Definition,
   type_: types.GeneratedType(repr),
   handler: fn(types.GeneratedType(repr)) -> Module,
 ) -> Module {
@@ -453,7 +448,7 @@ pub fn with_type_alias(
 }
 
 pub fn eof() -> Module {
-  Module([], [])
+  Module([], [], option.None)
 }
 
 pub fn render(module: Module, context: render.Context) -> render.Rendered {
@@ -461,71 +456,9 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
     list.map_fold(
       module.definitions,
       render.empty_details,
-      fn(previous_details, def) {
-        let #(definition, details) = case def.value {
-          Constant(value) -> {
-            let rendered_expr = expression.render(value, context)
-            #(
-              doc.concat([
-                doc.from_string("const "),
-                doc.from_string(def.details.name),
-                doc.space,
-                doc.from_string("="),
-                doc.space,
-                rendered_expr.doc,
-              ]),
-              rendered_expr.details,
-            )
-          }
-          CustomTypeBuilder(type_) -> {
-            let rendered_type = custom.render(type_)
-            #(
-              doc.concat([
-                doc.from_string("type "),
-                doc.from_string(def.details.name),
-                rendered_type.doc,
-              ]),
-              rendered_type.details,
-            )
-          }
-          TypeAlias(type_) -> {
-            let rendered_type = types.render_type(type_)
-            #(
-              doc.concat([
-                doc.from_string("type "),
-                doc.from_string(def.details.name),
-                doc.space,
-                doc.from_string("="),
-                doc.space,
-                rendered_type
-                  |> result.map(fn(v) { v.doc })
-                  |> result.unwrap(doc.from_string("??")),
-              ]),
-              rendered_type
-                |> result.map(fn(v) { v.details })
-                |> result.unwrap(render.empty_details),
-            )
-          }
-          Function(func) -> {
-            let rendered =
-              function.render(func, context, option.Some(def.details.name))
-            #(rendered.doc, rendered.details)
-          }
-        }
-
-        let full_doc =
-          doc.join(list.map(def.details.attributes, render_attribute), doc.line)
-          |> doc.append(case list.is_empty(def.details.attributes) {
-            True -> doc.empty
-            False -> doc.line
-          })
-          |> doc.append(case def.details.is_public {
-            True -> doc.concat([doc.from_string("pub"), doc.space])
-            False -> doc.empty
-          })
-          |> doc.append(definition)
-
-        #(render.merge_details(details, previous_details), full_doc)
+      fn(previous_details, definition) {
+        let #(rendered, new_details) = render_definition(definition, context)
+        #(render.merge_details(previous_details, new_details), rendered)
       },
     )
 
@@ -549,20 +482,6 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
   |> render.Render(details:)
 }
 
-fn render_attribute(attribute: Attribute) -> doc.Document {
-  case attribute {
-    ExternalErlang -> doc.from_string("@external(erlang)")
-    ExternalJavascript -> doc.from_string("@external(javascript)")
-    Deprecated(reason) ->
-      doc.concat([
-        doc.from_string("@deprecated(\""),
-        doc.from_string(reason),
-        doc.from_string("\")"),
-      ])
-    Internal -> doc.from_string("@internal")
-  }
-}
-
 pub fn render_imported_module(module: import_.ImportedModule) -> render.Rendered {
   doc.concat([
     doc.from_string("import "),
@@ -579,4 +498,173 @@ pub fn render_imported_module(module: import_.ImportedModule) -> render.Rendered
     },
   ])
   |> render.Render(details: render.empty_details)
+}
+
+fn render_all_definitions(
+  definitions: List(ModuleDefinition),
+  after_definition: dict.Dict(String, List(ModuleDefinition)),
+  last_definition_name: Option(String),
+  context,
+  previous_details,
+  rendered_definitions,
+) {
+  let definitions_to_prepend =
+    last_definition_name
+    |> option.then(fn(name) {
+      case dict.get(after_definition, name) {
+        Ok(defs) -> option.Some(#(defs, dict.delete(after_definition, name)))
+        Error(_) -> option.None
+      }
+    })
+
+  case definitions_to_prepend {
+    option.Some(#(defs, new_after_definition)) -> {
+      render_all_definitions(
+        list.append(defs, definitions),
+        new_after_definition,
+        option.None,
+        context,
+        previous_details,
+        rendered_definitions,
+      )
+    }
+    option.None -> {
+      case definitions {
+        [definition, ..rest] -> {
+          let #(rendered_def, new_details) =
+            render_definition(definition, context)
+
+          render_all_definitions(
+            rest,
+            after_definition,
+            option.Some(definition.details.name),
+            context,
+            render.merge_details(previous_details, new_details),
+            [rendered_def, ..rendered_definitions],
+          )
+        }
+        [] -> {
+          #(list.reverse(rendered_definitions), previous_details)
+        }
+      }
+    }
+  }
+}
+
+fn separate_definitions(
+  definitions: List(ModuleDefinition),
+  at_top: List(ModuleDefinition),
+  at_bottom: List(ModuleDefinition),
+  after_definition: dict.Dict(String, List(ModuleDefinition)),
+) -> #(
+  List(ModuleDefinition),
+  List(ModuleDefinition),
+  dict.Dict(String, List(ModuleDefinition)),
+) {
+  case definitions {
+    [definition, ..rest] -> {
+      case definition.details.position {
+        definition.Top ->
+          separate_definitions(
+            rest,
+            [definition, ..at_top],
+            at_bottom,
+            after_definition,
+          )
+        definition.Bottom ->
+          separate_definitions(
+            rest,
+            at_top,
+            [definition, ..at_bottom],
+            after_definition,
+          )
+        definition.AfterDefinition(def_name) -> {
+          let after_definition =
+            dict.upsert(
+              after_definition,
+              def_name,
+              with: fn(currently_after_definition) {
+                case currently_after_definition {
+                  option.Some(list) -> [definition, ..list]
+                  option.None -> [definition]
+                }
+              },
+            )
+
+          separate_definitions(rest, at_top, at_bottom, after_definition)
+        }
+      }
+    }
+    [] -> #(at_top, at_bottom, after_definition)
+  }
+}
+
+fn render_definition(definition: ModuleDefinition, context) {
+  let #(rendered, details) = case definition.value {
+    Constant(value) -> {
+      let rendered_expr = expression.render(value, context)
+      #(
+        doc.concat([
+          doc.from_string("const "),
+          doc.from_string(definition.details.name),
+          doc.space,
+          doc.from_string("="),
+          doc.space,
+          rendered_expr.doc,
+        ]),
+        rendered_expr.details,
+      )
+    }
+    CustomTypeBuilder(type_) -> {
+      let rendered_type = custom.render(type_)
+      #(
+        doc.concat([
+          doc.from_string("type "),
+          doc.from_string(definition.details.name),
+          rendered_type.doc,
+        ]),
+        rendered_type.details,
+      )
+    }
+    TypeAlias(type_) -> {
+      let rendered_type = types.render_type(type_)
+      #(
+        doc.concat([
+          doc.from_string("type "),
+          doc.from_string(definition.details.name),
+          doc.space,
+          doc.from_string("="),
+          doc.space,
+          rendered_type
+            |> result.map(fn(v) { v.doc })
+            |> result.unwrap(doc.from_string("??")),
+        ]),
+        rendered_type
+          |> result.map(fn(v) { v.details })
+          |> result.unwrap(render.empty_details),
+      )
+    }
+    Function(func) -> {
+      let rendered =
+        function.render(func, context, option.Some(definition.details.name))
+      #(rendered.doc, rendered.details)
+    }
+  }
+
+  let full_doc =
+    doc.join(
+      list.map(definition.details.attributes, definition.render_attribute),
+      doc.line,
+    )
+    |> doc.append(case list.is_empty(definition.details.attributes) {
+      True -> doc.empty
+      False -> doc.line
+    })
+    |> doc.append(case definition.details.is_public {
+      True -> doc.concat([doc.from_string("pub"), doc.space])
+      False -> doc.empty
+    })
+    |> doc.append(rendered)
+
+  #(full_doc, details)
 }

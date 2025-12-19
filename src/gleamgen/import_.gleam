@@ -1,20 +1,38 @@
+import glance
 import gleam/list
 import gleam/option.{type Option}
+import gleam/order
+import gleam/string
 import gleamgen/expression.{type Expression}
 import gleamgen/function
 import gleamgen/types
 import gleamgen/types/custom
 
 pub type ImportedModule {
-  ImportedModule(name: List(String), alias: Option(String))
+  ImportedModule(
+    name: List(String),
+    alias: Option(String),
+    before_text: String,
+    predefined: Bool,
+  )
 }
 
 pub fn new(name: List(String)) -> ImportedModule {
-  ImportedModule(name: name, alias: option.None)
+  ImportedModule(
+    name: name,
+    alias: option.None,
+    before_text: "",
+    predefined: False,
+  )
 }
 
 pub fn new_with_alias(name: List(String), alias: String) -> ImportedModule {
-  ImportedModule(name: name, alias: option.Some(alias))
+  ImportedModule(
+    name: name,
+    alias: option.Some(alias),
+    before_text: "",
+    predefined: False,
+  )
 }
 
 @internal
@@ -172,5 +190,84 @@ pub fn function9(
   let name = function.get_function_name(func)
   expression.unchecked_ident(get_reference(imported) <> "." <> name)
 }
+
 // }}}
-// vim: foldmethod=marker foldlevel=0
+
+// @internal
+// pub fn convert_glance_imports(
+//   imports: List(glance.Definition(glance.Import)),
+//   text: ModuleText,
+// ) -> #(List(ImportedModule), ModuleText) {
+//   // TODO: preserve order if import statements broken up
+//   imports
+//   |> list.reverse()
+//   |> module_text.fold(text, convert_import, fn(mod) { mod.definition.location })
+// }
+
+@internal
+pub fn convert_import(
+  definition: glance.Definition(glance.Import),
+  before_import: String,
+) -> ImportedModule {
+  // TODO: unqualified values and types
+  let glance.Import(module:, alias:, ..) = definition.definition
+  let name = string.split(module, "/")
+  let alias =
+    option.map(alias, fn(a) {
+      case a {
+        glance.Named(n) -> n
+        glance.Discarded(n) -> n
+      }
+    })
+
+  ImportedModule(
+    name:,
+    alias: alias,
+    before_text: before_import,
+    predefined: True,
+  )
+}
+
+@internal
+pub fn compare(
+  imported_module: ImportedModule,
+  imported_module_2: ImportedModule,
+) -> order.Order {
+  string.compare(
+    string.join(imported_module.name, "/"),
+    string.join(imported_module_2.name, "/"),
+  )
+}
+
+pub fn merge_imports(imports) {
+  do_merge_imports(imports, option.None, [])
+}
+
+fn do_merge_imports(
+  imports_left: List(ImportedModule),
+  last_import: Option(ImportedModule),
+  acc: List(ImportedModule),
+) {
+  case imports_left, last_import {
+    [import_, ..rest], option.Some(last) if last.name == import_.name -> {
+      let new_import =
+        ImportedModule(
+          name: import_.name,
+          alias: case last.alias, import_.alias {
+            option.Some(_), _ -> last.alias
+            option.None, option.Some(a) -> option.Some(a)
+            option.None, option.None -> option.None
+          },
+          before_text: last.before_text <> import_.before_text,
+          predefined: last.predefined || import_.predefined,
+        )
+      do_merge_imports(rest, option.Some(new_import), acc)
+    }
+    [import_, ..rest], option.Some(last) ->
+      do_merge_imports(rest, option.Some(import_), [last, ..acc])
+    [import_, ..rest], option.None ->
+      do_merge_imports(rest, option.Some(import_), acc)
+    [], option.Some(last) -> list.reverse([last, ..acc])
+    [], option.None -> list.reverse(acc)
+  }
+}

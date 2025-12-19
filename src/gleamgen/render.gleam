@@ -65,13 +65,9 @@ pub fn body(
 }
 
 @internal
-pub fn escape_string(string: String) -> doc.Document {
+pub fn escape_string(string: String) -> String {
   let escaped = do_escape_string(string, "")
-  doc.concat([
-    doc.from_string("\""),
-    doc.from_string(escaped),
-    doc.from_string("\""),
-  ])
+  "\"" <> escaped <> "\""
 }
 
 fn do_escape_string(original: String, escaped: String) -> String {

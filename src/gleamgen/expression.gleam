@@ -758,6 +758,7 @@ pub fn render(
       |> render.Render(details: render.empty_details)
     StrLiteral(value) ->
       render.escape_string(value)
+      |> doc.from_string()
       |> render.Render(details: render.empty_details)
     BoolLiteral(True) ->
       doc.from_string("True") |> render.Render(details: render.empty_details)
@@ -835,7 +836,7 @@ fn render_panicking_expression(name: String, as_string: Option(String)) {
       doc.concat([
         doc.from_string(name <> " as"),
         doc.space,
-        render.escape_string(value),
+        value |> render.escape_string() |> doc.from_string(),
       ])
       |> doc.group
     None -> doc.from_string(name)

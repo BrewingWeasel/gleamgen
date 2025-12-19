@@ -724,9 +724,11 @@ pub fn render(
       |> render.Render(details: render.empty_details)
     StringLiteral(literal, ..) ->
       render.escape_string(literal)
+      |> doc.from_string()
       |> render.Render(details: render.empty_details)
     StringConcat(#(literal, variable), ..) ->
       render.escape_string(literal)
+      |> doc.from_string()
       |> doc.append(
         doc.concat([
           doc.space,

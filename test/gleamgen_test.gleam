@@ -13,6 +13,7 @@ import gleamgen/function
 import gleamgen/import_
 import gleamgen/matcher
 import gleamgen/module
+import gleamgen/module/definition
 import gleamgen/render
 import gleamgen/types
 import gleamgen/types/custom
@@ -500,22 +501,13 @@ pub fn simple_anonymous_function_test() {
 }
 
 pub fn simple_module_test() {
-  let mod =
-    module.Module(
-      [
-        module.Definition(
-          details: module.DefinitionDetails(
-            name: "based_number",
-            is_public: True,
-            attributes: [],
-          ),
-          value: module.Constant(
-            expression.int(46) |> expression.to_unchecked(),
-          ),
-        ),
-      ],
-      [],
+  let mod = {
+    use _based_number <- module.with_constant(
+      definition.new("based_number") |> definition.with_publicity(True),
+      expression.int(46),
     )
+    module.eof()
+  }
   mod
   |> module.render(render.default_context())
   |> render.to_string()
@@ -555,18 +547,14 @@ pub fn module_with_function_test() {
   let mod = {
     use io <- module.with_import(import_.new(["gleam", "io"]))
     use language <- module.with_constant(
-      module.DefinitionDetails(
-        name: "language",
-        is_public: False,
-        attributes: [],
-      ),
+      definition.new("language"),
       expression.string("gleam"),
     )
 
     use describer <- module.with_function(
-      module.DefinitionDetails(name: "describer", is_public: True, attributes: [
-        module.Internal,
-      ]),
+      definition.new(name: "describer")
+        |> definition.with_publicity(True)
+        |> definition.with_attributes([definition.Internal]),
       function.new1(
         arg1: #("thing", types.string),
         returns: types.string,
@@ -580,7 +568,8 @@ pub fn module_with_function_test() {
     )
 
     use _main <- module.with_function(
-      module.DefinitionDetails(name: "main", is_public: True, attributes: []),
+      definition.new(name: "main")
+        |> definition.with_publicity(True),
       function.new0(returns: types.nil, handler: fn() {
         expression.call1(
           import_.unchecked_ident(io, "println"),
@@ -618,11 +607,8 @@ pub fn module_import_constructor_test() {
     let option_type = import_.unchecked_type(option_module, "Option")
 
     use _option_from_str <- module.with_function(
-      module.DefinitionDetails(
-        name: "option_from_string",
-        is_public: True,
-        attributes: [],
-      ),
+      definition.new(name: "option_from_string")
+        |> definition.with_publicity(True),
       function.new1(
         arg1: #("str", types.string),
         returns: option_type |> custom.to_type1(types.string),
@@ -676,11 +662,8 @@ pub fn basic_use_test() {
     use result_module <- module.with_import(import_.new(["gleam", "result"]))
 
     use _ <- module.with_function(
-      module.DefinitionDetails(
-        name: "do_result",
-        is_public: True,
-        attributes: [],
-      ),
+      definition.new(name: "do_result")
+        |> definition.with_publicity(True),
       function.new0(
         returns: types.result(types.int, types.string),
         handler: fn() {
@@ -731,11 +714,8 @@ pub fn two_use_test() {
     use bool_module <- module.with_import(import_.new(["gleam", "bool"]))
 
     use _ <- module.with_function(
-      module.DefinitionDetails(
-        name: "do_result",
-        is_public: True,
-        attributes: [],
-      ),
+      definition.new(name: "do_result")
+        |> definition.with_publicity(True),
       function.new0(
         returns: types.result(types.int, types.string),
         handler: fn() {
@@ -795,11 +775,8 @@ pub fn result_test() {
     use string_module <- module.with_import(import_.new(["gleam", "string"]))
 
     use _swap_result <- module.with_function(
-      module.DefinitionDetails(
-        name: "handle_result",
-        is_public: True,
-        attributes: [],
-      ),
+      definition.new(name: "handle_result")
+        |> definition.with_publicity(True),
       function.new1(
         arg1: #("res", types.result(types.string, types.int)),
         returns: types.result(types.bool, types.int),
@@ -871,18 +848,14 @@ pub fn handle_result(res: Result(String, Int)) -> Result(Bool, Int) {
 pub fn module_with_type_alias_test() {
   let mod = {
     use awesome_string <- module.with_type_alias(
-      module.DefinitionDetails(
-        name: "AwesomeString",
-        is_public: False,
-        attributes: [],
-      ),
+      definition.new(name: "AwesomeString"),
       types.string,
     )
 
     use _ <- module.with_function(
-      module.DefinitionDetails(name: "runner", is_public: True, attributes: [
-        module.Internal,
-      ]),
+      definition.new("runner")
+        |> definition.with_publicity(True)
+        |> definition.with_attributes([definition.Internal]),
       function.new1(
         arg1: #("thing", awesome_string),
         returns: types.string,
@@ -918,10 +891,16 @@ pub fn module_import_test() {
     use int_mod <- module.with_import(import_.new(["gleam", "int"]))
 
     let io_print = import_.function1(io, io.println)
-    let int_string = import_.function1(int_mod, int.to_string)
+    let int_string =
+      import_.value_of_type(
+        int_mod,
+        "to_string",
+        types.reference(int.to_string),
+      )
 
     use _main <- module.with_function(
-      module.DefinitionDetails(name: "main", is_public: True, attributes: []),
+      definition.new(name: "main")
+        |> definition.with_publicity(True),
       function.new0(returns: types.nil, handler: fn() {
         expression.call1(
           io_print,
@@ -955,10 +934,16 @@ pub fn module_unused_import_test() {
     use _ <- module.with_import(import_.new(["gleam", "string"]))
 
     let io_print = import_.function1(io, io.println)
-    let int_string = import_.function1(int_mod, int.to_string)
+    let int_string =
+      import_.value_of_type(
+        int_mod,
+        "to_string",
+        types.reference(int.to_string),
+      )
 
     use _main <- module.with_function(
-      module.DefinitionDetails(name: "main", is_public: True, attributes: []),
+      definition.new(name: "main")
+        |> definition.with_publicity(True),
       function.new0(returns: types.nil, handler: fn() {
         expression.call1(
           io_print,
@@ -982,6 +967,10 @@ pub fn main() -> Nil {
   )
 }
 
+// Because this is False, we don't use the string module, 
+// therefore it should not be rendered in the final string
+const use_string_mod_this_time = False
+
 pub fn module_sometimes_unused_import_test() {
   let mod = {
     use io <- module.with_import(import_.new_with_alias(
@@ -992,12 +981,13 @@ pub fn module_sometimes_unused_import_test() {
     use string_mod <- module.with_import(import_.new(["gleam", "string"]))
 
     let io_print = import_.function1(io, io.println)
-    let int_string = import_.function1(int_mod, int.to_string)
+    let int_string =
+      import_.value_of_type(
+        int_mod,
+        "to_string",
+        types.reference(int.to_string),
+      )
     let string_length = import_.function1(string_mod, string.length)
-
-    // Because this is False, we don't use the string module, 
-    // therefore it should not be rendered in the final string
-    let use_string_mod_this_time = 1 == 0
 
     let int_value = case use_string_mod_this_time {
       True -> expression.call1(string_length, expression.string("hi"))
@@ -1005,7 +995,8 @@ pub fn module_sometimes_unused_import_test() {
     }
 
     use _main <- module.with_function(
-      module.DefinitionDetails(name: "main", is_public: True, attributes: []),
+      definition.new(name: "main")
+        |> definition.with_publicity(True),
       function.new0(returns: types.nil, handler: fn() {
         expression.call1(io_print, expression.call1(int_string, int_value))
       }),
@@ -1045,16 +1036,12 @@ pub fn module_with_custom_type_test() {
 
   let mod = {
     use animal_type, dog_constructor, cat_constructor <- module.with_custom_type2(
-      module.DefinitionDetails(name: "Animal", is_public: True, attributes: []),
+      definition.new("Animal") |> definition.with_publicity(True),
       animals,
     )
 
     use describer <- module.with_function(
-      module.DefinitionDetails(
-        name: "describer",
-        is_public: True,
-        attributes: [],
-      ),
+      definition.new("describer") |> definition.with_publicity(True),
       function.new1(
         arg1: #("animal", animal_type |> custom.to_type()),
         returns: types.string,
@@ -1063,7 +1050,8 @@ pub fn module_with_custom_type_test() {
     )
 
     use _main <- module.with_function(
-      module.DefinitionDetails(name: "main", is_public: True, attributes: []),
+      definition.new(name: "main")
+        |> definition.with_publicity(True),
       function.new0(returns: types.nil, handler: fn() {
         {
           use dog_var <- block.with_let_declaration(
@@ -1130,16 +1118,19 @@ pub fn module_case_on_custom_type_test() {
   let mod = {
     use int_mod <- module.with_import(import_.new(["gleam", "int"]))
     use animal_type, dog_constructor, cat_constructor <- module.with_custom_type2(
-      module.DefinitionDetails(name: "Animal", is_public: True, attributes: []),
+      definition.new("Animal") |> definition.with_publicity(True),
       animals,
     )
 
+    let int_to_string =
+      import_.value_of_type(
+        int_mod,
+        "to_string",
+        types.reference(int.to_string),
+      )
+
     use describer <- module.with_function(
-      module.DefinitionDetails(
-        name: "describer",
-        is_public: True,
-        attributes: [],
-      ),
+      definition.new("describer") |> definition.with_publicity(True),
       function.new1(
         arg1: #("animal", animal_type |> custom.to_type()),
         returns: types.string,
@@ -1152,10 +1143,7 @@ pub fn module_case_on_custom_type_test() {
             ),
             fn(bones) {
               expression.string("Dog with ")
-              |> expression.concat_string(expression.call1(
-                import_.function1(int_mod, int.to_string),
-                bones,
-              ))
+              |> expression.concat_string(expression.call1(int_to_string, bones))
             },
           )
           |> case_.with_matcher(
@@ -1189,7 +1177,8 @@ pub fn module_case_on_custom_type_test() {
     )
 
     use _main <- module.with_function(
-      module.DefinitionDetails(name: "main", is_public: True, attributes: []),
+      definition.new(name: "main")
+        |> definition.with_publicity(True),
       function.new0(returns: types.nil, handler: fn() {
         {
           use dog_var <- block.with_let_declaration(
@@ -1262,16 +1251,19 @@ pub fn module_let_on_custom_type_test() {
   let mod = {
     use int_mod <- module.with_import(import_.new(["gleam", "int"]))
     use _animal_type, dog_constructor, cat_constructor <- module.with_custom_type2(
-      module.DefinitionDetails(name: "Animal", is_public: True, attributes: []),
+      definition.new("Animal") |> definition.with_publicity(True),
       animals,
     )
 
+    let int_to_string =
+      import_.value_of_type(
+        int_mod,
+        "to_string",
+        types.reference(int.to_string),
+      )
+
     use _describe <- module.with_function(
-      module.DefinitionDetails(
-        name: "describe",
-        is_public: True,
-        attributes: [],
-      ),
+      definition.new("describer") |> definition.with_publicity(True),
       function.new0(returns: types.string, handler: fn() {
         {
           use bones <- block.with_matching_let_declaration(
@@ -1304,7 +1296,7 @@ pub fn module_let_on_custom_type_test() {
               name,
               expression.string(" knows a dog with this many bones: "),
             ),
-            expression.call1(import_.function1(int_mod, int.to_string), bones),
+            expression.call1(int_to_string, bones),
           ))
         }
         |> block.build()
@@ -1325,7 +1317,7 @@ pub type Animal {
   Cat(name: String, has_catnip: Bool)
 }
 
-pub fn describe() -> String {
+pub fn describer() -> String {
   let assert Dog(bones) = Dog(4)
   let assert Cat(\"jake\" as name, True) = Cat(\"jake\", True)
   name <> \" knows a dog with this many bones: \" <> int.to_string(bones)
@@ -1352,20 +1344,13 @@ pub fn module_with_custom_type_generics_test() {
 
   let mod = {
     use awesome_type, ok_awesome_constructor, less_ok_awesome_constructor <- module.with_custom_type2(
-      module.DefinitionDetails(
-        name: "MoreAwesomeResult",
-        is_public: True,
-        attributes: [],
-      ),
+      definition.new(name: "MoreAwesomeResult")
+        |> definition.with_publicity(True),
       more_awesome_result,
     )
 
     use _main <- module.with_function(
-      module.DefinitionDetails(
-        name: "generate",
-        is_public: True,
-        attributes: [],
-      ),
+      definition.new(name: "generate") |> definition.with_publicity(True),
       function.new0(
         returns: custom.to_type2(awesome_type, types.int, types.bool),
         handler: fn() {
@@ -1430,11 +1415,8 @@ pub fn module_with_custom_type_generics_multiple_ways_test() {
 
   let mod = {
     use awesome_type, base_ok_constructor, base_less_ok_constructor <- module.with_custom_type2(
-      module.DefinitionDetails(
-        name: "MoreAwesomeResult",
-        is_public: True,
-        attributes: [],
-      ),
+      definition.new(name: "MoreAwesomeResult")
+        |> definition.with_publicity(True),
       more_awesome_result,
     )
 
@@ -1451,11 +1433,8 @@ pub fn module_with_custom_type_generics_multiple_ways_test() {
     ) = constructor.unsafe_convert(base_less_ok_constructor)
 
     use _main <- module.with_function(
-      module.DefinitionDetails(
-        name: "generate",
-        is_public: True,
-        attributes: [],
-      ),
+      definition.new(name: "generate")
+        |> definition.with_publicity(True),
       function.new0(
         returns: custom.to_type2(awesome_type, types.string, types.bool),
         handler: fn() {
@@ -1519,11 +1498,7 @@ pub fn case_unchecked_variant_test() {
     use int_module <- module.with_import(import_.new(["gleam", "int"]))
 
     use _, custom_constructors <- module.with_custom_type_unchecked(
-      module.DefinitionDetails(
-        name: "VariantHolder",
-        is_public: True,
-        attributes: [],
-      ),
+      definition.new(name: "VariantHolder") |> definition.with_publicity(True),
       custom_type,
     )
     let assert [custom_variant, ..] = custom_constructors
@@ -1538,7 +1513,8 @@ pub fn case_unchecked_variant_test() {
       )
 
     use _ <- module.with_function(
-      module.DefinitionDetails(name: "handle", is_public: True, attributes: []),
+      definition.new(name: "handle")
+        |> definition.with_publicity(True),
       function.new0(returns: types.int, handler: fn() {
         case_.new(match_on)
         |> case_.with_matcher(
@@ -1633,8 +1609,7 @@ pub fn module_with_unchecked_custom_types_test() {
       |> variant.with_arguments_unchecked(
         list.range(0, i)
         |> list.reverse()
-        |> list.pop(fn(_) { True })
-        |> result.map(fn(x) { x.1 })
+        |> list.rest()
         |> result.unwrap([])
         |> list.reverse()
         |> list.map(fn(x) {
@@ -1653,32 +1628,23 @@ pub fn module_with_unchecked_custom_types_test() {
 
   let mod = {
     use custom_type_type, custom_constructors <- module.with_custom_type_unchecked(
-      module.DefinitionDetails(
-        name: "VariantHolder",
-        is_public: True,
-        attributes: [],
-      ),
+      definition.new(name: "VariantHolder")
+        |> definition.with_publicity(True),
       custom_type,
     )
 
     let assert [variant0, _, _, variant3, ..] = custom_constructors
 
     use _get_variant <- module.with_function(
-      module.DefinitionDetails(
-        name: "get_variant",
-        is_public: True,
-        attributes: [],
-      ),
+      definition.new(name: "get_variant")
+        |> definition.with_publicity(True),
       function.new0(returns: custom.to_type(custom_type_type), handler: fn() {
         constructor.to_expression_unchecked(variant0)
       }),
     )
     use _get_other_variant <- module.with_function(
-      module.DefinitionDetails(
-        name: "get_other_variant",
-        is_public: True,
-        attributes: [],
-      ),
+      definition.new(name: "get_other_variant")
+        |> definition.with_publicity(True),
       function.new0(returns: custom.to_type(custom_type_type), handler: fn() {
         expression.call3(
           constructor.to_expression_unchecked(variant3),

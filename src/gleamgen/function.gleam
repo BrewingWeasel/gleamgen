@@ -15,6 +15,20 @@ pub type Function(type_, ret) {
   )
 }
 
+pub fn new_raw(
+  args args: List(#(String, types.GeneratedType(Unchecked))),
+  returns returns: types.GeneratedType(ret),
+  handler handler: fn(List(expression.Expression(Unchecked))) ->
+    expression.Expression(ret),
+) -> Function(Unchecked, ret) {
+  let body =
+    handler(
+      args
+      |> list.map(fn(arg) { expression.unchecked_ident(arg.0) }),
+    )
+  Function(args:, returns:, body:)
+}
+
 pub fn new0(
   returns returns: types.GeneratedType(ret),
   handler handler: fn() -> expression.Expression(ret),

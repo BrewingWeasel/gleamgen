@@ -1,24 +1,43 @@
 import glam/doc
+import glance
+import gleam/bool
 import gleam/dict
+import gleam/int
 import gleam/list
-import gleam/option
+import gleam/option.{type Option}
 import gleam/result
 import gleam/string
 import gleamgen/expression.{type Expression}
 import gleamgen/expression/constructor
 import gleamgen/function
 import gleamgen/import_
+import gleamgen/internal/module_text
 import gleamgen/module/definition
 import gleamgen/render
 import gleamgen/types.{type Unchecked}
 import gleamgen/types/custom
 
+pub opaque type ExternalModule {
+  ExternalModule(
+    definitions: List(ModuleDefinition),
+    parse_error: Option(glance.Error),
+  )
+}
 
 pub type Module {
   Module(
     definitions: List(ModuleDefinition),
     imports: List(import_.ImportedModule),
+    external_module: Option(ExternalModule),
   )
+}
+
+type PredefinedDefinition {
+  PredefinedImport(glance.Definition(glance.Import))
+  PredefinedCustomType(glance.Definition(glance.CustomType))
+  PredefinedTypeAlias(glance.Definition(glance.TypeAlias))
+  PredefinedConstant(glance.Definition(glance.Constant))
+  PredefinedFunction(glance.Definition(glance.Function))
 }
 
 pub type ModuleDefinition {
@@ -30,6 +49,128 @@ pub opaque type Definable {
   CustomTypeBuilder(custom.CustomTypeBuilder(Unchecked, Nil, Nil))
   Constant(Expression(Unchecked))
   TypeAlias(types.GeneratedType(Unchecked))
+  Predefined(ast: PredefinedDefinition, text_before: String, content: String)
+}
+
+fn arrange_definitions(
+  module_: glance.Module,
+  module_text: module_text.ModuleText,
+) {
+  let get_location = fn(definition: PredefinedDefinition) {
+    case definition {
+      PredefinedImport(def) -> def.definition.location
+      PredefinedConstant(def) -> def.definition.location
+      PredefinedCustomType(def) -> def.definition.location
+      PredefinedTypeAlias(def) -> def.definition.location
+      PredefinedFunction(def) -> def.definition.location
+    }
+  }
+
+  let #(module, _module_text) =
+    [
+      list.map(module_.imports, PredefinedImport),
+      list.map(module_.constants, PredefinedConstant),
+      list.map(module_.custom_types, PredefinedCustomType),
+      list.map(module_.type_aliases, PredefinedTypeAlias),
+      list.map(module_.functions, PredefinedFunction),
+    ]
+    |> list.flatten()
+    |> list.sort(fn(first, second) {
+      int.compare(get_location(first).start, get_location(second).start)
+    })
+    |> module_text.fold(
+      module_text,
+      Module([], [], option.Some(ExternalModule([], option.None))),
+      handle_existing_definition,
+      get_location,
+    )
+  module
+}
+
+fn handle_existing_definition(
+  predefined_definition: PredefinedDefinition,
+  module: Module,
+  before_text: String,
+  definition_text: String,
+) -> Module {
+  let add_definition = fn(name, publicity, attributes) {
+    let external_module =
+      module.external_module
+      |> option.unwrap(ExternalModule([], option.None))
+
+    let is_public = case publicity {
+      glance.Public -> True
+      glance.Private -> False
+    }
+    let attributes =
+      list.filter_map(attributes, definition.attribute_from_glance)
+
+    let details =
+      definition.new(name)
+      |> definition.with_publicity(is_public)
+      |> definition.with_attributes(attributes)
+      |> definition.with_text_before(before_text)
+      |> definition.set_predefined(True)
+
+    let new_definition =
+      Definition(
+        details:,
+        value: Predefined(predefined_definition, before_text, definition_text),
+      )
+
+    Module(
+      ..module,
+      external_module: option.Some(
+        ExternalModule(..external_module, definitions: [
+          new_definition,
+          ..external_module.definitions
+        ]),
+      ),
+    )
+  }
+
+  case predefined_definition {
+    PredefinedImport(definition) -> {
+      let new_import = import_.convert_import(definition, before_text)
+      Module(..module, imports: [new_import, ..module.imports])
+    }
+    PredefinedConstant(definition) ->
+      add_definition(
+        definition.definition.name,
+        definition.definition.publicity,
+        definition.attributes,
+      )
+    PredefinedCustomType(definition) ->
+      add_definition(
+        definition.definition.name,
+        definition.definition.publicity,
+        definition.attributes,
+      )
+    PredefinedTypeAlias(definition) ->
+      add_definition(
+        definition.definition.name,
+        definition.definition.publicity,
+        definition.attributes,
+      )
+    PredefinedFunction(definition) ->
+      add_definition(
+        definition.definition.name,
+        definition.definition.publicity,
+        definition.attributes,
+      )
+  }
+}
+
+pub fn from_string(module_text: String) -> Module {
+  case glance.module(module_text) {
+    Ok(parsed_module) -> {
+      let module_text = module_text.from_string(module_text)
+      arrange_definitions(parsed_module, module_text)
+    }
+    Error(err) -> {
+      Module([], [], option.Some(ExternalModule([], option.Some(err))))
+    }
+  }
 }
 
 pub fn with_constant(
@@ -58,6 +199,52 @@ pub fn with_imports_unchecked(
 ) -> Module {
   let rest = handler(modules)
   Module(..rest, imports: list.append(list.reverse(modules), rest.imports))
+}
+
+pub fn replace_function(
+  function_name: String,
+  module: Module,
+  func: fn(Option(glance.Function)) -> function.Function(func_type, ret),
+  handler: fn(Module, Expression(func_type)) -> Module,
+) -> Module {
+  let rest = handler(module, expression.unchecked_ident(function_name))
+  case module.external_module {
+    option.Some(ExternalModule(definitions:, ..) as external_module) -> {
+      let definitions =
+        list.map(definitions, fn(definition) {
+          use <- bool.guard(
+            definition.details.name != function_name,
+            definition,
+          )
+          let #(details, value) = case definition.value {
+            Predefined(PredefinedFunction(f), _, _) -> #(
+              definition.details |> definition.set_predefined(False),
+              Function(
+                func(option.Some(f.definition)) |> function.to_unchecked(),
+              ),
+            )
+            v -> #(definition.details, v)
+          }
+          Definition(details:, value:)
+        })
+
+      Module(
+        ..module,
+        external_module: option.Some(
+          ExternalModule(..external_module, definitions:),
+        ),
+      )
+    }
+    option.None -> {
+      Module(..rest, definitions: [
+        Definition(
+          definition.new(function_name),
+          value: Function(func(option.None) |> function.to_unchecked()),
+        ),
+        ..rest.definitions
+      ])
+    }
+  }
 }
 
 pub fn with_function(
@@ -452,24 +639,42 @@ pub fn eof() -> Module {
 }
 
 pub fn render(module: Module, context: render.Context) -> render.Rendered {
+  let #(definitions_at_top, definitions_at_bottom, definitions_after) =
+    separate_definitions(module.definitions, [], [], dict.new())
+
+  let external_definitions = case module.external_module {
+    option.Some(external) -> external.definitions
+    option.None -> []
+  }
+  let all_definitions =
+    [
+      definitions_at_bottom,
+      external_definitions,
+      definitions_at_top,
+    ]
+    |> list.flatten
+    |> list.reverse()
+
   let #(details, rendered_defs) =
-    list.map_fold(
-      module.definitions,
+    render_all_definitions(
+      all_definitions,
+      definitions_after,
+      option.None,
+      context,
       render.empty_details,
-      fn(previous_details, definition) {
-        let #(rendered, new_details) = render_definition(definition, context)
-        #(render.merge_details(previous_details, new_details), rendered)
-      },
+      [],
     )
 
   let rendered_imports =
     module.imports
     |> list.filter(fn(m) {
-      details.used_imports
+      m.predefined
+      || details.used_imports
       |> list.contains(import_.get_reference(m))
     })
+    |> list.sort(import_.compare)
+    |> import_.merge_imports
     |> list.map(fn(x) { x |> render_imported_module |> render.to_string() })
-    |> list.sort(string.compare)
     |> list.map(doc.from_string)
     |> doc.join(with: doc.line)
     |> doc.append(case list.is_empty(module.imports) {
@@ -484,6 +689,7 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
 
 pub fn render_imported_module(module: import_.ImportedModule) -> render.Rendered {
   doc.concat([
+    doc.from_string(module.before_text),
     doc.from_string("import "),
     doc.from_string(string.join(module.name, "/")),
     case module.alias {
@@ -504,10 +710,10 @@ fn render_all_definitions(
   definitions: List(ModuleDefinition),
   after_definition: dict.Dict(String, List(ModuleDefinition)),
   last_definition_name: Option(String),
-  context,
-  previous_details,
-  rendered_definitions,
-) {
+  context: render.Context,
+  previous_details: render.RenderedDetails,
+  rendered_definitions: List(doc.Document),
+) -> #(render.RenderedDetails, List(doc.Document)) {
   let definitions_to_prepend =
     last_definition_name
     |> option.then(fn(name) {
@@ -544,7 +750,7 @@ fn render_all_definitions(
           )
         }
         [] -> {
-          #(list.reverse(rendered_definitions), previous_details)
+          #(previous_details, list.reverse(rendered_definitions))
         }
       }
     }
@@ -649,21 +855,29 @@ fn render_definition(definition: ModuleDefinition, context) {
         function.render(func, context, option.Some(definition.details.name))
       #(rendered.doc, rendered.details)
     }
+    Predefined(_, _, content) -> {
+      #(doc.from_string(content), render.empty_details)
+    }
   }
 
   let full_doc =
-    doc.join(
-      list.map(definition.details.attributes, definition.render_attribute),
-      doc.line,
-    )
+    doc.concat([
+      doc.from_string(definition.details.text_before),
+      doc.join(
+        list.map(definition.details.attributes, definition.render_attribute),
+        doc.line,
+      ),
+    ])
     |> doc.append(case list.is_empty(definition.details.attributes) {
       True -> doc.empty
       False -> doc.line
     })
-    |> doc.append(case definition.details.is_public {
-      True -> doc.concat([doc.from_string("pub"), doc.space])
-      False -> doc.empty
-    })
+    |> doc.append(
+      case definition.details.is_public && !definition.details.predefined {
+        True -> doc.concat([doc.from_string("pub"), doc.space])
+        False -> doc.empty
+      },
+    )
     |> doc.append(rendered)
 
   #(full_doc, details)

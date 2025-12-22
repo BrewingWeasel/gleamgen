@@ -19,114 +19,156 @@ import gleamgen/types
 import gleamgen/types/custom
 import gleamgen/types/variant
 import gleeunit
-import gleeunit/should
 
 pub fn main() {
   gleeunit.main()
 }
 
 pub fn simple_int_addition_test() {
-  expression.int(3)
-  |> expression.math_operator(expression.Add, expression.int(5))
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal("3 + 5")
+  let result =
+    expression.int(3)
+    |> expression.math_operator(expression.Add, expression.int(5))
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "3 + 5"
+
+  assert result == expected
 }
 
 pub fn simple_string_test() {
-  expression.string("hello")
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal("\"hello\"")
+  let result =
+    expression.string("hello")
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "\"hello\""
+
+  assert result == expected
 }
 
 pub fn string_escape_quote_test() {
-  expression.string("hel\"lo")
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal("\"hel\\\"lo\"")
+  let result =
+    expression.string("hel\"lo")
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "\"hel\\\"lo\""
+
+  assert result == expected
 }
 
 pub fn string_escape_slash_test() {
-  expression.string("hello\\hi")
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal("\"hello\\hi\"")
+  let result =
+    expression.string("hello\\hi")
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "\"hello\\hi\""
+
+  assert result == expected
 }
 
 pub fn empty_string_test() {
-  expression.string("")
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal("\"\"")
+  let result =
+    expression.string("")
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "\"\""
+
+  assert result == expected
 }
 
 pub fn simple_tuple_test() {
-  expression.tuple3(
-    expression.int(3),
-    expression.string("hello"),
-    expression.bool(True),
-  )
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal("#(3, \"hello\", True)")
+  let result =
+    expression.tuple3(
+      expression.int(3),
+      expression.string("hello"),
+      expression.bool(True),
+    )
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "#(3, \"hello\", True)"
+
+  assert result == expected
 }
 
 pub fn simple_list_test() {
-  expression.list([expression.string("hello"), expression.string("hi")])
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal("[\"hello\", \"hi\"]")
+  let result =
+    expression.list([expression.string("hello"), expression.string("hi")])
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "[\"hello\", \"hi\"]"
+
+  assert result == expected
 }
 
 pub fn simple_list_prepending_test() {
-  expression.list_prepend(
-    [expression.string("hello"), expression.string("hi")],
-    expression.list([expression.string("yo")]),
-  )
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal("[\"hello\", \"hi\", ..[\"yo\"]]")
+  let result =
+    expression.list_prepend(
+      [expression.string("hello"), expression.string("hi")],
+      expression.list([expression.string("yo")]),
+    )
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "[\"hello\", \"hi\", ..[\"yo\"]]"
+
+  assert result == expected
 }
 
 pub fn multiline_list_prepending_test() {
-  expression.list_prepend(
-    [
-      expression.string("hello but much, much, much, much longer so it breaks"),
-      expression.string("hello but much, much, much, much longer so it breaks"),
-    ],
-    expression.list([expression.string("yo")]),
-  )
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    expression.list_prepend(
+      [
+        expression.string(
+          "hello but much, much, much, much longer so it breaks",
+        ),
+        expression.string(
+          "hello but much, much, much, much longer so it breaks",
+        ),
+      ],
+      expression.list([expression.string("yo")]),
+    )
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "[
   \"hello but much, much, much, much longer so it breaks\",
   \"hello but much, much, much, much longer so it breaks\",
   ..[\"yo\"]
-]",
-  )
+]"
+
+  assert result == expected
 }
 
 pub fn long_list_test() {
-  expression.list([
+  let result =
     expression.list([
-      expression.string("hello"),
-      expression.string("hello"),
-      expression.string("hello"),
-      expression.string("hello"),
-      expression.string("hello but much, much, much, much longer so it breaks"),
-    ]),
-    expression.list([
-      expression.string("hi"),
-      expression.string("hi"),
-      expression.string("hi"),
-      expression.string("hi"),
-    ]),
-  ])
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+      expression.list([
+        expression.string("hello"),
+        expression.string("hello"),
+        expression.string("hello"),
+        expression.string("hello"),
+        expression.string(
+          "hello but much, much, much, much longer so it breaks",
+        ),
+      ]),
+      expression.list([
+        expression.string("hi"),
+        expression.string("hi"),
+        expression.string("hi"),
+        expression.string("hi"),
+      ]),
+    ])
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "[
   [
     \"hello\",
@@ -136,25 +178,30 @@ pub fn long_list_test() {
     \"hello but much, much, much, much longer so it breaks\",
   ],
   [\"hi\", \"hi\", \"hi\", \"hi\"],
-]",
-  )
+]"
+
+  assert result == expected
 }
 
 pub fn long_tuple_test() {
-  expression.tuple9(
-    expression.int(3),
-    expression.string("hello there (making this really long like really long)"),
-    expression.bool(True),
-    expression.bool(True),
-    expression.bool(True),
-    expression.bool(True),
-    expression.bool(True),
-    expression.bool(True),
-    expression.bool(True),
-  )
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    expression.tuple9(
+      expression.int(3),
+      expression.string(
+        "hello there (making this really long like really long)",
+      ),
+      expression.bool(True),
+      expression.bool(True),
+      expression.bool(True),
+      expression.bool(True),
+      expression.bool(True),
+      expression.bool(True),
+      expression.bool(True),
+    )
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "#(
   3,
   \"hello there (making this really long like really long)\",
@@ -165,284 +212,338 @@ pub fn long_tuple_test() {
   True,
   True,
   True,
-)",
-  )
+)"
+
+  assert result == expected
 }
 
 pub fn simple_todo_test() {
-  expression.todo_(option.Some("some unimplemented thing"))
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal("todo as \"some unimplemented thing\"")
+  let result =
+    expression.todo_(option.Some("some unimplemented thing"))
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "todo as \"some unimplemented thing\""
+
+  assert result == expected
 }
 
 pub fn simple_float_subtraction_test() {
-  expression.float(3.3)
-  |> expression.math_operator_float(expression.Add, expression.float(5.3))
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal("3.3 +. 5.3")
+  let result =
+    expression.float(3.3)
+    |> expression.math_operator_float(expression.Add, expression.float(5.3))
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "3.3 +. 5.3"
+
+  assert result == expected
 }
 
 pub fn equals_test() {
-  expression.string("hi")
-  |> expression.equals(expression.string("hello"))
-  |> expression.equals(expression.bool(True))
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal("\"hi\" == \"hello\" == True")
+  let result =
+    expression.string("hi")
+    |> expression.equals(expression.string("hello"))
+    |> expression.equals(expression.bool(True))
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "\"hi\" == \"hello\" == True"
+
+  assert result == expected
 }
 
 pub fn simple_string_addition_test() {
-  expression.string("hello ")
-  |> expression.concat_string(expression.string("world"))
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal("\"hello \" <> \"world\"")
+  let result =
+    expression.string("hello ")
+    |> expression.concat_string(expression.string("world"))
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "\"hello \" <> \"world\""
+
+  assert result == expected
 }
 
 pub fn simple_case_string_test() {
-  case_.new(expression.string("hello"))
-  |> case_.with_matcher(matcher.string_literal("hello"), fn(_) {
-    expression.string("world")
-  })
-  |> case_.with_matcher(matcher.variable("v"), fn(v) {
-    expression.concat_string(v, expression.string(" world"))
-  })
-  |> case_.build_expression()
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    case_.new(expression.string("hello"))
+    |> case_.with_matcher(matcher.string_literal("hello"), fn(_) {
+      expression.string("world")
+    })
+    |> case_.with_matcher(matcher.variable("v"), fn(v) {
+      expression.concat_string(v, expression.string(" world"))
+    })
+    |> case_.build_expression()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "case \"hello\" {
   \"hello\" -> \"world\"
   v -> v <> \" world\"
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn simple_case_or_test() {
-  case_.new(expression.string("hello"))
-  |> case_.with_matcher(
-    matcher.or(matcher.string_literal("hello"), matcher.string_literal("hi")),
-    fn(_) { expression.string("world") },
-  )
-  |> case_.with_matcher(matcher.variable("v"), fn(v) {
-    expression.concat_string(v, expression.string(" world"))
-  })
-  |> case_.build_expression()
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    case_.new(expression.string("hello"))
+    |> case_.with_matcher(
+      matcher.or(matcher.string_literal("hello"), matcher.string_literal("hi")),
+      fn(_) { expression.string("world") },
+    )
+    |> case_.with_matcher(matcher.variable("v"), fn(v) {
+      expression.concat_string(v, expression.string(" world"))
+    })
+    |> case_.build_expression()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "case \"hello\" {
   \"hello\" | \"hi\" -> \"world\"
   v -> v <> \" world\"
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn simple_case_as_test() {
-  case_.new(expression.string("hello"))
-  |> case_.with_matcher(
-    matcher.string_literal("hello")
-      |> matcher.as_("greeting"),
-    fn(greeting) {
-      expression.concat_string(greeting, expression.string("world"))
-    },
-  )
-  |> case_.with_matcher(matcher.variable("v"), fn(v) {
-    expression.concat_string(v, expression.string(" world"))
-  })
-  |> case_.build_expression()
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    case_.new(expression.string("hello"))
+    |> case_.with_matcher(
+      matcher.string_literal("hello")
+        |> matcher.as_("greeting"),
+      fn(greeting) {
+        expression.concat_string(greeting, expression.string("world"))
+      },
+    )
+    |> case_.with_matcher(matcher.variable("v"), fn(v) {
+      expression.concat_string(v, expression.string(" world"))
+    })
+    |> case_.build_expression()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "case \"hello\" {
   \"hello\" as greeting -> greeting <> \"world\"
   v -> v <> \" world\"
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn simple_string_concat_test() {
-  case_.new(expression.string("I love gleam"))
-  |> case_.with_matcher(
-    matcher.concat_string(starting: "I love ", variable: "thing"),
-    fn(thing) {
-      expression.string("I love ")
-      |> expression.concat_string(thing)
-      |> expression.concat_string(expression.string(" too"))
-    },
-  )
-  |> case_.with_matcher(matcher.variable("_"), fn(_) {
-    expression.string("Interesting")
-  })
-  |> case_.build_expression()
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    case_.new(expression.string("I love gleam"))
+    |> case_.with_matcher(
+      matcher.concat_string(starting: "I love ", variable: "thing"),
+      fn(thing) {
+        expression.string("I love ")
+        |> expression.concat_string(thing)
+        |> expression.concat_string(expression.string(" too"))
+      },
+    )
+    |> case_.with_matcher(matcher.variable("_"), fn(_) {
+      expression.string("Interesting")
+    })
+    |> case_.build_expression()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "case \"I love gleam\" {
   \"I love \" <> thing -> \"I love \" <> thing <> \" too\"
   _ -> \"Interesting\"
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn simple_case_tuple_to_multiple_subjects_test() {
-  case_.new(expression.tuple2(expression.string("hello"), expression.int(3)))
-  |> case_.with_matcher(
-    matcher.tuple2(
-      matcher.string_literal("hello"),
-      matcher.named_discard("other"),
-    ),
-    fn(_) { expression.string("world") },
-  )
-  |> case_.with_matcher(matcher.discard(), fn(_: Nil) {
-    expression.string("other")
-  })
-  |> case_.build_expression()
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    case_.new(expression.tuple2(expression.string("hello"), expression.int(3)))
+    |> case_.with_matcher(
+      matcher.tuple2(
+        matcher.string_literal("hello"),
+        matcher.named_discard("other"),
+      ),
+      fn(_) { expression.string("world") },
+    )
+    |> case_.with_matcher(matcher.discard(), fn(_: Nil) {
+      expression.string("other")
+    })
+    |> case_.build_expression()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "case \"hello\", 3 {
   \"hello\", _other -> \"world\"
   _, _ -> \"other\"
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn simple_case_tuple_not_multiple_subjects_test() {
-  case_.new(expression.tuple2(expression.string("hello"), expression.int(3)))
-  |> case_.with_matcher(
-    matcher.tuple2(matcher.string_literal("hello"), matcher.variable("num")),
-    fn(patterns) {
-      let #(_, num) = patterns
-      expression.tuple2(
-        expression.string("world"),
-        expression.math_operator(num, expression.Add, expression.int(2)),
-      )
-    },
-  )
-  |> case_.with_matcher(
-    matcher.variable("my_favorite_variable"),
-    fn(my_favorite_variable) { my_favorite_variable },
-  )
-  |> case_.build_expression()
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    case_.new(expression.tuple2(expression.string("hello"), expression.int(3)))
+    |> case_.with_matcher(
+      matcher.tuple2(matcher.string_literal("hello"), matcher.variable("num")),
+      fn(patterns) {
+        let #(_, num) = patterns
+        expression.tuple2(
+          expression.string("world"),
+          expression.math_operator(num, expression.Add, expression.int(2)),
+        )
+      },
+    )
+    |> case_.with_matcher(
+      matcher.variable("my_favorite_variable"),
+      fn(my_favorite_variable) { my_favorite_variable },
+    )
+    |> case_.build_expression()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "case #(\"hello\", 3) {
   #(\"hello\", num) -> #(\"world\", num + 2)
   my_favorite_variable -> my_favorite_variable
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn simple_case_tuple_to_multiple_subjects_multiple_vars_test() {
-  case_.new(expression.tuple2(expression.string("hello"), expression.int(3)))
-  |> case_.with_matcher(
-    matcher.tuple2(matcher.string_literal("hello"), matcher.variable("num")),
-    fn(patterns) {
-      let #(_, num) = patterns
-      expression.tuple2(
-        expression.string("world"),
-        expression.math_operator(num, expression.Add, expression.int(2)),
-      )
-    },
-  )
-  |> case_.with_matcher(
-    matcher.tuple2(matcher.variable("greeting"), matcher.variable("num")),
-    fn(patterns) {
-      let #(greeting, num) = patterns
-      expression.tuple2(
-        greeting,
-        expression.math_operator(num, expression.Sub, expression.int(2)),
-      )
-    },
-  )
-  |> case_.build_expression()
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    case_.new(expression.tuple2(expression.string("hello"), expression.int(3)))
+    |> case_.with_matcher(
+      matcher.tuple2(matcher.string_literal("hello"), matcher.variable("num")),
+      fn(patterns) {
+        let #(_, num) = patterns
+        expression.tuple2(
+          expression.string("world"),
+          expression.math_operator(num, expression.Add, expression.int(2)),
+        )
+      },
+    )
+    |> case_.with_matcher(
+      matcher.tuple2(matcher.variable("greeting"), matcher.variable("num")),
+      fn(patterns) {
+        let #(greeting, num) = patterns
+        expression.tuple2(
+          greeting,
+          expression.math_operator(num, expression.Sub, expression.int(2)),
+        )
+      },
+    )
+    |> case_.build_expression()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "case \"hello\", 3 {
   \"hello\", num -> #(\"world\", num + 2)
   greeting, num -> #(greeting, num - 2)
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn simple_case_merge_repeated_test() {
-  case_.new(expression.string("hello"))
-  |> case_.with_matcher(
-    matcher.or(matcher.string_literal("hello"), matcher.string_literal("hi")),
-    fn(_) { expression.string("...world!") },
-  )
-  |> case_.with_matcher(matcher.string_literal("hola"), fn(_) {
-    expression.string("...world!")
-  })
-  |> case_.with_matcher(matcher.string_literal("labas"), fn(_) {
-    expression.string("...world!")
-  })
-  |> case_.with_matcher(matcher.string_literal("sveiks"), fn(_) {
-    expression.string("Latvian????")
-  })
-  |> case_.with_matcher(matcher.variable("v"), fn(v) {
-    expression.concat_string(v, expression.string(" world"))
-  })
-  |> case_.build_expression()
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    case_.new(expression.string("hello"))
+    |> case_.with_matcher(
+      matcher.or(matcher.string_literal("hello"), matcher.string_literal("hi")),
+      fn(_) { expression.string("...world!") },
+    )
+    |> case_.with_matcher(matcher.string_literal("hola"), fn(_) {
+      expression.string("...world!")
+    })
+    |> case_.with_matcher(matcher.string_literal("labas"), fn(_) {
+      expression.string("...world!")
+    })
+    |> case_.with_matcher(matcher.string_literal("sveiks"), fn(_) {
+      expression.string("Latvian????")
+    })
+    |> case_.with_matcher(matcher.variable("v"), fn(v) {
+      expression.concat_string(v, expression.string(" world"))
+    })
+    |> case_.build_expression()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "case \"hello\" {
   \"hello\" | \"hi\" | \"hola\" | \"labas\" -> \"...world!\"
   \"sveiks\" -> \"Latvian????\"
   v -> v <> \" world\"
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn case_merge_repeated_test() {
-  case_.new(expression.string("hello"))
-  |> case_.with_matcher(
-    matcher.concat_string(starting: "I love ", variable: "thing"),
-    fn(thing) { expression.concat_string(thing, expression.string("is good!")) },
-  )
-  |> case_.with_matcher(
-    matcher.concat_string(starting: "My favorite thing is ", variable: "thing"),
-    fn(thing) { expression.concat_string(thing, expression.string("is good!")) },
-  )
-  |> case_.with_matcher(matcher.variable("_"), fn(_) {
-    expression.string("I don't know!")
-  })
-  |> case_.build_expression()
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    case_.new(expression.string("hello"))
+    |> case_.with_matcher(
+      matcher.concat_string(starting: "I love ", variable: "thing"),
+      fn(thing) {
+        expression.concat_string(thing, expression.string("is good!"))
+      },
+    )
+    |> case_.with_matcher(
+      matcher.concat_string(
+        starting: "My favorite thing is ",
+        variable: "thing",
+      ),
+      fn(thing) {
+        expression.concat_string(thing, expression.string("is good!"))
+      },
+    )
+    |> case_.with_matcher(matcher.variable("_"), fn(_) {
+      expression.string("I don't know!")
+    })
+    |> case_.build_expression()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "case \"hello\" {
   \"I love \" <> thing | \"My favorite thing is \" <> thing -> thing <> \"is good!\"
   _ -> \"I don't know!\"
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn simple_block_test() {
-  {
-    use x <- block.with_let_declaration("x", expression.int(4))
-    use y <- block.with_let_declaration(
-      "y",
-      expression.math_operator(x, expression.Add, expression.int(5)),
-    )
-    block.ending_block(y)
-  }
-  |> block.build()
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    {
+      use x <- block.with_let_declaration("x", expression.int(4))
+      use y <- block.with_let_declaration(
+        "y",
+        expression.math_operator(x, expression.Add, expression.int(5)),
+      )
+      block.ending_block(y)
+    }
+    |> block.build()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "{
   let x = 4
   let y = x + 5
   y
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn block_in_function_test() {
@@ -457,47 +558,53 @@ pub fn block_in_function_test() {
     }
     |> block.build()
 
-  function.new0(types.int, fn() { block_expr })
-  |> function.to_unchecked()
-  |> function.render(render.default_context(), option.Some("test_function"))
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    function.new0(types.int, fn() { block_expr })
+    |> function.to_unchecked()
+    |> function.render(render.default_context(), option.Some("test_function"))
+    |> render.to_string()
+
+  let expected =
     "fn test_function() -> Int {
   let x = 4
   let y = x + 5
   y
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn simple_anonymous_function_test() {
-  {
-    use func <- block.with_let_declaration(
-      "func",
-      function.anonymous(
-        function.new2(
-          #("x", types.int),
-          #("y", types.int),
-          types.int,
-          handler: fn(x, y) { expression.math_operator(x, expression.Add, y) },
+  let result =
+    {
+      use func <- block.with_let_declaration(
+        "func",
+        function.anonymous(
+          function.new2(
+            #("x", types.int),
+            #("y", types.int),
+            types.int,
+            handler: fn(x, y) { expression.math_operator(x, expression.Add, y) },
+          ),
         ),
-      ),
-    )
-    block.ending_block(expression.call2(
-      func,
-      expression.int(2),
-      expression.int(3),
-    ))
-  }
-  |> block.build()
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+      )
+      block.ending_block(expression.call2(
+        func,
+        expression.int(2),
+        expression.int(3),
+      ))
+    }
+    |> block.build()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "{
   let func = fn(x: Int, y: Int) -> Int { x + y }
   func(2, 3)
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn simple_module_test() {
@@ -508,39 +615,47 @@ pub fn simple_module_test() {
     )
     module.eof()
   }
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal("pub const based_number = 46")
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "pub const based_number = 46"
+
+  assert result == expected
 }
 
 pub fn block_with_let_matching_test() {
-  {
-    use x <- block.with_let_declaration("x", expression.ok(expression.int(4)))
-    use y <- block.with_matching_let_declaration(
-      matcher.or(
-        matcher.ok(matcher.variable("y")),
-        matcher.error(matcher.variable("y")),
-      ),
-      x,
-      False,
-    )
-    block.ending_block(expression.math_operator(
-      y,
-      expression.Add,
-      expression.int(3),
-    ))
-  }
-  |> block.build()
-  |> expression.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    {
+      use x <- block.with_let_declaration("x", expression.ok(expression.int(4)))
+      use y <- block.with_matching_let_declaration(
+        matcher.or(
+          matcher.ok(matcher.variable("y")),
+          matcher.error(matcher.variable("y")),
+        ),
+        x,
+        False,
+      )
+      block.ending_block(expression.math_operator(
+        y,
+        expression.Add,
+        expression.int(3),
+      ))
+    }
+    |> block.build()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "{
   let x = Ok(4)
   let Ok(y) | Error(y) = x
   y + 3
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn module_with_function_test() {
@@ -581,10 +696,12 @@ pub fn module_with_function_test() {
     module.eof()
   }
 
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "import gleam/io
 
 const language = \"gleam\"
@@ -596,8 +713,9 @@ pub fn describer(thing: String) -> String {
 
 pub fn main() -> Nil {
   io.println(describer(\"program\"))
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn module_import_constructor_test() {
@@ -642,10 +760,12 @@ pub fn module_import_constructor_test() {
     module.eof()
   }
 
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "import gleam/option
 
 pub fn option_from_string(str: String) -> option.Option(String) {
@@ -653,8 +773,9 @@ pub fn option_from_string(str: String) -> option.Option(String) {
     \"\" -> option.None
     value -> option.Some(value)
   }
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn basic_use_test() {
@@ -694,18 +815,20 @@ pub fn basic_use_test() {
     module.eof()
   }
 
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "import gleam/result
 
 pub fn do_result() -> Result(Int, String) {
   let res = Ok(3)
   use ok_value <- result.try(res)
   Ok(ok_value + 5)
-}",
-  )
+}"
+  assert result == expected
 }
 
 pub fn two_use_test() {
@@ -753,10 +876,12 @@ pub fn two_use_test() {
     module.eof()
   }
 
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "import gleam/bool
 import gleam/result
 
@@ -765,8 +890,8 @@ pub fn do_result() -> Result(Int, String) {
   use ok_value <- result.try(res)
   use <- bool.guard(ok_value == 2, Error(\"not equal to 2\"))
   Ok(ok_value + 5)
-}",
-  )
+}"
+  assert result == expected
 }
 
 pub fn result_test() {
@@ -827,10 +952,12 @@ pub fn result_test() {
     module.eof()
   }
 
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "import gleam/result
 import gleam/string
 
@@ -841,8 +968,8 @@ pub fn handle_result(res: Result(String, Int)) -> Result(Bool, Int) {
     Ok(str) -> Error(string.length(str))
     Error(number) -> Error(number)
   }
-}",
-  )
+}"
+  assert result == expected
 }
 
 pub fn module_with_type_alias_test() {
@@ -869,17 +996,20 @@ pub fn module_with_type_alias_test() {
     module.eof()
   }
 
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "type AwesomeString = String
 
 @internal
 pub fn runner(thing: AwesomeString) -> String {
   \"Hi \" <> thing
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn module_import_test() {
@@ -911,17 +1041,20 @@ pub fn module_import_test() {
     module.eof()
   }
 
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "import gleam/int
 import gleam/io as only_o
 
 pub fn main() -> Nil {
   only_o.println(int.to_string(23))
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn module_unused_import_test() {
@@ -954,17 +1087,20 @@ pub fn module_unused_import_test() {
     module.eof()
   }
 
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "import gleam/int
 import gleam/io as only_o
 
 pub fn main() -> Nil {
   only_o.println(int.to_string(23))
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 // Because this is False, we don't use the string module, 
@@ -1004,17 +1140,20 @@ pub fn module_sometimes_unused_import_test() {
     module.eof()
   }
 
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "import gleam/int
 import gleam/io as only_o
 
 pub fn main() -> Nil {
   only_o.println(int.to_string(23))
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub type ExampleAnimal {
@@ -1080,10 +1219,12 @@ pub fn module_with_custom_type_test() {
     module.eof()
   }
 
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "pub type Animal {
   Dog(bones: Int)
   Cat(name: String, has_catnip: Bool)
@@ -1098,8 +1239,9 @@ pub fn main() -> Nil {
   describer(dog)
   let cat = Cat(\"jake\", True)
   describer(cat)
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn module_case_on_custom_type_test() {
@@ -1207,10 +1349,12 @@ pub fn module_case_on_custom_type_test() {
     module.eof()
   }
 
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "import gleam/int
 
 pub type Animal {
@@ -1231,8 +1375,9 @@ pub fn main() -> Nil {
   describer(dog)
   let cat = Cat(\"jake\", True)
   describer(cat)
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn module_let_on_custom_type_test() {
@@ -1306,10 +1451,12 @@ pub fn module_let_on_custom_type_test() {
     module.eof()
   }
 
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "import gleam/int
 
 pub type Animal {
@@ -1321,8 +1468,9 @@ pub fn describer() -> String {
   let assert Dog(bones) = Dog(4)
   let assert Cat(\"jake\" as name, True) = Cat(\"jake\", True)
   name <> \" knows a dog with this many bones: \" <> int.to_string(bones)
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn module_with_custom_type_generics_test() {
@@ -1376,10 +1524,12 @@ pub fn module_with_custom_type_generics_test() {
     module.eof()
   }
 
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "pub type MoreAwesomeResult(awesome, not_awesome) {
   VeryOk(contents: awesome)
   NotVeryOk(contents: awesome, failures: not_awesome)
@@ -1388,8 +1538,9 @@ pub fn module_with_custom_type_generics_test() {
 pub fn generate() -> MoreAwesomeResult(Int, Bool) {
   let whoo = VeryOk(4)
   NotVeryOk(23, True)
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn module_with_custom_type_generics_multiple_ways_test() {
@@ -1460,10 +1611,12 @@ pub fn module_with_custom_type_generics_multiple_ways_test() {
     module.eof()
   }
 
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "pub type MoreAwesomeResult(awesome, not_awesome) {
   VeryOk(contents: awesome)
   NotVeryOk(contents: awesome, failures: not_awesome)
@@ -1472,8 +1625,9 @@ pub fn module_with_custom_type_generics_multiple_ways_test() {
 pub fn generate() -> MoreAwesomeResult(String, Bool) {
   let whoo = VeryOk(4)
   NotVeryOk(\"hi\", True)
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn case_unchecked_variant_test() {
@@ -1551,10 +1705,12 @@ pub fn case_unchecked_variant_test() {
     module.eof()
   }
 
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "import gleam/int
 
 pub type VariantHolder {
@@ -1597,8 +1753,9 @@ pub fn handle() -> Int {
     int.sum([value1, value3, value5, value7, value9, value11, value13, value15])
     v -> 5
   }
-}",
-  )
+}"
+
+  assert result == expected
 }
 
 pub fn module_with_unchecked_custom_types_test() {
@@ -1658,10 +1815,12 @@ pub fn module_with_unchecked_custom_types_test() {
     module.eof()
   }
 
-  mod
-  |> module.render(render.default_context())
-  |> render.to_string()
-  |> should.equal(
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
     "pub type VariantHolder {
   Variant0
   Variant1(arg0: Int)
@@ -1895,6 +2054,7 @@ pub fn get_variant() -> VariantHolder {
 
 pub fn get_other_variant() -> VariantHolder {
   Variant3(1, 2, 3)
-}",
-  )
+}"
+
+  assert result == expected
 }

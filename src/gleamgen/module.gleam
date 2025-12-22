@@ -19,6 +19,7 @@ import gleamgen/types/custom
 
 pub opaque type ExternalModule {
   ExternalModule(
+    module: Option(glance.Module),
     definitions: List(ModuleDefinition),
     parse_error: Option(glance.Error),
   )
@@ -53,7 +54,7 @@ pub opaque type Definable {
 }
 
 fn arrange_definitions(
-  module_: glance.Module,
+  module: glance.Module,
   module_text: module_text.ModuleText,
 ) {
   let get_location = fn(definition: PredefinedDefinition) {
@@ -68,11 +69,11 @@ fn arrange_definitions(
 
   let #(module, _module_text) =
     [
-      list.map(module_.imports, PredefinedImport),
-      list.map(module_.constants, PredefinedConstant),
-      list.map(module_.custom_types, PredefinedCustomType),
-      list.map(module_.type_aliases, PredefinedTypeAlias),
-      list.map(module_.functions, PredefinedFunction),
+      list.map(module.imports, PredefinedImport),
+      list.map(module.constants, PredefinedConstant),
+      list.map(module.custom_types, PredefinedCustomType),
+      list.map(module.type_aliases, PredefinedTypeAlias),
+      list.map(module.functions, PredefinedFunction),
     ]
     |> list.flatten()
     |> list.sort(fn(first, second) {
@@ -80,7 +81,11 @@ fn arrange_definitions(
     })
     |> module_text.fold(
       module_text,
-      Module([], [], option.Some(ExternalModule([], option.None))),
+      Module(
+        [],
+        [],
+        option.Some(ExternalModule(option.Some(module), [], option.None)),
+      ),
       handle_existing_definition,
       get_location,
     )
@@ -96,7 +101,7 @@ fn handle_existing_definition(
   let add_definition = fn(name, publicity, attributes) {
     let external_module =
       module.external_module
-      |> option.unwrap(ExternalModule([], option.None))
+      |> option.unwrap(ExternalModule(option.None, [], option.None))
 
     let is_public = case publicity {
       glance.Public -> True
@@ -168,7 +173,11 @@ pub fn from_string(module_text: String) -> Module {
       arrange_definitions(parsed_module, module_text)
     }
     Error(err) -> {
-      Module([], [], option.Some(ExternalModule([], option.Some(err))))
+      Module(
+        [],
+        [],
+        option.Some(ExternalModule(option.None, [], option.Some(err))),
+      )
     }
   }
 }

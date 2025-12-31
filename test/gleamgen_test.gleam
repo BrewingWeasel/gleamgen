@@ -11,7 +11,7 @@ import gleamgen/expression/case_
 import gleamgen/expression/constructor
 import gleamgen/function
 import gleamgen/import_
-import gleamgen/matcher
+import gleamgen/pattern
 import gleamgen/module
 import gleamgen/module/definition
 import gleamgen/render
@@ -268,10 +268,10 @@ pub fn simple_string_addition_test() {
 pub fn simple_case_string_test() {
   let result =
     case_.new(expression.string("hello"))
-    |> case_.with_matcher(matcher.string_literal("hello"), fn(_) {
+    |> case_.with_pattern(pattern.string_literal("hello"), fn(_) {
       expression.string("world")
     })
-    |> case_.with_matcher(matcher.variable("v"), fn(v) {
+    |> case_.with_pattern(pattern.variable("v"), fn(v) {
       expression.concat_string(v, expression.string(" world"))
     })
     |> case_.build_expression()
@@ -290,11 +290,11 @@ pub fn simple_case_string_test() {
 pub fn simple_case_or_test() {
   let result =
     case_.new(expression.string("hello"))
-    |> case_.with_matcher(
-      matcher.or(matcher.string_literal("hello"), matcher.string_literal("hi")),
+    |> case_.with_pattern(
+      pattern.or(pattern.string_literal("hello"), pattern.string_literal("hi")),
       fn(_) { expression.string("world") },
     )
-    |> case_.with_matcher(matcher.variable("v"), fn(v) {
+    |> case_.with_pattern(pattern.variable("v"), fn(v) {
       expression.concat_string(v, expression.string(" world"))
     })
     |> case_.build_expression()
@@ -313,14 +313,14 @@ pub fn simple_case_or_test() {
 pub fn simple_case_as_test() {
   let result =
     case_.new(expression.string("hello"))
-    |> case_.with_matcher(
-      matcher.string_literal("hello")
-        |> matcher.as_("greeting"),
+    |> case_.with_pattern(
+      pattern.string_literal("hello")
+        |> pattern.as_("greeting"),
       fn(greeting) {
         expression.concat_string(greeting, expression.string("world"))
       },
     )
-    |> case_.with_matcher(matcher.variable("v"), fn(v) {
+    |> case_.with_pattern(pattern.variable("v"), fn(v) {
       expression.concat_string(v, expression.string(" world"))
     })
     |> case_.build_expression()
@@ -339,15 +339,15 @@ pub fn simple_case_as_test() {
 pub fn simple_string_concat_test() {
   let result =
     case_.new(expression.string("I love gleam"))
-    |> case_.with_matcher(
-      matcher.concat_string(starting: "I love ", variable: "thing"),
+    |> case_.with_pattern(
+      pattern.concat_string(starting: "I love ", variable: "thing"),
       fn(thing) {
         expression.string("I love ")
         |> expression.concat_string(thing)
         |> expression.concat_string(expression.string(" too"))
       },
     )
-    |> case_.with_matcher(matcher.variable("_"), fn(_) {
+    |> case_.with_pattern(pattern.variable("_"), fn(_) {
       expression.string("Interesting")
     })
     |> case_.build_expression()
@@ -366,14 +366,14 @@ pub fn simple_string_concat_test() {
 pub fn simple_case_tuple_to_multiple_subjects_test() {
   let result =
     case_.new(expression.tuple2(expression.string("hello"), expression.int(3)))
-    |> case_.with_matcher(
-      matcher.tuple2(
-        matcher.string_literal("hello"),
-        matcher.named_discard("other"),
+    |> case_.with_pattern(
+      pattern.tuple2(
+        pattern.string_literal("hello"),
+        pattern.named_discard("other"),
       ),
       fn(_) { expression.string("world") },
     )
-    |> case_.with_matcher(matcher.discard(), fn(_: Nil) {
+    |> case_.with_pattern(pattern.discard(), fn(_: Nil) {
       expression.string("other")
     })
     |> case_.build_expression()
@@ -392,8 +392,8 @@ pub fn simple_case_tuple_to_multiple_subjects_test() {
 pub fn simple_case_tuple_not_multiple_subjects_test() {
   let result =
     case_.new(expression.tuple2(expression.string("hello"), expression.int(3)))
-    |> case_.with_matcher(
-      matcher.tuple2(matcher.string_literal("hello"), matcher.variable("num")),
+    |> case_.with_pattern(
+      pattern.tuple2(pattern.string_literal("hello"), pattern.variable("num")),
       fn(patterns) {
         let #(_, num) = patterns
         expression.tuple2(
@@ -402,8 +402,8 @@ pub fn simple_case_tuple_not_multiple_subjects_test() {
         )
       },
     )
-    |> case_.with_matcher(
-      matcher.variable("my_favorite_variable"),
+    |> case_.with_pattern(
+      pattern.variable("my_favorite_variable"),
       fn(my_favorite_variable) { my_favorite_variable },
     )
     |> case_.build_expression()
@@ -422,8 +422,8 @@ pub fn simple_case_tuple_not_multiple_subjects_test() {
 pub fn simple_case_tuple_to_multiple_subjects_multiple_vars_test() {
   let result =
     case_.new(expression.tuple2(expression.string("hello"), expression.int(3)))
-    |> case_.with_matcher(
-      matcher.tuple2(matcher.string_literal("hello"), matcher.variable("num")),
+    |> case_.with_pattern(
+      pattern.tuple2(pattern.string_literal("hello"), pattern.variable("num")),
       fn(patterns) {
         let #(_, num) = patterns
         expression.tuple2(
@@ -432,8 +432,8 @@ pub fn simple_case_tuple_to_multiple_subjects_multiple_vars_test() {
         )
       },
     )
-    |> case_.with_matcher(
-      matcher.tuple2(matcher.variable("greeting"), matcher.variable("num")),
+    |> case_.with_pattern(
+      pattern.tuple2(pattern.variable("greeting"), pattern.variable("num")),
       fn(patterns) {
         let #(greeting, num) = patterns
         expression.tuple2(
@@ -458,20 +458,20 @@ pub fn simple_case_tuple_to_multiple_subjects_multiple_vars_test() {
 pub fn simple_case_merge_repeated_test() {
   let result =
     case_.new(expression.string("hello"))
-    |> case_.with_matcher(
-      matcher.or(matcher.string_literal("hello"), matcher.string_literal("hi")),
+    |> case_.with_pattern(
+      pattern.or(pattern.string_literal("hello"), pattern.string_literal("hi")),
       fn(_) { expression.string("...world!") },
     )
-    |> case_.with_matcher(matcher.string_literal("hola"), fn(_) {
+    |> case_.with_pattern(pattern.string_literal("hola"), fn(_) {
       expression.string("...world!")
     })
-    |> case_.with_matcher(matcher.string_literal("labas"), fn(_) {
+    |> case_.with_pattern(pattern.string_literal("labas"), fn(_) {
       expression.string("...world!")
     })
-    |> case_.with_matcher(matcher.string_literal("sveiks"), fn(_) {
+    |> case_.with_pattern(pattern.string_literal("sveiks"), fn(_) {
       expression.string("Latvian????")
     })
-    |> case_.with_matcher(matcher.variable("v"), fn(v) {
+    |> case_.with_pattern(pattern.variable("v"), fn(v) {
       expression.concat_string(v, expression.string(" world"))
     })
     |> case_.build_expression()
@@ -491,14 +491,14 @@ pub fn simple_case_merge_repeated_test() {
 pub fn case_merge_repeated_test() {
   let result =
     case_.new(expression.string("hello"))
-    |> case_.with_matcher(
-      matcher.concat_string(starting: "I love ", variable: "thing"),
+    |> case_.with_pattern(
+      pattern.concat_string(starting: "I love ", variable: "thing"),
       fn(thing) {
         expression.concat_string(thing, expression.string("is good!"))
       },
     )
-    |> case_.with_matcher(
-      matcher.concat_string(
+    |> case_.with_pattern(
+      pattern.concat_string(
         starting: "My favorite thing is ",
         variable: "thing",
       ),
@@ -506,7 +506,7 @@ pub fn case_merge_repeated_test() {
         expression.concat_string(thing, expression.string("is good!"))
       },
     )
-    |> case_.with_matcher(matcher.variable("_"), fn(_) {
+    |> case_.with_pattern(pattern.variable("_"), fn(_) {
       expression.string("I don't know!")
     })
     |> case_.build_expression()
@@ -631,9 +631,9 @@ pub fn block_with_let_matching_test() {
     {
       use x <- block.with_let_declaration("x", expression.ok(expression.int(4)))
       use y <- block.with_matching_let_declaration(
-        matcher.or(
-          matcher.ok(matcher.variable("y")),
-          matcher.error(matcher.variable("y")),
+        pattern.or(
+          pattern.ok(pattern.variable("y")),
+          pattern.error(pattern.variable("y")),
         ),
         x,
         False,
@@ -732,14 +732,14 @@ pub fn module_import_constructor_test() {
         returns: option_type |> custom.to_type1(types.string),
         handler: fn(str) {
           case_.new(str)
-          |> case_.with_matcher(matcher.string_literal(""), fn(_) {
+          |> case_.with_pattern(pattern.string_literal(""), fn(_) {
             expression.construct0(import_.value_of_type(
               option_module,
               "None",
               types.function0(option_type |> custom.to_type1(types.string)),
             ))
           })
-          |> case_.with_matcher(matcher.variable("value"), fn(value) {
+          |> case_.with_pattern(pattern.variable("value"), fn(value) {
             expression.construct1(
               import_.value_of_type(
                 option_module,
@@ -916,19 +916,19 @@ pub fn result_test() {
               ),
             )
 
-            let special_matcher =
-              matcher.or(
-                matcher.ok(matcher.string_literal("")),
-                matcher.error(matcher.int_literal(0)),
+            let special_pattern =
+              pattern.or(
+                pattern.ok(pattern.string_literal("")),
+                pattern.error(pattern.int_literal(0)),
               )
 
             block.ending_block(
               case_.new(res)
-              |> case_.with_matcher(special_matcher, fn(_) {
+              |> case_.with_pattern(special_pattern, fn(_) {
                 expression.ok(expression.bool(True))
               })
-              |> case_.with_matcher(
-                matcher.ok(matcher.variable("str")),
+              |> case_.with_pattern(
+                pattern.ok(pattern.variable("str")),
                 fn(str) {
                   expression.call1(
                     import_.function1(string_module, string.length),
@@ -937,8 +937,8 @@ pub fn result_test() {
                   |> expression.error()
                 },
               )
-              |> case_.with_matcher(
-                matcher.error(matcher.variable("number")),
+              |> case_.with_pattern(
+                pattern.error(pattern.variable("number")),
                 fn(number) { expression.error(number) },
               )
               |> case_.build_expression(),
@@ -1278,21 +1278,21 @@ pub fn module_case_on_custom_type_test() {
         returns: types.string,
         handler: fn(animal) {
           case_.new(animal)
-          |> case_.with_matcher(
-            matcher.from_constructor1(
+          |> case_.with_pattern(
+            pattern.from_constructor1(
               dog_constructor,
-              matcher.variable("bones"),
+              pattern.variable("bones"),
             ),
             fn(bones) {
               expression.string("Dog with ")
               |> expression.concat_string(expression.call1(int_to_string, bones))
             },
           )
-          |> case_.with_matcher(
-            matcher.from_constructor2(
+          |> case_.with_pattern(
+            pattern.from_constructor2(
               cat_constructor,
-              matcher.variable("name"),
-              matcher.bool_literal(True),
+              pattern.variable("name"),
+              pattern.bool_literal(True),
             ),
             fn(info) {
               let #(name, Nil) = info
@@ -1301,11 +1301,11 @@ pub fn module_case_on_custom_type_test() {
               |> expression.concat_string(expression.string(" (energetic!)"))
             },
           )
-          |> case_.with_matcher(
-            matcher.from_constructor2(
+          |> case_.with_pattern(
+            pattern.from_constructor2(
               cat_constructor,
-              matcher.variable("name"),
-              matcher.bool_literal(False),
+              pattern.variable("name"),
+              pattern.bool_literal(False),
             ),
             fn(info) {
               let #(name, Nil) = info
@@ -1412,9 +1412,9 @@ pub fn module_let_on_custom_type_test() {
       function.new0(returns: types.string, handler: fn() {
         {
           use bones <- block.with_matching_let_declaration(
-            matcher.from_constructor1(
+            pattern.from_constructor1(
               dog_constructor,
-              matcher.variable("bones"),
+              pattern.variable("bones"),
             ),
             expression.construct1(
               constructor.to_expression1(dog_constructor),
@@ -1424,10 +1424,10 @@ pub fn module_let_on_custom_type_test() {
           )
 
           use #(name, Nil) <- block.with_matching_let_declaration(
-            matcher.from_constructor2(
+            pattern.from_constructor2(
               cat_constructor,
-              matcher.as_(matcher.string_literal("jake"), "name"),
-              matcher.bool_literal(True),
+              pattern.as_(pattern.string_literal("jake"), "name"),
+              pattern.bool_literal(True),
             ),
             expression.construct2(
               constructor.to_expression2(cat_constructor),
@@ -1671,18 +1671,18 @@ pub fn case_unchecked_variant_test() {
         |> definition.with_publicity(True),
       function.new0(returns: types.int, handler: fn() {
         case_.new(match_on)
-        |> case_.with_matcher(
-          matcher.from_constructor_unchecked(
+        |> case_.with_pattern(
+          pattern.from_constructor_unchecked(
             custom_variant,
             list.range(0, 15)
               |> list.map(fn(x) {
                 case x % 2 {
                   0 ->
-                    matcher.int_literal(x + 4)
-                    |> matcher.to_unchecked()
+                    pattern.int_literal(x + 4)
+                    |> pattern.to_unchecked()
                   _ ->
-                    matcher.variable("value" <> int.to_string(x))
-                    |> matcher.to_unchecked()
+                    pattern.variable("value" <> int.to_string(x))
+                    |> pattern.to_unchecked()
                 }
               }),
           ),
@@ -1694,7 +1694,7 @@ pub fn case_unchecked_variant_test() {
             )
           },
         )
-        |> case_.with_matcher(matcher.variable("v"), fn(_) {
+        |> case_.with_pattern(pattern.variable("v"), fn(_) {
           // expression.concat_string(v, expression.string(" world"))
           expression.int(5)
         })

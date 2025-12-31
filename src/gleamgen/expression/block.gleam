@@ -1,7 +1,7 @@
 import gleam/list
 import gleam/result
 import gleamgen/expression.{type Expression}
-import gleamgen/matcher
+import gleamgen/pattern
 import gleamgen/render
 import gleamgen/types
 
@@ -95,17 +95,17 @@ pub fn with_let_declaration(
 }
 
 pub fn with_matching_let_declaration(
-  matcher: matcher.Matcher(type_, output),
+  pattern: pattern.Pattern(type_, output),
   value: Expression(type_),
   assert_ assert_: Bool,
   handler handler: fn(output) -> BlockBuilder(ret),
 ) -> BlockBuilder(ret) {
-  let rest = handler(matcher.get_output(matcher))
+  let rest = handler(pattern.get_output(pattern))
   BlockBuilder(..rest, contents: [
     expression.LetDeclaration(
-      matcher
-        |> matcher.to_unchecked()
-        |> matcher.render(1)
+      pattern
+        |> pattern.to_unchecked()
+        |> pattern.render(1)
         |> render.to_string(),
       value |> expression.to_unchecked(),
       assert_,

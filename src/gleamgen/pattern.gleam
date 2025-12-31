@@ -7,66 +7,66 @@ import gleamgen/render
 import gleamgen/types
 import gleamgen/types/custom
 
-pub opaque type Matcher(input, match_output) {
+pub opaque type Pattern(input, match_output) {
   Variable(name: String, output: match_output)
   StringLiteral(contents: String, output: match_output)
   StringConcat(contents: #(String, String), output: match_output)
   IntLiteral(contents: Int, output: match_output)
   BoolLiteral(contents: Bool, output: match_output)
   Tuple(
-    contents: List(Matcher(types.Unchecked, types.Unchecked)),
+    contents: List(Pattern(types.Unchecked, types.Unchecked)),
     output: match_output,
   )
   Constructor(
-    constructor: #(String, List(Matcher(types.Unchecked, types.Unchecked))),
+    constructor: #(String, List(Pattern(types.Unchecked, types.Unchecked))),
     output: match_output,
   )
   Or(
-    options: #(Matcher(input, match_output), Matcher(input, match_output)),
+    options: #(Pattern(input, match_output), Pattern(input, match_output)),
     output: match_output,
   )
   As(
-    options: #(Matcher(types.Unchecked, types.Unchecked), String),
+    options: #(Pattern(types.Unchecked, types.Unchecked), String),
     output: match_output,
   )
 }
 
-pub fn variable(name: String) -> Matcher(a, Expression(a)) {
+pub fn variable(name: String) -> Pattern(a, Expression(a)) {
   Variable(name, output: expression.unchecked_ident(name))
 }
 
-pub fn string_literal(literal: String) -> Matcher(a, Nil) {
+pub fn string_literal(literal: String) -> Pattern(a, Nil) {
   StringLiteral(literal, output: Nil)
 }
 
-pub fn discard() -> Matcher(a, Nil) {
+pub fn discard() -> Pattern(a, Nil) {
   Variable("_", output: Nil)
 }
 
-pub fn named_discard(name: String) -> Matcher(a, Nil) {
+pub fn named_discard(name: String) -> Pattern(a, Nil) {
   Variable("_" <> name, output: Nil)
 }
 
-pub fn int_literal(literal: Int) -> Matcher(Int, Nil) {
+pub fn int_literal(literal: Int) -> Pattern(Int, Nil) {
   IntLiteral(literal, output: Nil)
 }
 
-pub fn bool_literal(literal: Bool) -> Matcher(Bool, Nil) {
+pub fn bool_literal(literal: Bool) -> Pattern(Bool, Nil) {
   BoolLiteral(literal, output: Nil)
 }
 
 /// Match a string that starts with `initial`
 /// ```gleam
 /// case_.new(expression.string("I love gleam"))
-/// |> case_.with_matcher(
-///   matcher.concat_string(starting: "I love ", variable: "thing"),
+/// |> case_.with_pattern(
+///   pattern.concat_string(starting: "I love ", variable: "thing"),
 ///   fn(thing) {
 ///     expression.string("I love ")
 ///     |> expression.concat_string(thing)
 ///     |> expression.concat_string(expression.string(" too"))
 ///   },
 /// )
-/// |> case_.with_matcher(matcher.variable("_"), fn(_) {
+/// |> case_.with_pattern(pattern.variable("_"), fn(_) {
 ///   expression.string("interesting")
 /// })
 /// |> case_.build_expression()
@@ -80,34 +80,34 @@ pub fn bool_literal(literal: Bool) -> Matcher(Bool, Nil) {
 pub fn concat_string(
   starting initial: String,
   variable variable: String,
-) -> Matcher(String, Expression(a)) {
+) -> Pattern(String, Expression(a)) {
   StringConcat(
     #(initial, variable),
     output: expression.unchecked_ident(variable),
   )
 }
 
-pub fn ok(ok_matcher: Matcher(a, a_output)) -> Matcher(Result(a, err), a_output) {
-  Constructor(#("Ok", [ok_matcher |> to_unchecked]), output: ok_matcher.output)
+pub fn ok(ok_pattern: Pattern(a, a_output)) -> Pattern(Result(a, err), a_output) {
+  Constructor(#("Ok", [ok_pattern |> to_unchecked]), output: ok_pattern.output)
 }
 
 pub fn error(
-  err_matcher: Matcher(a, a_output),
-) -> Matcher(Result(ok, a), a_output) {
+  err_pattern: Pattern(a, a_output),
+) -> Pattern(Result(ok, a), a_output) {
   Constructor(
-    #("Error", [err_matcher |> to_unchecked]),
-    output: err_matcher.output,
+    #("Error", [err_pattern |> to_unchecked]),
+    output: err_pattern.output,
   )
 }
 
-/// Use either of the two matchers
+/// Use either of the two patterns
 /// ```gleam
 /// case_.new(expression.string("hello"))
-/// |> case_.with_matcher(
-///   matcher.or(matcher.string_literal("hello"), matcher.string_literal("hi")),
+/// |> case_.with_pattern(
+///   pattern.or(pattern.string_literal("hello"), pattern.string_literal("hi")),
 ///   fn(_) { expression.string("world") },
 /// )
-/// |> case_.with_matcher(matcher.variable("v"), fn(v) {
+/// |> case_.with_pattern(pattern.variable("v"), fn(v) {
 ///   expression.concat_string(v, expression.string(" world"))
 /// })
 /// |> case_.build_expression()
@@ -119,16 +119,16 @@ pub fn error(
 /// }",
 /// ```
 pub fn or(
-  first: Matcher(input, match_output),
-  second: Matcher(input, match_output),
-) -> Matcher(input, match_output) {
+  first: Pattern(input, match_output),
+  second: Pattern(input, match_output),
+) -> Pattern(input, match_output) {
   Or(#(first, second), output: first.output)
 }
 
 pub fn as_(
-  original: Matcher(input, _),
+  original: Pattern(input, _),
   name: String,
-) -> Matcher(input, Expression(input)) {
+) -> Pattern(input, Expression(input)) {
   As(
     #(original |> to_unchecked(), name),
     output: expression.unchecked_ident(name),
@@ -137,30 +137,30 @@ pub fn as_(
 
 pub fn from_constructor_unchecked(
   constructor: constructor.Constructor(construct_to, any, generics),
-  constructors: List(Matcher(types.Unchecked, types.Unchecked)),
-) -> Matcher(construct, List(Expression(types.Unchecked))) {
+  constructors: List(Pattern(types.Unchecked, types.Unchecked)),
+) -> Pattern(construct, List(Expression(types.Unchecked))) {
   Constructor(
     #(constructor.name(constructor), list.map(constructors, to_unchecked)),
-    output: list.filter_map(constructors, get_matcher_output),
+    output: list.filter_map(constructors, get_pattern_output),
   )
 }
 
-@external(erlang, "gleamgen_ffi", "get_matcher_output")
-@external(javascript, "../gleamgen_ffi.mjs", "get_matcher_output")
-fn get_matcher_output(
-  matcher: Matcher(types.Unchecked, types.Unchecked),
+@external(erlang, "gleamgen_ffi", "get_pattern_output")
+@external(javascript, "../gleamgen_ffi.mjs", "get_pattern_output")
+fn get_pattern_output(
+  pattern: Pattern(types.Unchecked, types.Unchecked),
 ) -> Result(Expression(types.Unchecked), Nil)
 
 pub fn from_constructor0(
   constructor: constructor.Constructor(construct_to, #(), generics),
-) -> Matcher(construct_to, Nil) {
+) -> Pattern(construct_to, Nil) {
   Constructor(#(constructor.name(constructor), []), output: Nil)
 }
 
 pub fn from_constructor1(
   constructor: constructor.Constructor(construct_to, #(#(), a), generics),
-  first: Matcher(a, a_output),
-) -> Matcher(custom.CustomType(construct_to, generics), a_output) {
+  first: Pattern(a, a_output),
+) -> Pattern(custom.CustomType(construct_to, generics), a_output) {
   Constructor(
     #(constructor.name(constructor), [first |> to_unchecked]),
     output: first.output,
@@ -172,9 +172,9 @@ pub fn from_constructor1(
 
 pub fn from_constructor2(
   constructor: constructor.Constructor(construct_to, #(#(#(), a), b), generics),
-  first: Matcher(a, a_output),
-  second: Matcher(b, b_output),
-) -> Matcher(custom.CustomType(construct_to, generics), #(a_output, b_output)) {
+  first: Pattern(a, a_output),
+  second: Pattern(b, b_output),
+) -> Pattern(custom.CustomType(construct_to, generics), #(a_output, b_output)) {
   Constructor(
     #(constructor.name(constructor), [
       first |> to_unchecked,
@@ -190,10 +190,10 @@ pub fn from_constructor3(
     #(#(#(#(), a), b), c),
     generics,
   ),
-  first: Matcher(a, a_output),
-  second: Matcher(b, b_output),
-  third: Matcher(c, c_output),
-) -> Matcher(construct_to, #(a_output, b_output, c_output)) {
+  first: Pattern(a, a_output),
+  second: Pattern(b, b_output),
+  third: Pattern(c, c_output),
+) -> Pattern(construct_to, #(a_output, b_output, c_output)) {
   Constructor(
     #(constructor.name(constructor), [
       first |> to_unchecked,
@@ -210,11 +210,11 @@ pub fn from_constructor4(
     #(#(#(#(#(), a), b), c), d),
     generics,
   ),
-  first: Matcher(a, a_output),
-  second: Matcher(b, b_output),
-  third: Matcher(c, c_output),
-  fourth: Matcher(d, d_output),
-) -> Matcher(construct_to, #(a_output, b_output, c_output, d_output)) {
+  first: Pattern(a, a_output),
+  second: Pattern(b, b_output),
+  third: Pattern(c, c_output),
+  fourth: Pattern(d, d_output),
+) -> Pattern(construct_to, #(a_output, b_output, c_output, d_output)) {
   Constructor(
     #(constructor.name(constructor), [
       first |> to_unchecked,
@@ -232,12 +232,12 @@ pub fn from_constructor5(
     #(#(#(#(#(#(), a), b), c), d), e),
     generics,
   ),
-  first: Matcher(a, a_output),
-  second: Matcher(b, b_output),
-  third: Matcher(c, c_output),
-  fourth: Matcher(d, d_output),
-  fifth: Matcher(e, e_output),
-) -> Matcher(construct_to, #(a_output, b_output, c_output, d_output, e_output)) {
+  first: Pattern(a, a_output),
+  second: Pattern(b, b_output),
+  third: Pattern(c, c_output),
+  fourth: Pattern(d, d_output),
+  fifth: Pattern(e, e_output),
+) -> Pattern(construct_to, #(a_output, b_output, c_output, d_output, e_output)) {
   Constructor(
     #(constructor.name(constructor), [
       first |> to_unchecked,
@@ -262,13 +262,13 @@ pub fn from_constructor6(
     #(#(#(#(#(#(#(), a), b), c), d), e), f),
     generics,
   ),
-  first: Matcher(a, a_output),
-  second: Matcher(b, b_output),
-  third: Matcher(c, c_output),
-  fourth: Matcher(d, d_output),
-  fifth: Matcher(e, e_output),
-  sixth: Matcher(f, f_output),
-) -> Matcher(
+  first: Pattern(a, a_output),
+  second: Pattern(b, b_output),
+  third: Pattern(c, c_output),
+  fourth: Pattern(d, d_output),
+  fifth: Pattern(e, e_output),
+  sixth: Pattern(f, f_output),
+) -> Pattern(
   construct_to,
   #(a_output, b_output, c_output, d_output, e_output, f_output),
 ) {
@@ -298,14 +298,14 @@ pub fn from_constructor7(
     #(#(#(#(#(#(#(#(), a), b), c), d), e), f), g),
     generics,
   ),
-  first: Matcher(a, a_output),
-  second: Matcher(b, b_output),
-  third: Matcher(c, c_output),
-  fourth: Matcher(d, d_output),
-  fifth: Matcher(e, e_output),
-  sixth: Matcher(f, f_output),
-  seventh: Matcher(g, g_output),
-) -> Matcher(
+  first: Pattern(a, a_output),
+  second: Pattern(b, b_output),
+  third: Pattern(c, c_output),
+  fourth: Pattern(d, d_output),
+  fifth: Pattern(e, e_output),
+  sixth: Pattern(f, f_output),
+  seventh: Pattern(g, g_output),
+) -> Pattern(
   construct_to,
   #(a_output, b_output, c_output, d_output, e_output, f_output, g_output),
 ) {
@@ -337,15 +337,15 @@ pub fn from_constructor8(
     #(#(#(#(#(#(#(#(#(), a), b), c), d), e), f), g), h),
     generics,
   ),
-  first: Matcher(a, a_output),
-  second: Matcher(b, b_output),
-  third: Matcher(c, c_output),
-  fourth: Matcher(d, d_output),
-  fifth: Matcher(e, e_output),
-  sixth: Matcher(f, f_output),
-  seventh: Matcher(g, g_output),
-  eighth: Matcher(h, h_output),
-) -> Matcher(
+  first: Pattern(a, a_output),
+  second: Pattern(b, b_output),
+  third: Pattern(c, c_output),
+  fourth: Pattern(d, d_output),
+  fifth: Pattern(e, e_output),
+  sixth: Pattern(f, f_output),
+  seventh: Pattern(g, g_output),
+  eighth: Pattern(h, h_output),
+) -> Pattern(
   construct_to,
   #(
     a_output,
@@ -388,16 +388,16 @@ pub fn from_constructor9(
     #(#(#(#(#(#(#(#(#(#(), a), b), c), d), e), f), g), h), i),
     generics,
   ),
-  first: Matcher(a, a_output),
-  second: Matcher(b, b_output),
-  third: Matcher(c, c_output),
-  fourth: Matcher(d, d_output),
-  fifth: Matcher(e, e_output),
-  sixth: Matcher(f, f_output),
-  seventh: Matcher(g, g_output),
-  eighth: Matcher(h, h_output),
-  ninth: Matcher(i, i_output),
-) -> Matcher(
+  first: Pattern(a, a_output),
+  second: Pattern(b, b_output),
+  third: Pattern(c, c_output),
+  fourth: Pattern(d, d_output),
+  fifth: Pattern(e, e_output),
+  sixth: Pattern(f, f_output),
+  seventh: Pattern(g, g_output),
+  eighth: Pattern(h, h_output),
+  ninth: Pattern(i, i_output),
+) -> Pattern(
   construct_to,
   #(
     a_output,
@@ -439,172 +439,172 @@ pub fn from_constructor9(
 
 // }}}
 
-pub fn tuple0() -> Matcher(#(), Nil) {
+pub fn tuple0() -> Pattern(#(), Nil) {
   Tuple([], output: Nil)
 }
 
 pub fn tuple1(
-  matcher: Matcher(a_input, a_output),
-) -> Matcher(#(a_input), #(a_output)) {
-  Tuple([matcher |> to_unchecked], output: #(matcher.output))
+  pattern: Pattern(a_input, a_output),
+) -> Pattern(#(a_input), #(a_output)) {
+  Tuple([pattern |> to_unchecked], output: #(pattern.output))
 }
 
 // rest of repetitive tuples
 // {{{
 
 pub fn tuple2(
-  matcher1: Matcher(a_input, a_output),
-  matcher2: Matcher(b_input, b_output),
-) -> Matcher(#(a_input, b_input), #(a_output, b_output)) {
-  Tuple([matcher1 |> to_unchecked, matcher2 |> to_unchecked], output: #(
-    matcher1.output,
-    matcher2.output,
+  pattern1: Pattern(a_input, a_output),
+  pattern2: Pattern(b_input, b_output),
+) -> Pattern(#(a_input, b_input), #(a_output, b_output)) {
+  Tuple([pattern1 |> to_unchecked, pattern2 |> to_unchecked], output: #(
+    pattern1.output,
+    pattern2.output,
   ))
 }
 
 pub fn tuple3(
-  matcher1: Matcher(a_input, a_output),
-  matcher2: Matcher(b_input, b_output),
-  matcher3: Matcher(c_input, c_output),
-) -> Matcher(#(a_input, b_input, c_input), #(a_output, b_output, c_output)) {
+  pattern1: Pattern(a_input, a_output),
+  pattern2: Pattern(b_input, b_output),
+  pattern3: Pattern(c_input, c_output),
+) -> Pattern(#(a_input, b_input, c_input), #(a_output, b_output, c_output)) {
   Tuple(
     [
-      matcher1 |> to_unchecked,
-      matcher2 |> to_unchecked,
-      matcher3 |> to_unchecked,
+      pattern1 |> to_unchecked,
+      pattern2 |> to_unchecked,
+      pattern3 |> to_unchecked,
     ],
-    output: #(matcher1.output, matcher2.output, matcher3.output),
+    output: #(pattern1.output, pattern2.output, pattern3.output),
   )
 }
 
 pub fn tuple4(
-  matcher1: Matcher(a_input, a_output),
-  matcher2: Matcher(b_input, b_output),
-  matcher3: Matcher(c_input, c_output),
-  matcher4: Matcher(d_input, d_output),
-) -> Matcher(
+  pattern1: Pattern(a_input, a_output),
+  pattern2: Pattern(b_input, b_output),
+  pattern3: Pattern(c_input, c_output),
+  pattern4: Pattern(d_input, d_output),
+) -> Pattern(
   #(a_input, b_input, c_input, d_input),
   #(a_output, b_output, c_output, d_output),
 ) {
   Tuple(
     [
-      matcher1 |> to_unchecked,
-      matcher2 |> to_unchecked,
-      matcher3 |> to_unchecked,
-      matcher4 |> to_unchecked,
+      pattern1 |> to_unchecked,
+      pattern2 |> to_unchecked,
+      pattern3 |> to_unchecked,
+      pattern4 |> to_unchecked,
     ],
     output: #(
-      matcher1.output,
-      matcher2.output,
-      matcher3.output,
-      matcher4.output,
+      pattern1.output,
+      pattern2.output,
+      pattern3.output,
+      pattern4.output,
     ),
   )
 }
 
 pub fn tuple5(
-  matcher1: Matcher(a_input, a_output),
-  matcher2: Matcher(b_input, b_output),
-  matcher3: Matcher(c_input, c_output),
-  matcher4: Matcher(d_input, d_output),
-  matcher5: Matcher(e_input, e_output),
-) -> Matcher(
+  pattern1: Pattern(a_input, a_output),
+  pattern2: Pattern(b_input, b_output),
+  pattern3: Pattern(c_input, c_output),
+  pattern4: Pattern(d_input, d_output),
+  pattern5: Pattern(e_input, e_output),
+) -> Pattern(
   #(a_input, b_input, c_input, d_input, e_input),
   #(a_output, b_output, c_output, d_output, e_output),
 ) {
   Tuple(
     [
-      matcher1 |> to_unchecked,
-      matcher2 |> to_unchecked,
-      matcher3 |> to_unchecked,
-      matcher4 |> to_unchecked,
-      matcher5 |> to_unchecked,
+      pattern1 |> to_unchecked,
+      pattern2 |> to_unchecked,
+      pattern3 |> to_unchecked,
+      pattern4 |> to_unchecked,
+      pattern5 |> to_unchecked,
     ],
     output: #(
-      matcher1.output,
-      matcher2.output,
-      matcher3.output,
-      matcher4.output,
-      matcher5.output,
+      pattern1.output,
+      pattern2.output,
+      pattern3.output,
+      pattern4.output,
+      pattern5.output,
     ),
   )
 }
 
 pub fn tuple6(
-  matcher1: Matcher(a_input, a_output),
-  matcher2: Matcher(b_input, b_output),
-  matcher3: Matcher(c_input, c_output),
-  matcher4: Matcher(d_input, d_output),
-  matcher5: Matcher(e_input, e_output),
-  matcher6: Matcher(f_input, f_output),
-) -> Matcher(
+  pattern1: Pattern(a_input, a_output),
+  pattern2: Pattern(b_input, b_output),
+  pattern3: Pattern(c_input, c_output),
+  pattern4: Pattern(d_input, d_output),
+  pattern5: Pattern(e_input, e_output),
+  pattern6: Pattern(f_input, f_output),
+) -> Pattern(
   #(a_input, b_input, c_input, d_input, e_input, f_input),
   #(a_output, b_output, c_output, d_output, e_output, f_output),
 ) {
   Tuple(
     [
-      matcher1 |> to_unchecked,
-      matcher2 |> to_unchecked,
-      matcher3 |> to_unchecked,
-      matcher4 |> to_unchecked,
-      matcher5 |> to_unchecked,
-      matcher6 |> to_unchecked,
+      pattern1 |> to_unchecked,
+      pattern2 |> to_unchecked,
+      pattern3 |> to_unchecked,
+      pattern4 |> to_unchecked,
+      pattern5 |> to_unchecked,
+      pattern6 |> to_unchecked,
     ],
     output: #(
-      matcher1.output,
-      matcher2.output,
-      matcher3.output,
-      matcher4.output,
-      matcher5.output,
-      matcher6.output,
+      pattern1.output,
+      pattern2.output,
+      pattern3.output,
+      pattern4.output,
+      pattern5.output,
+      pattern6.output,
     ),
   )
 }
 
 pub fn tuple7(
-  matcher1: Matcher(a_input, a_output),
-  matcher2: Matcher(b_input, b_output),
-  matcher3: Matcher(c_input, c_output),
-  matcher4: Matcher(d_input, d_output),
-  matcher5: Matcher(e_input, e_output),
-  matcher6: Matcher(f_input, f_output),
-  matcher7: Matcher(g_input, g_output),
-) -> Matcher(
+  pattern1: Pattern(a_input, a_output),
+  pattern2: Pattern(b_input, b_output),
+  pattern3: Pattern(c_input, c_output),
+  pattern4: Pattern(d_input, d_output),
+  pattern5: Pattern(e_input, e_output),
+  pattern6: Pattern(f_input, f_output),
+  pattern7: Pattern(g_input, g_output),
+) -> Pattern(
   #(a_input, b_input, c_input, d_input, e_input, f_input, g_input),
   #(a_output, b_output, c_output, d_output, e_output, f_output, g_output),
 ) {
   Tuple(
     [
-      matcher1 |> to_unchecked,
-      matcher2 |> to_unchecked,
-      matcher3 |> to_unchecked,
-      matcher4 |> to_unchecked,
-      matcher5 |> to_unchecked,
-      matcher6 |> to_unchecked,
-      matcher7 |> to_unchecked,
+      pattern1 |> to_unchecked,
+      pattern2 |> to_unchecked,
+      pattern3 |> to_unchecked,
+      pattern4 |> to_unchecked,
+      pattern5 |> to_unchecked,
+      pattern6 |> to_unchecked,
+      pattern7 |> to_unchecked,
     ],
     output: #(
-      matcher1.output,
-      matcher2.output,
-      matcher3.output,
-      matcher4.output,
-      matcher5.output,
-      matcher6.output,
-      matcher7.output,
+      pattern1.output,
+      pattern2.output,
+      pattern3.output,
+      pattern4.output,
+      pattern5.output,
+      pattern6.output,
+      pattern7.output,
     ),
   )
 }
 
 pub fn tuple8(
-  matcher1: Matcher(a_input, a_output),
-  matcher2: Matcher(b_input, b_output),
-  matcher3: Matcher(c_input, c_output),
-  matcher4: Matcher(d_input, d_output),
-  matcher5: Matcher(e_input, e_output),
-  matcher6: Matcher(f_input, f_output),
-  matcher7: Matcher(g_input, g_output),
-  matcher8: Matcher(h_input, h_output),
-) -> Matcher(
+  pattern1: Pattern(a_input, a_output),
+  pattern2: Pattern(b_input, b_output),
+  pattern3: Pattern(c_input, c_output),
+  pattern4: Pattern(d_input, d_output),
+  pattern5: Pattern(e_input, e_output),
+  pattern6: Pattern(f_input, f_output),
+  pattern7: Pattern(g_input, g_output),
+  pattern8: Pattern(h_input, h_output),
+) -> Pattern(
   #(a_input, b_input, c_input, d_input, e_input, f_input, g_input, h_input),
   #(
     a_output,
@@ -619,39 +619,39 @@ pub fn tuple8(
 ) {
   Tuple(
     [
-      matcher1 |> to_unchecked,
-      matcher2 |> to_unchecked,
-      matcher3 |> to_unchecked,
-      matcher4 |> to_unchecked,
-      matcher5 |> to_unchecked,
-      matcher6 |> to_unchecked,
-      matcher7 |> to_unchecked,
-      matcher8 |> to_unchecked,
+      pattern1 |> to_unchecked,
+      pattern2 |> to_unchecked,
+      pattern3 |> to_unchecked,
+      pattern4 |> to_unchecked,
+      pattern5 |> to_unchecked,
+      pattern6 |> to_unchecked,
+      pattern7 |> to_unchecked,
+      pattern8 |> to_unchecked,
     ],
     output: #(
-      matcher1.output,
-      matcher2.output,
-      matcher3.output,
-      matcher4.output,
-      matcher5.output,
-      matcher6.output,
-      matcher7.output,
-      matcher8.output,
+      pattern1.output,
+      pattern2.output,
+      pattern3.output,
+      pattern4.output,
+      pattern5.output,
+      pattern6.output,
+      pattern7.output,
+      pattern8.output,
     ),
   )
 }
 
 pub fn tuple9(
-  matcher1: Matcher(a_input, a_output),
-  matcher2: Matcher(b_input, b_output),
-  matcher3: Matcher(c_input, c_output),
-  matcher4: Matcher(d_input, d_output),
-  matcher5: Matcher(e_input, e_output),
-  matcher6: Matcher(f_input, f_output),
-  matcher7: Matcher(g_input, g_output),
-  matcher8: Matcher(h_input, h_output),
-  matcher9: Matcher(i_input, i_output),
-) -> Matcher(
+  pattern1: Pattern(a_input, a_output),
+  pattern2: Pattern(b_input, b_output),
+  pattern3: Pattern(c_input, c_output),
+  pattern4: Pattern(d_input, d_output),
+  pattern5: Pattern(e_input, e_output),
+  pattern6: Pattern(f_input, f_output),
+  pattern7: Pattern(g_input, g_output),
+  pattern8: Pattern(h_input, h_output),
+  pattern9: Pattern(i_input, i_output),
+) -> Pattern(
   #(
     a_input,
     b_input,
@@ -677,47 +677,47 @@ pub fn tuple9(
 ) {
   Tuple(
     [
-      matcher1 |> to_unchecked,
-      matcher2 |> to_unchecked,
-      matcher3 |> to_unchecked,
-      matcher4 |> to_unchecked,
-      matcher5 |> to_unchecked,
-      matcher6 |> to_unchecked,
-      matcher7 |> to_unchecked,
-      matcher8 |> to_unchecked,
-      matcher9 |> to_unchecked,
+      pattern1 |> to_unchecked,
+      pattern2 |> to_unchecked,
+      pattern3 |> to_unchecked,
+      pattern4 |> to_unchecked,
+      pattern5 |> to_unchecked,
+      pattern6 |> to_unchecked,
+      pattern7 |> to_unchecked,
+      pattern8 |> to_unchecked,
+      pattern9 |> to_unchecked,
     ],
     output: #(
-      matcher1.output,
-      matcher2.output,
-      matcher3.output,
-      matcher4.output,
-      matcher5.output,
-      matcher6.output,
-      matcher7.output,
-      matcher8.output,
-      matcher9.output,
+      pattern1.output,
+      pattern2.output,
+      pattern3.output,
+      pattern4.output,
+      pattern5.output,
+      pattern6.output,
+      pattern7.output,
+      pattern8.output,
+      pattern9.output,
     ),
   )
 }
 
 // }}}
 
-pub fn get_output(matcher: Matcher(_, output)) -> output {
-  matcher.output
+pub fn get_output(pattern: Pattern(_, output)) -> output {
+  pattern.output
 }
 
 @external(erlang, "gleamgen_ffi", "identity")
 @external(javascript, "../gleamgen_ffi.mjs", "identity")
 pub fn to_unchecked(
-  type_: Matcher(input, handler_output),
-) -> Matcher(types.Unchecked, types.Unchecked)
+  type_: Pattern(input, handler_output),
+) -> Pattern(types.Unchecked, types.Unchecked)
 
 pub fn render(
-  matcher: Matcher(_, _),
+  pattern: Pattern(_, _),
   number_of_subjects: Int,
 ) -> render.Rendered {
-  case matcher {
+  case pattern {
     Variable(name, ..) ->
       list.repeat(doc.from_string(name), number_of_subjects)
       |> doc.concat_join(with: [doc.from_string(","), doc.space])
@@ -774,22 +774,22 @@ pub fn render(
       ])
       |> render.Render(details: original.details)
     }
-    Constructor(#(name, matchers), ..) -> {
-      let #(details, rendered_matchers) =
-        matchers
+    Constructor(#(name, patterns), ..) -> {
+      let #(details, rendered_patterns) =
+        patterns
         |> list.map_fold(render.empty_details, fn(acc, m) {
           let rendered = render(m, 1)
           #(render.merge_details(acc, rendered.details), rendered.doc)
         })
 
-      rendered_matchers
+      rendered_patterns
       |> render.pretty_list()
       |> doc.prepend(doc.from_string(name))
       |> render.Render(details:)
     }
-    Tuple(matchers, ..) -> {
-      let #(details, rendered_matchers) =
-        matchers
+    Tuple(patterns, ..) -> {
+      let #(details, rendered_patterns) =
+        patterns
         |> list.map_fold(render.empty_details, fn(acc, m) {
           let rendered = render(m, 1)
           #(render.merge_details(acc, rendered.details), rendered.doc)
@@ -797,11 +797,11 @@ pub fn render(
 
       case number_of_subjects {
         1 ->
-          rendered_matchers
+          rendered_patterns
           |> render.pretty_list()
           |> doc.prepend(doc.from_string("#"))
         _ ->
-          rendered_matchers
+          rendered_patterns
           |> doc.concat_join([doc.from_string(","), doc.space])
       }
       |> render.Render(details:)
@@ -809,8 +809,8 @@ pub fn render(
   }
 }
 
-pub fn can_match_on_multiple(matcher: Matcher(_, _)) -> Bool {
-  case matcher {
+pub fn can_match_on_multiple(pattern: Pattern(_, _)) -> Bool {
+  case pattern {
     // Or(..) -> True
     Tuple(..) -> True
     Variable(name: "_", ..) -> True

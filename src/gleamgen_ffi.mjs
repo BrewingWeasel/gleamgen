@@ -14,7 +14,7 @@ export function get_function_name(x) {
   }
 }
 
-export function get_matcher_output(x) {
+export function get_pattern_output(x) {
   if (x.output) {
     return new Ok(x.output);
   } else {

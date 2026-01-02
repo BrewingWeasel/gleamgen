@@ -14,7 +14,7 @@ import gleamgen/import_
 import gleamgen/internal/module_text
 import gleamgen/module/definition
 import gleamgen/render
-import gleamgen/types.{type Unchecked}
+import gleamgen/types.{type Dynamic}
 import gleamgen/types/custom
 
 pub opaque type ExternalModule {
@@ -46,10 +46,10 @@ pub type ModuleDefinition {
 }
 
 pub opaque type Definable {
-  Function(function.Function(Unchecked, Unchecked))
-  CustomTypeBuilder(custom.CustomTypeBuilder(Unchecked, Nil, Nil))
-  Constant(Expression(Unchecked))
-  TypeAlias(types.GeneratedType(Unchecked))
+  Function(function.Function(Dynamic, Dynamic))
+  CustomTypeBuilder(custom.CustomTypeBuilder(Dynamic, Nil, Nil))
+  Constant(Expression(Dynamic))
+  TypeAlias(types.GeneratedType(Dynamic))
   Predefined(ast: PredefinedDefinition, text_before: String, content: String)
 }
 
@@ -187,9 +187,9 @@ pub fn with_constant(
   value: Expression(t),
   handler: fn(Expression(t)) -> Module,
 ) -> Module {
-  let rest = handler(expression.unchecked_ident(details.name))
+  let rest = handler(expression.raw(details.name))
   Module(..rest, definitions: [
-    Definition(details:, value: Constant(value |> expression.to_unchecked())),
+    Definition(details:, value: Constant(value |> expression.to_dynamic())),
     ..rest.definitions
   ])
 }
@@ -202,7 +202,7 @@ pub fn with_import(
   Module(..rest, imports: [module, ..rest.imports])
 }
 
-pub fn with_imports_unchecked(
+pub fn with_dynamic_imports(
   modules: List(import_.ImportedModule),
   handler: fn(List(import_.ImportedModule)) -> Module,
 ) -> Module {
@@ -216,7 +216,7 @@ pub fn replace_function(
   func: fn(Option(glance.Function)) -> function.Function(func_type, ret),
   handler: fn(Module, Expression(func_type)) -> Module,
 ) -> Module {
-  let rest = handler(module, expression.unchecked_ident(function_name))
+  let rest = handler(module, expression.raw(function_name))
   case module.external_module {
     option.Some(ExternalModule(definitions:, ..) as external_module) -> {
       let definitions =
@@ -229,7 +229,7 @@ pub fn replace_function(
             Predefined(PredefinedFunction(f), _, _) -> #(
               definition.details |> definition.set_predefined(False),
               Function(
-                func(option.Some(f.definition)) |> function.to_unchecked(),
+                func(option.Some(f.definition)) |> function.to_dynamic(),
               ),
             )
             v -> #(definition.details, v)
@@ -248,7 +248,7 @@ pub fn replace_function(
       Module(..rest, definitions: [
         Definition(
           definition.new(function_name),
-          value: Function(func(option.None) |> function.to_unchecked()),
+          value: Function(func(option.None) |> function.to_dynamic()),
         ),
         ..rest.definitions
       ])
@@ -261,9 +261,9 @@ pub fn with_function(
   func: function.Function(func_type, ret),
   handler: fn(Expression(func_type)) -> Module,
 ) -> Module {
-  let rest = handler(expression.unchecked_ident(details.name))
+  let rest = handler(expression.raw(details.name))
   Module(..rest, definitions: [
-    Definition(details:, value: Function(func |> function.to_unchecked())),
+    Definition(details:, value: Function(func |> function.to_dynamic())),
     ..rest.definitions
   ])
 }
@@ -286,7 +286,7 @@ pub fn with_custom_type1(
   Module(..rest, definitions: [
     Definition(
       details:,
-      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
     ),
     ..rest.definitions
   ])
@@ -314,7 +314,7 @@ pub fn with_custom_type2(
   Module(..rest, definitions: [
     Definition(
       details:,
-      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
     ),
     ..rest.definitions
   ])
@@ -342,7 +342,7 @@ pub fn with_custom_type3(
   Module(..rest, definitions: [
     Definition(
       details:,
-      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
     ),
     ..rest.definitions
   ])
@@ -372,7 +372,7 @@ pub fn with_custom_type4(
   Module(..rest, definitions: [
     Definition(
       details:,
-      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
     ),
     ..rest.definitions
   ])
@@ -408,7 +408,7 @@ pub fn with_custom_type5(
   Module(..rest, definitions: [
     Definition(
       details:,
-      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
     ),
     ..rest.definitions
   ])
@@ -447,7 +447,7 @@ pub fn with_custom_type6(
   Module(..rest, definitions: [
     Definition(
       details:,
-      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
     ),
     ..rest.definitions
   ])
@@ -495,7 +495,7 @@ pub fn with_custom_type7(
   Module(..rest, definitions: [
     Definition(
       details:,
-      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
     ),
     ..rest.definitions
   ])
@@ -546,7 +546,7 @@ pub fn with_custom_type8(
   Module(..rest, definitions: [
     Definition(
       details:,
-      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
     ),
     ..rest.definitions
   ])
@@ -600,7 +600,7 @@ pub fn with_custom_type9(
   Module(..rest, definitions: [
     Definition(
       details:,
-      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
     ),
     ..rest.definitions
   ])
@@ -608,12 +608,12 @@ pub fn with_custom_type9(
 
 // }}}
 
-pub fn with_custom_type_unchecked(
+pub fn with_custom_type_dynamic(
   details: definition.Definition,
-  type_: custom.CustomTypeBuilder(repr, Unchecked, generics),
+  type_: custom.CustomTypeBuilder(repr, Dynamic, generics),
   handler: fn(
     custom.CustomType(repr, generics),
-    List(constructor.Constructor(repr, Unchecked, generics)),
+    List(constructor.Constructor(repr, Dynamic, generics)),
   ) ->
     Module,
 ) -> Module {
@@ -625,7 +625,7 @@ pub fn with_custom_type_unchecked(
   Module(..rest, definitions: [
     Definition(
       details:,
-      value: CustomTypeBuilder(type_ |> custom.to_unchecked()),
+      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
     ),
     ..rest.definitions
   ])
@@ -636,9 +636,9 @@ pub fn with_type_alias(
   type_: types.GeneratedType(repr),
   handler: fn(types.GeneratedType(repr)) -> Module,
 ) -> Module {
-  let rest = handler(types.unchecked_ident(details.name))
+  let rest = handler(types.raw(details.name))
   Module(..rest, definitions: [
-    Definition(details:, value: TypeAlias(type_ |> types.to_unchecked())),
+    Definition(details:, value: TypeAlias(type_ |> types.to_dynamic())),
     ..rest.definitions
   ])
 }

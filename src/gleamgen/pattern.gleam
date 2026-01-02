@@ -14,11 +14,11 @@ pub opaque type Pattern(input, match_output) {
   IntLiteral(contents: Int, output: match_output)
   BoolLiteral(contents: Bool, output: match_output)
   Tuple(
-    contents: List(Pattern(types.Unchecked, types.Unchecked)),
+    contents: List(Pattern(types.Dynamic, types.Dynamic)),
     output: match_output,
   )
   Constructor(
-    constructor: #(String, List(Pattern(types.Unchecked, types.Unchecked))),
+    constructor: #(String, List(Pattern(types.Dynamic, types.Dynamic))),
     output: match_output,
   )
   Or(
@@ -26,13 +26,13 @@ pub opaque type Pattern(input, match_output) {
     output: match_output,
   )
   As(
-    options: #(Pattern(types.Unchecked, types.Unchecked), String),
+    options: #(Pattern(types.Dynamic, types.Dynamic), String),
     output: match_output,
   )
 }
 
 pub fn variable(name: String) -> Pattern(a, Expression(a)) {
-  Variable(name, output: expression.unchecked_ident(name))
+  Variable(name, output: expression.raw(name))
 }
 
 pub fn string_literal(literal: String) -> Pattern(a, Nil) {
@@ -83,19 +83,19 @@ pub fn concat_string(
 ) -> Pattern(String, Expression(a)) {
   StringConcat(
     #(initial, variable),
-    output: expression.unchecked_ident(variable),
+    output: expression.raw(variable),
   )
 }
 
 pub fn ok(ok_pattern: Pattern(a, a_output)) -> Pattern(Result(a, err), a_output) {
-  Constructor(#("Ok", [ok_pattern |> to_unchecked]), output: ok_pattern.output)
+  Constructor(#("Ok", [ok_pattern |> to_dynamic]), output: ok_pattern.output)
 }
 
 pub fn error(
   err_pattern: Pattern(a, a_output),
 ) -> Pattern(Result(ok, a), a_output) {
   Constructor(
-    #("Error", [err_pattern |> to_unchecked]),
+    #("Error", [err_pattern |> to_dynamic]),
     output: err_pattern.output,
   )
 }
@@ -130,17 +130,17 @@ pub fn as_(
   name: String,
 ) -> Pattern(input, Expression(input)) {
   As(
-    #(original |> to_unchecked(), name),
-    output: expression.unchecked_ident(name),
+    #(original |> to_dynamic(), name),
+    output: expression.raw(name),
   )
 }
 
-pub fn from_constructor_unchecked(
+pub fn from_constructor_dynamic(
   constructor: constructor.Constructor(construct_to, any, generics),
-  constructors: List(Pattern(types.Unchecked, types.Unchecked)),
-) -> Pattern(construct, List(Expression(types.Unchecked))) {
+  constructors: List(Pattern(types.Dynamic, types.Dynamic)),
+) -> Pattern(construct, List(Expression(types.Dynamic))) {
   Constructor(
-    #(constructor.name(constructor), list.map(constructors, to_unchecked)),
+    #(constructor.name(constructor), list.map(constructors, to_dynamic)),
     output: list.filter_map(constructors, get_pattern_output),
   )
 }
@@ -148,8 +148,8 @@ pub fn from_constructor_unchecked(
 @external(erlang, "gleamgen_ffi", "get_pattern_output")
 @external(javascript, "../gleamgen_ffi.mjs", "get_pattern_output")
 fn get_pattern_output(
-  pattern: Pattern(types.Unchecked, types.Unchecked),
-) -> Result(Expression(types.Unchecked), Nil)
+  pattern: Pattern(types.Dynamic, types.Dynamic),
+) -> Result(Expression(types.Dynamic), Nil)
 
 pub fn from_constructor0(
   constructor: constructor.Constructor(construct_to, #(), generics),
@@ -162,7 +162,7 @@ pub fn from_constructor1(
   first: Pattern(a, a_output),
 ) -> Pattern(custom.CustomType(construct_to, generics), a_output) {
   Constructor(
-    #(constructor.name(constructor), [first |> to_unchecked]),
+    #(constructor.name(constructor), [first |> to_dynamic]),
     output: first.output,
   )
 }
@@ -177,8 +177,8 @@ pub fn from_constructor2(
 ) -> Pattern(custom.CustomType(construct_to, generics), #(a_output, b_output)) {
   Constructor(
     #(constructor.name(constructor), [
-      first |> to_unchecked,
-      second |> to_unchecked,
+      first |> to_dynamic,
+      second |> to_dynamic,
     ]),
     output: #(first.output, second.output),
   )
@@ -196,9 +196,9 @@ pub fn from_constructor3(
 ) -> Pattern(construct_to, #(a_output, b_output, c_output)) {
   Constructor(
     #(constructor.name(constructor), [
-      first |> to_unchecked,
-      second |> to_unchecked,
-      third |> to_unchecked,
+      first |> to_dynamic,
+      second |> to_dynamic,
+      third |> to_dynamic,
     ]),
     output: #(first.output, second.output, third.output),
   )
@@ -217,10 +217,10 @@ pub fn from_constructor4(
 ) -> Pattern(construct_to, #(a_output, b_output, c_output, d_output)) {
   Constructor(
     #(constructor.name(constructor), [
-      first |> to_unchecked,
-      second |> to_unchecked,
-      third |> to_unchecked,
-      fourth |> to_unchecked,
+      first |> to_dynamic,
+      second |> to_dynamic,
+      third |> to_dynamic,
+      fourth |> to_dynamic,
     ]),
     output: #(first.output, second.output, third.output, fourth.output),
   )
@@ -240,11 +240,11 @@ pub fn from_constructor5(
 ) -> Pattern(construct_to, #(a_output, b_output, c_output, d_output, e_output)) {
   Constructor(
     #(constructor.name(constructor), [
-      first |> to_unchecked,
-      second |> to_unchecked,
-      third |> to_unchecked,
-      fourth |> to_unchecked,
-      fifth |> to_unchecked,
+      first |> to_dynamic,
+      second |> to_dynamic,
+      third |> to_dynamic,
+      fourth |> to_dynamic,
+      fifth |> to_dynamic,
     ]),
     output: #(
       first.output,
@@ -274,12 +274,12 @@ pub fn from_constructor6(
 ) {
   Constructor(
     #(constructor.name(constructor), [
-      first |> to_unchecked,
-      second |> to_unchecked,
-      third |> to_unchecked,
-      fourth |> to_unchecked,
-      fifth |> to_unchecked,
-      sixth |> to_unchecked,
+      first |> to_dynamic,
+      second |> to_dynamic,
+      third |> to_dynamic,
+      fourth |> to_dynamic,
+      fifth |> to_dynamic,
+      sixth |> to_dynamic,
     ]),
     output: #(
       first.output,
@@ -311,13 +311,13 @@ pub fn from_constructor7(
 ) {
   Constructor(
     #(constructor.name(constructor), [
-      first |> to_unchecked,
-      second |> to_unchecked,
-      third |> to_unchecked,
-      fourth |> to_unchecked,
-      fifth |> to_unchecked,
-      sixth |> to_unchecked,
-      seventh |> to_unchecked,
+      first |> to_dynamic,
+      second |> to_dynamic,
+      third |> to_dynamic,
+      fourth |> to_dynamic,
+      fifth |> to_dynamic,
+      sixth |> to_dynamic,
+      seventh |> to_dynamic,
     ]),
     output: #(
       first.output,
@@ -360,14 +360,14 @@ pub fn from_constructor8(
 ) {
   Constructor(
     #(constructor.name(constructor), [
-      first |> to_unchecked,
-      second |> to_unchecked,
-      third |> to_unchecked,
-      fourth |> to_unchecked,
-      fifth |> to_unchecked,
-      sixth |> to_unchecked,
-      seventh |> to_unchecked,
-      eighth |> to_unchecked,
+      first |> to_dynamic,
+      second |> to_dynamic,
+      third |> to_dynamic,
+      fourth |> to_dynamic,
+      fifth |> to_dynamic,
+      sixth |> to_dynamic,
+      seventh |> to_dynamic,
+      eighth |> to_dynamic,
     ]),
     output: #(
       first.output,
@@ -413,15 +413,15 @@ pub fn from_constructor9(
 ) {
   Constructor(
     #(constructor.name(constructor), [
-      first |> to_unchecked,
-      second |> to_unchecked,
-      third |> to_unchecked,
-      fourth |> to_unchecked,
-      fifth |> to_unchecked,
-      sixth |> to_unchecked,
-      seventh |> to_unchecked,
-      eighth |> to_unchecked,
-      ninth |> to_unchecked,
+      first |> to_dynamic,
+      second |> to_dynamic,
+      third |> to_dynamic,
+      fourth |> to_dynamic,
+      fifth |> to_dynamic,
+      sixth |> to_dynamic,
+      seventh |> to_dynamic,
+      eighth |> to_dynamic,
+      ninth |> to_dynamic,
     ]),
     output: #(
       first.output,
@@ -446,7 +446,7 @@ pub fn tuple0() -> Pattern(#(), Nil) {
 pub fn tuple1(
   pattern: Pattern(a_input, a_output),
 ) -> Pattern(#(a_input), #(a_output)) {
-  Tuple([pattern |> to_unchecked], output: #(pattern.output))
+  Tuple([pattern |> to_dynamic], output: #(pattern.output))
 }
 
 // rest of repetitive tuples
@@ -456,7 +456,7 @@ pub fn tuple2(
   pattern1: Pattern(a_input, a_output),
   pattern2: Pattern(b_input, b_output),
 ) -> Pattern(#(a_input, b_input), #(a_output, b_output)) {
-  Tuple([pattern1 |> to_unchecked, pattern2 |> to_unchecked], output: #(
+  Tuple([pattern1 |> to_dynamic, pattern2 |> to_dynamic], output: #(
     pattern1.output,
     pattern2.output,
   ))
@@ -469,9 +469,9 @@ pub fn tuple3(
 ) -> Pattern(#(a_input, b_input, c_input), #(a_output, b_output, c_output)) {
   Tuple(
     [
-      pattern1 |> to_unchecked,
-      pattern2 |> to_unchecked,
-      pattern3 |> to_unchecked,
+      pattern1 |> to_dynamic,
+      pattern2 |> to_dynamic,
+      pattern3 |> to_dynamic,
     ],
     output: #(pattern1.output, pattern2.output, pattern3.output),
   )
@@ -488,10 +488,10 @@ pub fn tuple4(
 ) {
   Tuple(
     [
-      pattern1 |> to_unchecked,
-      pattern2 |> to_unchecked,
-      pattern3 |> to_unchecked,
-      pattern4 |> to_unchecked,
+      pattern1 |> to_dynamic,
+      pattern2 |> to_dynamic,
+      pattern3 |> to_dynamic,
+      pattern4 |> to_dynamic,
     ],
     output: #(
       pattern1.output,
@@ -514,11 +514,11 @@ pub fn tuple5(
 ) {
   Tuple(
     [
-      pattern1 |> to_unchecked,
-      pattern2 |> to_unchecked,
-      pattern3 |> to_unchecked,
-      pattern4 |> to_unchecked,
-      pattern5 |> to_unchecked,
+      pattern1 |> to_dynamic,
+      pattern2 |> to_dynamic,
+      pattern3 |> to_dynamic,
+      pattern4 |> to_dynamic,
+      pattern5 |> to_dynamic,
     ],
     output: #(
       pattern1.output,
@@ -543,12 +543,12 @@ pub fn tuple6(
 ) {
   Tuple(
     [
-      pattern1 |> to_unchecked,
-      pattern2 |> to_unchecked,
-      pattern3 |> to_unchecked,
-      pattern4 |> to_unchecked,
-      pattern5 |> to_unchecked,
-      pattern6 |> to_unchecked,
+      pattern1 |> to_dynamic,
+      pattern2 |> to_dynamic,
+      pattern3 |> to_dynamic,
+      pattern4 |> to_dynamic,
+      pattern5 |> to_dynamic,
+      pattern6 |> to_dynamic,
     ],
     output: #(
       pattern1.output,
@@ -575,13 +575,13 @@ pub fn tuple7(
 ) {
   Tuple(
     [
-      pattern1 |> to_unchecked,
-      pattern2 |> to_unchecked,
-      pattern3 |> to_unchecked,
-      pattern4 |> to_unchecked,
-      pattern5 |> to_unchecked,
-      pattern6 |> to_unchecked,
-      pattern7 |> to_unchecked,
+      pattern1 |> to_dynamic,
+      pattern2 |> to_dynamic,
+      pattern3 |> to_dynamic,
+      pattern4 |> to_dynamic,
+      pattern5 |> to_dynamic,
+      pattern6 |> to_dynamic,
+      pattern7 |> to_dynamic,
     ],
     output: #(
       pattern1.output,
@@ -619,14 +619,14 @@ pub fn tuple8(
 ) {
   Tuple(
     [
-      pattern1 |> to_unchecked,
-      pattern2 |> to_unchecked,
-      pattern3 |> to_unchecked,
-      pattern4 |> to_unchecked,
-      pattern5 |> to_unchecked,
-      pattern6 |> to_unchecked,
-      pattern7 |> to_unchecked,
-      pattern8 |> to_unchecked,
+      pattern1 |> to_dynamic,
+      pattern2 |> to_dynamic,
+      pattern3 |> to_dynamic,
+      pattern4 |> to_dynamic,
+      pattern5 |> to_dynamic,
+      pattern6 |> to_dynamic,
+      pattern7 |> to_dynamic,
+      pattern8 |> to_dynamic,
     ],
     output: #(
       pattern1.output,
@@ -677,15 +677,15 @@ pub fn tuple9(
 ) {
   Tuple(
     [
-      pattern1 |> to_unchecked,
-      pattern2 |> to_unchecked,
-      pattern3 |> to_unchecked,
-      pattern4 |> to_unchecked,
-      pattern5 |> to_unchecked,
-      pattern6 |> to_unchecked,
-      pattern7 |> to_unchecked,
-      pattern8 |> to_unchecked,
-      pattern9 |> to_unchecked,
+      pattern1 |> to_dynamic,
+      pattern2 |> to_dynamic,
+      pattern3 |> to_dynamic,
+      pattern4 |> to_dynamic,
+      pattern5 |> to_dynamic,
+      pattern6 |> to_dynamic,
+      pattern7 |> to_dynamic,
+      pattern8 |> to_dynamic,
+      pattern9 |> to_dynamic,
     ],
     output: #(
       pattern1.output,
@@ -709,9 +709,9 @@ pub fn get_output(pattern: Pattern(_, output)) -> output {
 
 @external(erlang, "gleamgen_ffi", "identity")
 @external(javascript, "../gleamgen_ffi.mjs", "identity")
-pub fn to_unchecked(
+pub fn to_dynamic(
   type_: Pattern(input, handler_output),
-) -> Pattern(types.Unchecked, types.Unchecked)
+) -> Pattern(types.Dynamic, types.Dynamic)
 
 pub fn render(
   pattern: Pattern(_, _),

@@ -22,29 +22,29 @@ type InternalExpression(type_) {
   BoolLiteral(Bool)
   NilLiteral
   ListLiteral(
-    prepending: List(Expression(types.Unchecked)),
-    initial: Option(Expression(types.Unchecked)),
+    prepending: List(Expression(types.Dynamic)),
+    initial: Option(Expression(types.Dynamic)),
   )
-  Equals(Expression(types.Unchecked), Expression(types.Unchecked))
-  TupleLiteral(List(Expression(types.Unchecked)))
+  Equals(Expression(types.Dynamic), Expression(types.Dynamic))
+  TupleLiteral(List(Expression(types.Dynamic)))
   Ident(String)
   Todo(Option(String))
   Panic(Option(String))
   MathOperator(Expression(Int), MathOperator, Expression(Int))
   ConcatString(Expression(String), Expression(String))
   MathOperatorFloat(Expression(Float), MathOperator, Expression(Float))
-  Call(Expression(types.Unchecked), List(Expression(types.Unchecked)))
-  SingleConstructor(Expression(types.Unchecked))
+  Call(Expression(types.Dynamic), List(Expression(types.Dynamic)))
+  SingleConstructor(Expression(types.Dynamic))
   Block(List(Statement))
   Case(
-    Expression(types.Unchecked),
+    Expression(types.Dynamic),
     List(fn(render.Context, Int) -> render.Rendered),
     Bool,
   )
   AnonymousFunction(fn(render.Context) -> render.Rendered)
   Use(
-    function: Expression(types.Unchecked),
-    args: List(Expression(types.Unchecked)),
+    function: Expression(types.Dynamic),
+    args: List(Expression(types.Dynamic)),
     callback_args: List(String),
   )
 }
@@ -75,11 +75,11 @@ pub fn nil() -> Expression(Nil) {
 
 pub fn list(value: List(Expression(t))) -> Expression(List(t)) {
   Expression(
-    ListLiteral(value |> list.map(to_unchecked), None),
+    ListLiteral(value |> list.map(to_dynamic), None),
     value
       |> list.first()
       |> result.map(type_)
-      |> result.lazy_unwrap(fn() { types.unchecked() })
+      |> result.lazy_unwrap(fn() { types.dynamic() })
       |> types.list(),
   )
 }
@@ -90,26 +90,23 @@ pub fn list_prepend(
 ) -> Expression(List(t)) {
   Expression(
     ListLiteral(
-      prepending: prepending |> list.map(to_unchecked),
-      initial: Some(original |> to_unchecked()),
+      prepending: prepending |> list.map(to_dynamic),
+      initial: Some(original |> to_dynamic()),
     ),
     prepending
       |> list.first()
       |> result.map(type_)
-      |> result.lazy_unwrap(fn() { types.unchecked() })
+      |> result.lazy_unwrap(fn() { types.dynamic() })
       |> types.list(),
   )
 }
 
 pub fn tuple1(arg1: Expression(a)) -> Expression(#(a)) {
-  Expression(TupleLiteral([arg1 |> to_unchecked()]), types.tuple1(type_(arg1)))
+  Expression(TupleLiteral([arg1 |> to_dynamic()]), types.tuple1(type_(arg1)))
 }
 
 pub fn equals(first: Expression(a), second: Expression(a)) -> Expression(Bool) {
-  Expression(
-    Equals(first |> to_unchecked(), second |> to_unchecked()),
-    types.bool,
-  )
+  Expression(Equals(first |> to_dynamic(), second |> to_dynamic()), types.bool)
 }
 
 // Remaining repetitive tuple functions
@@ -117,7 +114,7 @@ pub fn equals(first: Expression(a), second: Expression(a)) -> Expression(Bool) {
 
 pub fn tuple2(arg1: Expression(a), arg2: Expression(b)) -> Expression(#(a, b)) {
   Expression(
-    TupleLiteral([arg1 |> to_unchecked(), arg2 |> to_unchecked()]),
+    TupleLiteral([arg1 |> to_dynamic(), arg2 |> to_dynamic()]),
     types.tuple2(type_(arg1), type_(arg2)),
   )
 }
@@ -129,9 +126,9 @@ pub fn tuple3(
 ) -> Expression(#(a, b, c)) {
   Expression(
     TupleLiteral([
-      arg1 |> to_unchecked(),
-      arg2 |> to_unchecked(),
-      arg3 |> to_unchecked(),
+      arg1 |> to_dynamic(),
+      arg2 |> to_dynamic(),
+      arg3 |> to_dynamic(),
     ]),
     types.tuple3(type_(arg1), type_(arg2), type_(arg3)),
   )
@@ -145,10 +142,10 @@ pub fn tuple4(
 ) -> Expression(#(a, b, c, d)) {
   Expression(
     TupleLiteral([
-      arg1 |> to_unchecked(),
-      arg2 |> to_unchecked(),
-      arg3 |> to_unchecked(),
-      arg4 |> to_unchecked(),
+      arg1 |> to_dynamic(),
+      arg2 |> to_dynamic(),
+      arg3 |> to_dynamic(),
+      arg4 |> to_dynamic(),
     ]),
     types.tuple4(type_(arg1), type_(arg2), type_(arg3), type_(arg4)),
   )
@@ -163,11 +160,11 @@ pub fn tuple5(
 ) -> Expression(#(a, b, c, d, e)) {
   Expression(
     TupleLiteral([
-      arg1 |> to_unchecked(),
-      arg2 |> to_unchecked(),
-      arg3 |> to_unchecked(),
-      arg4 |> to_unchecked(),
-      arg5 |> to_unchecked(),
+      arg1 |> to_dynamic(),
+      arg2 |> to_dynamic(),
+      arg3 |> to_dynamic(),
+      arg4 |> to_dynamic(),
+      arg5 |> to_dynamic(),
     ]),
     types.tuple5(
       type_(arg1),
@@ -189,12 +186,12 @@ pub fn tuple6(
 ) -> Expression(#(a, b, c, d, e, f)) {
   Expression(
     TupleLiteral([
-      arg1 |> to_unchecked(),
-      arg2 |> to_unchecked(),
-      arg3 |> to_unchecked(),
-      arg4 |> to_unchecked(),
-      arg5 |> to_unchecked(),
-      arg6 |> to_unchecked(),
+      arg1 |> to_dynamic(),
+      arg2 |> to_dynamic(),
+      arg3 |> to_dynamic(),
+      arg4 |> to_dynamic(),
+      arg5 |> to_dynamic(),
+      arg6 |> to_dynamic(),
     ]),
     types.tuple6(
       type_(arg1),
@@ -218,13 +215,13 @@ pub fn tuple7(
 ) -> Expression(#(a, b, c, d, e, f, g)) {
   Expression(
     TupleLiteral([
-      arg1 |> to_unchecked(),
-      arg2 |> to_unchecked(),
-      arg3 |> to_unchecked(),
-      arg4 |> to_unchecked(),
-      arg5 |> to_unchecked(),
-      arg6 |> to_unchecked(),
-      arg7 |> to_unchecked(),
+      arg1 |> to_dynamic(),
+      arg2 |> to_dynamic(),
+      arg3 |> to_dynamic(),
+      arg4 |> to_dynamic(),
+      arg5 |> to_dynamic(),
+      arg6 |> to_dynamic(),
+      arg7 |> to_dynamic(),
     ]),
     types.tuple7(
       type_(arg1),
@@ -250,14 +247,14 @@ pub fn tuple8(
 ) -> Expression(#(a, b, c, d, e, f, g, h)) {
   Expression(
     TupleLiteral([
-      arg1 |> to_unchecked(),
-      arg2 |> to_unchecked(),
-      arg3 |> to_unchecked(),
-      arg4 |> to_unchecked(),
-      arg5 |> to_unchecked(),
-      arg6 |> to_unchecked(),
-      arg7 |> to_unchecked(),
-      arg8 |> to_unchecked(),
+      arg1 |> to_dynamic(),
+      arg2 |> to_dynamic(),
+      arg3 |> to_dynamic(),
+      arg4 |> to_dynamic(),
+      arg5 |> to_dynamic(),
+      arg6 |> to_dynamic(),
+      arg7 |> to_dynamic(),
+      arg8 |> to_dynamic(),
     ]),
     types.tuple8(
       type_(arg1),
@@ -285,15 +282,15 @@ pub fn tuple9(
 ) -> Expression(#(a, b, c, d, e, f, g, h, i)) {
   Expression(
     TupleLiteral([
-      arg1 |> to_unchecked(),
-      arg2 |> to_unchecked(),
-      arg3 |> to_unchecked(),
-      arg4 |> to_unchecked(),
-      arg5 |> to_unchecked(),
-      arg6 |> to_unchecked(),
-      arg7 |> to_unchecked(),
-      arg8 |> to_unchecked(),
-      arg9 |> to_unchecked(),
+      arg1 |> to_dynamic(),
+      arg2 |> to_dynamic(),
+      arg3 |> to_dynamic(),
+      arg4 |> to_dynamic(),
+      arg5 |> to_dynamic(),
+      arg6 |> to_dynamic(),
+      arg7 |> to_dynamic(),
+      arg8 |> to_dynamic(),
+      arg9 |> to_dynamic(),
     ]),
     types.tuple9(
       type_(arg1),
@@ -314,12 +311,12 @@ pub fn tuple9(
 // TODO: undefined tuple
 
 /// Provide an ident that could be of any type
-pub fn unchecked_ident(value: String) -> Expression(any) {
-  Expression(Ident(value), types.unchecked())
+pub fn raw(value: String) -> Expression(a) {
+  Expression(Ident(value), types.dynamic())
 }
 
 /// Provide a string to inject without any checking of the specified type
-pub fn unchecked_of_type(
+pub fn raw_of_type(
   value: String,
   type_: types.GeneratedType(t),
 ) -> Expression(t) {
@@ -348,7 +345,7 @@ pub fn concat_string(
 /// // -> "todo as \"some unimplemented thing\""
 /// ```
 pub fn todo_(as_string: Option(String)) -> Expression(a) {
-  Expression(Todo(as_string), types.unchecked())
+  Expression(Todo(as_string), types.dynamic())
 }
 
 /// Create a panic expression with an optional as clause
@@ -359,20 +356,20 @@ pub fn todo_(as_string: Option(String)) -> Expression(a) {
 /// // -> "panic as \"ahhhhhh!!!\""
 /// ```
 pub fn panic_(as_string: Option(String)) -> Expression(a) {
-  Expression(Panic(as_string), types.unchecked())
+  Expression(Panic(as_string), types.dynamic())
 }
 
 pub fn ok(ok_value: Expression(ok)) -> Expression(Result(ok, err)) {
   Expression(
-    internal: Call(unchecked_ident("Ok"), [ok_value |> to_unchecked]),
-    type_: types.result(type_(ok_value), types.unchecked()),
+    internal: Call(raw("Ok"), [ok_value |> to_dynamic]),
+    type_: types.result(type_(ok_value), types.dynamic()),
   )
 }
 
 pub fn error(err_value: Expression(err)) -> Expression(Result(ok, err)) {
   Expression(
-    internal: Call(unchecked_ident("Error"), [err_value |> to_unchecked]),
-    type_: types.result(types.unchecked(), type_(err_value)),
+    internal: Call(raw("Error"), [err_value |> to_dynamic]),
+    type_: types.result(types.dynamic(), type_(err_value)),
   )
 }
 
@@ -432,7 +429,7 @@ pub fn math_operator_float(
 /// // -> "dict.new()"
 /// ```
 pub fn call0(func: Expression(fn() -> ret)) -> Expression(ret) {
-  Expression(internal: Call(func |> to_unchecked, []), type_: types.unchecked())
+  Expression(internal: Call(func |> to_dynamic, []), type_: types.dynamic())
 }
 
 /// Call a function or constructor with one argument
@@ -442,8 +439,8 @@ pub fn call1(
   arg1: Expression(arg1),
 ) -> Expression(ret) {
   Expression(
-    internal: Call(func |> to_unchecked, [arg1 |> to_unchecked]),
-    type_: types.unchecked(),
+    internal: Call(func |> to_dynamic, [arg1 |> to_dynamic]),
+    type_: types.dynamic(),
   )
 }
 
@@ -458,11 +455,11 @@ pub fn call2(
   arg2: Expression(arg2),
 ) -> Expression(ret) {
   Expression(
-    internal: Call(func |> to_unchecked, [
-      arg1 |> to_unchecked,
-      arg2 |> to_unchecked,
+    internal: Call(func |> to_dynamic, [
+      arg1 |> to_dynamic,
+      arg2 |> to_dynamic,
     ]),
-    type_: types.unchecked(),
+    type_: types.dynamic(),
   )
 }
 
@@ -475,12 +472,12 @@ pub fn call3(
   arg3: Expression(arg3),
 ) -> Expression(ret) {
   Expression(
-    internal: Call(func |> to_unchecked, [
-      arg1 |> to_unchecked,
-      arg2 |> to_unchecked,
-      arg3 |> to_unchecked,
+    internal: Call(func |> to_dynamic, [
+      arg1 |> to_dynamic,
+      arg2 |> to_dynamic,
+      arg3 |> to_dynamic,
     ]),
-    type_: types.unchecked(),
+    type_: types.dynamic(),
   )
 }
 
@@ -494,13 +491,13 @@ pub fn call4(
   arg4: Expression(arg4),
 ) -> Expression(ret) {
   Expression(
-    internal: Call(func |> to_unchecked, [
-      arg1 |> to_unchecked,
-      arg2 |> to_unchecked,
-      arg3 |> to_unchecked,
-      arg4 |> to_unchecked,
+    internal: Call(func |> to_dynamic, [
+      arg1 |> to_dynamic,
+      arg2 |> to_dynamic,
+      arg3 |> to_dynamic,
+      arg4 |> to_dynamic,
     ]),
-    type_: types.unchecked(),
+    type_: types.dynamic(),
   )
 }
 
@@ -515,14 +512,14 @@ pub fn call5(
   arg5: Expression(arg5),
 ) -> Expression(ret) {
   Expression(
-    internal: Call(func |> to_unchecked, [
-      arg1 |> to_unchecked,
-      arg2 |> to_unchecked,
-      arg3 |> to_unchecked,
-      arg4 |> to_unchecked,
-      arg5 |> to_unchecked,
+    internal: Call(func |> to_dynamic, [
+      arg1 |> to_dynamic,
+      arg2 |> to_dynamic,
+      arg3 |> to_dynamic,
+      arg4 |> to_dynamic,
+      arg5 |> to_dynamic,
     ]),
-    type_: types.unchecked(),
+    type_: types.dynamic(),
   )
 }
 
@@ -538,15 +535,15 @@ pub fn call6(
   arg6: Expression(arg6),
 ) -> Expression(ret) {
   Expression(
-    internal: Call(func |> to_unchecked, [
-      arg1 |> to_unchecked,
-      arg2 |> to_unchecked,
-      arg3 |> to_unchecked,
-      arg4 |> to_unchecked,
-      arg5 |> to_unchecked,
-      arg6 |> to_unchecked,
+    internal: Call(func |> to_dynamic, [
+      arg1 |> to_dynamic,
+      arg2 |> to_dynamic,
+      arg3 |> to_dynamic,
+      arg4 |> to_dynamic,
+      arg5 |> to_dynamic,
+      arg6 |> to_dynamic,
     ]),
-    type_: types.unchecked(),
+    type_: types.dynamic(),
   )
 }
 
@@ -563,16 +560,16 @@ pub fn call7(
   arg7: Expression(arg7),
 ) -> Expression(ret) {
   Expression(
-    internal: Call(func |> to_unchecked, [
-      arg1 |> to_unchecked,
-      arg2 |> to_unchecked,
-      arg3 |> to_unchecked,
-      arg4 |> to_unchecked,
-      arg5 |> to_unchecked,
-      arg6 |> to_unchecked,
-      arg7 |> to_unchecked,
+    internal: Call(func |> to_dynamic, [
+      arg1 |> to_dynamic,
+      arg2 |> to_dynamic,
+      arg3 |> to_dynamic,
+      arg4 |> to_dynamic,
+      arg5 |> to_dynamic,
+      arg6 |> to_dynamic,
+      arg7 |> to_dynamic,
     ]),
-    type_: types.unchecked(),
+    type_: types.dynamic(),
   )
 }
 
@@ -590,17 +587,17 @@ pub fn call8(
   arg8: Expression(arg8),
 ) -> Expression(ret) {
   Expression(
-    internal: Call(func |> to_unchecked, [
-      arg1 |> to_unchecked,
-      arg2 |> to_unchecked,
-      arg3 |> to_unchecked,
-      arg4 |> to_unchecked,
-      arg5 |> to_unchecked,
-      arg6 |> to_unchecked,
-      arg7 |> to_unchecked,
-      arg8 |> to_unchecked,
+    internal: Call(func |> to_dynamic, [
+      arg1 |> to_dynamic,
+      arg2 |> to_dynamic,
+      arg3 |> to_dynamic,
+      arg4 |> to_dynamic,
+      arg5 |> to_dynamic,
+      arg6 |> to_dynamic,
+      arg7 |> to_dynamic,
+      arg8 |> to_dynamic,
     ]),
-    type_: types.unchecked(),
+    type_: types.dynamic(),
   )
 }
 
@@ -621,35 +618,35 @@ pub fn call9(
   arg9: Expression(arg9),
 ) -> Expression(ret) {
   Expression(
-    internal: Call(func |> to_unchecked, [
-      arg1 |> to_unchecked,
-      arg2 |> to_unchecked,
-      arg3 |> to_unchecked,
-      arg4 |> to_unchecked,
-      arg5 |> to_unchecked,
-      arg6 |> to_unchecked,
-      arg7 |> to_unchecked,
-      arg8 |> to_unchecked,
-      arg9 |> to_unchecked,
+    internal: Call(func |> to_dynamic, [
+      arg1 |> to_dynamic,
+      arg2 |> to_dynamic,
+      arg3 |> to_dynamic,
+      arg4 |> to_dynamic,
+      arg5 |> to_dynamic,
+      arg6 |> to_dynamic,
+      arg7 |> to_dynamic,
+      arg8 |> to_dynamic,
+      arg9 |> to_dynamic,
     ]),
-    type_: types.unchecked(),
+    type_: types.dynamic(),
   )
 }
 
 // }}}
 
 /// Call a function or constructor without type checking
-pub fn call_unchecked(
-  func: Expression(types.Unchecked),
-  args: List(Expression(types.Unchecked)),
-) -> Expression(types.Unchecked) {
-  Expression(internal: Call(func, args), type_: types.unchecked())
+pub fn call_dynamic(
+  func: Expression(types.Dynamic),
+  args: List(Expression(types.Dynamic)),
+) -> Expression(types.Dynamic) {
+  Expression(internal: Call(func, args), type_: types.dynamic())
 }
 
 pub fn construct0(constructor: Expression(fn() -> ret)) -> Expression(ret) {
   Expression(
-    internal: SingleConstructor(constructor |> to_unchecked),
-    type_: types.unchecked(),
+    internal: SingleConstructor(constructor |> to_dynamic),
+    type_: types.dynamic(),
   )
 }
 
@@ -681,10 +678,10 @@ pub fn new_use(
   function: Expression(a),
   args,
   callback_args,
-) -> Expression(types.Unchecked) {
+) -> Expression(types.Dynamic) {
   let return = types.get_return_type(function.type_)
   Expression(
-    internal: Use(function |> to_unchecked(), args, callback_args),
+    internal: Use(function |> to_dynamic(), args, callback_args),
     type_: return,
   )
 }
@@ -711,7 +708,7 @@ pub fn new_anonymous_function(
 }
 
 /// Get the internal type of an expression
-pub fn type_(expr: Expression(unchecked)) -> types.GeneratedType(unchecked) {
+pub fn type_(expr: Expression(t)) -> types.GeneratedType(t) {
   expr.type_
 }
 
@@ -721,20 +718,20 @@ pub fn type_(expr: Expression(unchecked)) -> types.GeneratedType(unchecked) {
 
 @external(erlang, "gleamgen_ffi", "identity")
 @external(javascript, "../gleamgen_ffi.mjs", "identity")
-pub fn to_unchecked(type_: Expression(t)) -> Expression(types.Unchecked)
+pub fn to_dynamic(type_: Expression(t)) -> Expression(types.Dynamic)
 
 /// Convert an expression to any type without checking
 @external(erlang, "gleamgen_ffi", "identity")
 @external(javascript, "../gleamgen_ffi.mjs", "identity")
-pub fn unsafe_from_unchecked(type_: Expression(t1)) -> Expression(t2)
+pub fn coerce_dynamic_unsafe(type_: Expression(t1)) -> Expression(t2)
 
 // ----------------------------------------------------------------------------
 // Statements
 // ----------------------------------------------------------------------------
 
 pub type Statement {
-  LetDeclaration(String, Expression(types.Unchecked), assert_: Bool)
-  ExpressionStatement(Expression(types.Unchecked))
+  LetDeclaration(String, Expression(types.Dynamic), assert_: Bool)
+  ExpressionStatement(Expression(types.Dynamic))
 }
 
 // ----------------------------------------------------------------------------

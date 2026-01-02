@@ -5,7 +5,7 @@ import gleam/result
 import gleam/string
 import gleamgen/render
 
-pub type Unchecked
+pub type Dynamic
 
 pub opaque type GeneratedType(type_) {
   GeneratedBool
@@ -13,12 +13,12 @@ pub opaque type GeneratedType(type_) {
   GeneratedInt
   GeneratedFloat
   GeneratedNil
-  GeneratedList(GeneratedType(Unchecked))
-  GeneratedTuple(List(GeneratedType(Unchecked)))
-  GeneratedFunction(List(GeneratedType(Unchecked)), GeneratedType(Unchecked))
-  Unchecked
-  CustomType(option.Option(String), String, List(GeneratedType(Unchecked)))
-  UncheckedIdent(String)
+  GeneratedList(GeneratedType(Dynamic))
+  GeneratedTuple(List(GeneratedType(Dynamic)))
+  GeneratedFunction(List(GeneratedType(Dynamic)), GeneratedType(Dynamic))
+  Dynamic
+  CustomType(option.Option(String), String, List(GeneratedType(Dynamic)))
+  Raw(String)
   Generic(String)
 }
 
@@ -37,18 +37,18 @@ pub fn generic(name: String) -> GeneratedType(a) {
 }
 
 pub fn list(type_: GeneratedType(t)) -> GeneratedType(List(t)) {
-  GeneratedList(type_ |> to_unchecked)
+  GeneratedList(type_ |> to_dynamic)
 }
 
 pub fn tuple1(type1: GeneratedType(a)) -> GeneratedType(#(a)) {
-  GeneratedTuple([type1 |> to_unchecked])
+  GeneratedTuple([type1 |> to_dynamic])
 }
 
 pub fn tuple2(
   type1: GeneratedType(a),
   type2: GeneratedType(b),
 ) -> GeneratedType(#(a, b)) {
-  GeneratedTuple([type1 |> to_unchecked, type2 |> to_unchecked])
+  GeneratedTuple([type1 |> to_dynamic, type2 |> to_dynamic])
 }
 
 pub fn tuple3(
@@ -57,9 +57,9 @@ pub fn tuple3(
   type3: GeneratedType(c),
 ) -> GeneratedType(#(a, b, c)) {
   GeneratedTuple([
-    type1 |> to_unchecked,
-    type2 |> to_unchecked,
-    type3 |> to_unchecked,
+    type1 |> to_dynamic,
+    type2 |> to_dynamic,
+    type3 |> to_dynamic,
   ])
 }
 
@@ -70,10 +70,10 @@ pub fn tuple4(
   type4: GeneratedType(d),
 ) -> GeneratedType(#(a, b, c, d)) {
   GeneratedTuple([
-    type1 |> to_unchecked,
-    type2 |> to_unchecked,
-    type3 |> to_unchecked,
-    type4 |> to_unchecked,
+    type1 |> to_dynamic,
+    type2 |> to_dynamic,
+    type3 |> to_dynamic,
+    type4 |> to_dynamic,
   ])
 }
 
@@ -85,11 +85,11 @@ pub fn tuple5(
   type5: GeneratedType(e),
 ) -> GeneratedType(#(a, b, c, d, e)) {
   GeneratedTuple([
-    type1 |> to_unchecked,
-    type2 |> to_unchecked,
-    type3 |> to_unchecked,
-    type4 |> to_unchecked,
-    type5 |> to_unchecked,
+    type1 |> to_dynamic,
+    type2 |> to_dynamic,
+    type3 |> to_dynamic,
+    type4 |> to_dynamic,
+    type5 |> to_dynamic,
   ])
 }
 
@@ -102,12 +102,12 @@ pub fn tuple6(
   type6: GeneratedType(f),
 ) -> GeneratedType(#(a, b, c, d, e, f)) {
   GeneratedTuple([
-    type1 |> to_unchecked,
-    type2 |> to_unchecked,
-    type3 |> to_unchecked,
-    type4 |> to_unchecked,
-    type5 |> to_unchecked,
-    type6 |> to_unchecked,
+    type1 |> to_dynamic,
+    type2 |> to_dynamic,
+    type3 |> to_dynamic,
+    type4 |> to_dynamic,
+    type5 |> to_dynamic,
+    type6 |> to_dynamic,
   ])
 }
 
@@ -121,13 +121,13 @@ pub fn tuple7(
   type7: GeneratedType(g),
 ) -> GeneratedType(#(a, b, c, d, e, f, g)) {
   GeneratedTuple([
-    type1 |> to_unchecked,
-    type2 |> to_unchecked,
-    type3 |> to_unchecked,
-    type4 |> to_unchecked,
-    type5 |> to_unchecked,
-    type6 |> to_unchecked,
-    type7 |> to_unchecked,
+    type1 |> to_dynamic,
+    type2 |> to_dynamic,
+    type3 |> to_dynamic,
+    type4 |> to_dynamic,
+    type5 |> to_dynamic,
+    type6 |> to_dynamic,
+    type7 |> to_dynamic,
   ])
 }
 
@@ -142,14 +142,14 @@ pub fn tuple8(
   type8: GeneratedType(h),
 ) -> GeneratedType(#(a, b, c, d, e, f, g, h)) {
   GeneratedTuple([
-    type1 |> to_unchecked,
-    type2 |> to_unchecked,
-    type3 |> to_unchecked,
-    type4 |> to_unchecked,
-    type5 |> to_unchecked,
-    type6 |> to_unchecked,
-    type7 |> to_unchecked,
-    type8 |> to_unchecked,
+    type1 |> to_dynamic,
+    type2 |> to_dynamic,
+    type3 |> to_dynamic,
+    type4 |> to_dynamic,
+    type5 |> to_dynamic,
+    type6 |> to_dynamic,
+    type7 |> to_dynamic,
+    type8 |> to_dynamic,
   ])
 }
 
@@ -165,28 +165,28 @@ pub fn tuple9(
   type9: GeneratedType(i),
 ) -> GeneratedType(#(a, b, c, d, e, f, g, h, i)) {
   GeneratedTuple([
-    type1 |> to_unchecked,
-    type2 |> to_unchecked,
-    type3 |> to_unchecked,
-    type4 |> to_unchecked,
-    type5 |> to_unchecked,
-    type6 |> to_unchecked,
-    type7 |> to_unchecked,
-    type8 |> to_unchecked,
-    type9 |> to_unchecked,
+    type1 |> to_dynamic,
+    type2 |> to_dynamic,
+    type3 |> to_dynamic,
+    type4 |> to_dynamic,
+    type5 |> to_dynamic,
+    type6 |> to_dynamic,
+    type7 |> to_dynamic,
+    type8 |> to_dynamic,
+    type9 |> to_dynamic,
   ])
 }
 
-pub fn unchecked_ident(name: String) -> GeneratedType(any) {
-  UncheckedIdent(name)
+pub fn raw(name: String) -> GeneratedType(any) {
+  Raw(name)
 }
 
-pub fn unchecked() -> GeneratedType(any) {
-  Unchecked
+pub fn dynamic() -> GeneratedType(any) {
+  Dynamic
 }
 
 pub fn reference(_: a) -> GeneratedType(a) {
-  Unchecked
+  Dynamic
 }
 
 pub fn result(
@@ -194,19 +194,19 @@ pub fn result(
   err_type: GeneratedType(err),
 ) -> GeneratedType(Result(ok, err)) {
   CustomType(option.None, "Result", [
-    ok_type |> to_unchecked,
-    err_type |> to_unchecked,
+    ok_type |> to_dynamic,
+    err_type |> to_dynamic,
   ])
 }
 
 pub fn function0(returns: GeneratedType(ret)) -> GeneratedType(fn() -> ret) {
-  GeneratedFunction([], returns |> to_unchecked)
+  GeneratedFunction([], returns |> to_dynamic)
 }
 
-pub fn unchecked_function(
-  args: List(GeneratedType(Unchecked)),
-  returns: GeneratedType(Unchecked),
-) -> GeneratedType(a) {
+pub fn dynamic_function(
+  args: List(GeneratedType(Dynamic)),
+  returns: GeneratedType(Dynamic),
+) -> GeneratedType(Dynamic) {
   GeneratedFunction(args, returns)
 }
 
@@ -214,7 +214,7 @@ pub fn function1(
   arg1: GeneratedType(arg1),
   returns: GeneratedType(ret),
 ) -> GeneratedType(fn(arg1) -> ret) {
-  GeneratedFunction([arg1 |> to_unchecked], returns |> to_unchecked)
+  GeneratedFunction([arg1 |> to_dynamic], returns |> to_dynamic)
 }
 
 pub fn function2(
@@ -223,8 +223,8 @@ pub fn function2(
   returns: GeneratedType(ret),
 ) -> GeneratedType(fn(arg1, arg2) -> ret) {
   GeneratedFunction(
-    [arg1 |> to_unchecked, arg2 |> to_unchecked],
-    returns |> to_unchecked,
+    [arg1 |> to_dynamic, arg2 |> to_dynamic],
+    returns |> to_dynamic,
   )
 }
 
@@ -235,8 +235,8 @@ pub fn function3(
   returns: GeneratedType(ret),
 ) -> GeneratedType(fn(arg1, arg2, arg3) -> ret) {
   GeneratedFunction(
-    [arg1 |> to_unchecked, arg2 |> to_unchecked, arg3 |> to_unchecked],
-    returns |> to_unchecked,
+    [arg1 |> to_dynamic, arg2 |> to_dynamic, arg3 |> to_dynamic],
+    returns |> to_dynamic,
   )
 }
 
@@ -249,12 +249,12 @@ pub fn function4(
 ) -> GeneratedType(fn(arg1, arg2, arg3, arg4) -> ret) {
   GeneratedFunction(
     [
-      arg1 |> to_unchecked,
-      arg2 |> to_unchecked,
-      arg3 |> to_unchecked,
-      arg4 |> to_unchecked,
+      arg1 |> to_dynamic,
+      arg2 |> to_dynamic,
+      arg3 |> to_dynamic,
+      arg4 |> to_dynamic,
     ],
-    returns |> to_unchecked,
+    returns |> to_dynamic,
   )
 }
 
@@ -268,13 +268,13 @@ pub fn function5(
 ) -> GeneratedType(fn(arg1, arg2, arg3, arg4, arg5) -> ret) {
   GeneratedFunction(
     [
-      arg1 |> to_unchecked,
-      arg2 |> to_unchecked,
-      arg3 |> to_unchecked,
-      arg4 |> to_unchecked,
-      arg5 |> to_unchecked,
+      arg1 |> to_dynamic,
+      arg2 |> to_dynamic,
+      arg3 |> to_dynamic,
+      arg4 |> to_dynamic,
+      arg5 |> to_dynamic,
     ],
-    returns |> to_unchecked,
+    returns |> to_dynamic,
   )
 }
 
@@ -289,14 +289,14 @@ pub fn function6(
 ) -> GeneratedType(fn(arg1, arg2, arg3, arg4, arg5, arg6) -> ret) {
   GeneratedFunction(
     [
-      arg1 |> to_unchecked,
-      arg2 |> to_unchecked,
-      arg3 |> to_unchecked,
-      arg4 |> to_unchecked,
-      arg5 |> to_unchecked,
-      arg6 |> to_unchecked,
+      arg1 |> to_dynamic,
+      arg2 |> to_dynamic,
+      arg3 |> to_dynamic,
+      arg4 |> to_dynamic,
+      arg5 |> to_dynamic,
+      arg6 |> to_dynamic,
     ],
-    returns |> to_unchecked,
+    returns |> to_dynamic,
   )
 }
 
@@ -312,15 +312,15 @@ pub fn function7(
 ) -> GeneratedType(fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7) -> ret) {
   GeneratedFunction(
     [
-      arg1 |> to_unchecked,
-      arg2 |> to_unchecked,
-      arg3 |> to_unchecked,
-      arg4 |> to_unchecked,
-      arg5 |> to_unchecked,
-      arg6 |> to_unchecked,
-      arg7 |> to_unchecked,
+      arg1 |> to_dynamic,
+      arg2 |> to_dynamic,
+      arg3 |> to_dynamic,
+      arg4 |> to_dynamic,
+      arg5 |> to_dynamic,
+      arg6 |> to_dynamic,
+      arg7 |> to_dynamic,
     ],
-    returns |> to_unchecked,
+    returns |> to_dynamic,
   )
 }
 
@@ -337,16 +337,16 @@ pub fn function8(
 ) -> GeneratedType(fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) -> ret) {
   GeneratedFunction(
     [
-      arg1 |> to_unchecked,
-      arg2 |> to_unchecked,
-      arg3 |> to_unchecked,
-      arg4 |> to_unchecked,
-      arg5 |> to_unchecked,
-      arg6 |> to_unchecked,
-      arg7 |> to_unchecked,
-      arg8 |> to_unchecked,
+      arg1 |> to_dynamic,
+      arg2 |> to_dynamic,
+      arg3 |> to_dynamic,
+      arg4 |> to_dynamic,
+      arg5 |> to_dynamic,
+      arg6 |> to_dynamic,
+      arg7 |> to_dynamic,
+      arg8 |> to_dynamic,
     ],
-    returns |> to_unchecked,
+    returns |> to_dynamic,
   )
 }
 
@@ -366,24 +366,24 @@ pub fn function9(
 ) {
   GeneratedFunction(
     [
-      arg1 |> to_unchecked,
-      arg2 |> to_unchecked,
-      arg3 |> to_unchecked,
-      arg4 |> to_unchecked,
-      arg5 |> to_unchecked,
-      arg6 |> to_unchecked,
-      arg7 |> to_unchecked,
-      arg8 |> to_unchecked,
-      arg9 |> to_unchecked,
+      arg1 |> to_dynamic,
+      arg2 |> to_dynamic,
+      arg3 |> to_dynamic,
+      arg4 |> to_dynamic,
+      arg5 |> to_dynamic,
+      arg6 |> to_dynamic,
+      arg7 |> to_dynamic,
+      arg8 |> to_dynamic,
+      arg9 |> to_dynamic,
     ],
-    returns |> to_unchecked,
+    returns |> to_dynamic,
   )
 }
 
 pub fn get_return_type(function: GeneratedType(any)) {
   case function {
     GeneratedFunction(_, ret) -> ret
-    _ -> Unchecked
+    _ -> Dynamic
   }
 }
 
@@ -391,19 +391,19 @@ pub fn get_return_type(function: GeneratedType(any)) {
 pub fn custom_type(
   module: option.Option(String),
   name: String,
-  types: List(GeneratedType(Unchecked)),
+  types: List(GeneratedType(Dynamic)),
 ) -> GeneratedType(a) {
   CustomType(module, name, types)
 }
 
 @external(erlang, "gleamgen_ffi", "identity")
 @external(javascript, "../gleamgen_ffi.mjs", "identity")
-pub fn to_unchecked(type_: GeneratedType(t)) -> GeneratedType(Unchecked)
+pub fn to_dynamic(type_: GeneratedType(t)) -> GeneratedType(Dynamic)
 
 @external(erlang, "gleamgen_ffi", "identity")
 @external(javascript, "../gleamgen_ffi.mjs", "identity")
-pub fn unsafe_from_unchecked(
-  type_: GeneratedType(Unchecked),
+pub fn coerce_dynamic_unsafe(
+  type_: GeneratedType(Dynamic),
 ) -> GeneratedType(a)
 
 pub fn render_type(type_: GeneratedType(a)) -> Result(render.Rendered, Nil) {
@@ -431,8 +431,8 @@ pub fn render_type(type_: GeneratedType(a)) -> Result(render.Rendered, Nil) {
     GeneratedList(t) -> render_custom(option.None, "List", [t])
     GeneratedTuple(t) -> render_tuple(t)
     CustomType(module, name, types) -> render_custom(module, name, types)
-    Unchecked -> Error(Nil)
-    UncheckedIdent(t) -> {
+    Dynamic -> Error(Nil)
+    Raw(t) -> {
       let used_imports = case string.split_once(t, ".") {
         Ok(#(module, _)) -> [module]
         Error(Nil) -> []
@@ -449,7 +449,7 @@ pub fn render_type(type_: GeneratedType(a)) -> Result(render.Rendered, Nil) {
   }
 }
 
-fn render_type_list(types: List(GeneratedType(Unchecked))) {
+fn render_type_list(types: List(GeneratedType(Dynamic))) {
   let possibly_rendered =
     types
     |> list.try_fold(#([], render.empty_details), fn(acc, t) {
@@ -467,7 +467,7 @@ fn render_type_list(types: List(GeneratedType(Unchecked))) {
 fn render_custom(
   module: option.Option(String),
   name: String,
-  types: List(GeneratedType(Unchecked)),
+  types: List(GeneratedType(Dynamic)),
 ) -> Result(render.Rendered, Nil) {
   let rendered = render_type_list(types)
   use #(rendered_types, details) <- result.try(rendered)
@@ -488,7 +488,7 @@ fn render_custom(
 }
 
 fn render_tuple(
-  types: List(GeneratedType(Unchecked)),
+  types: List(GeneratedType(Dynamic)),
 ) -> Result(render.Rendered, Nil) {
   let rendered = render_type_list(types)
   use #(rendered_types, details) <- result.try(rendered)

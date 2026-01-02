@@ -46,11 +46,11 @@ pub fn get_reference(imported: ImportedModule) -> String {
   }
 }
 
-pub fn unchecked_ident(
+pub fn raw_ident(
   imported: ImportedModule,
   name: String,
 ) -> Expression(any) {
-  expression.unchecked_ident(get_reference(imported) <> "." <> name)
+  expression.raw(get_reference(imported) <> "." <> name)
 }
 
 pub fn value_of_type(
@@ -58,10 +58,10 @@ pub fn value_of_type(
   name: String,
   type_: types.GeneratedType(t),
 ) -> Expression(t) {
-  expression.unchecked_of_type(get_reference(imported) <> "." <> name, type_)
+  expression.raw_of_type(get_reference(imported) <> "." <> name, type_)
 }
 
-pub fn unchecked_type(
+pub fn raw_type(
   imported: ImportedModule,
   name: String,
 ) -> custom.CustomType(t, generics) {
@@ -85,7 +85,7 @@ pub fn function0(
   func: fn() -> ret,
 ) -> Expression(fn() -> ret) {
   let name = function.get_function_name(func)
-  expression.unchecked_ident(get_reference(imported) <> "." <> name)
+  expression.raw(get_reference(imported) <> "." <> name)
 }
 
 /// Import an existing function from the module.
@@ -105,7 +105,7 @@ pub fn function1(
   func: fn(a) -> ret,
 ) -> Expression(fn(a) -> ret) {
   let name = function.get_function_name(func)
-  expression.unchecked_ident(get_reference(imported) <> "." <> name)
+  expression.raw(get_reference(imported) <> "." <> name)
 }
 
 // rest of the repetitive functionN functions
@@ -118,7 +118,7 @@ pub fn function2(
   func: fn(a, b) -> ret,
 ) -> Expression(fn(a, b) -> ret) {
   let name = function.get_function_name(func)
-  expression.unchecked_ident(get_reference(imported) <> "." <> name)
+  expression.raw(get_reference(imported) <> "." <> name)
 }
 
 /// Import an existing function from the module.
@@ -128,7 +128,7 @@ pub fn function3(
   func: fn(a, b, c) -> ret,
 ) -> Expression(fn(a, b, c) -> ret) {
   let name = function.get_function_name(func)
-  expression.unchecked_ident(get_reference(imported) <> "." <> name)
+  expression.raw(get_reference(imported) <> "." <> name)
 }
 
 /// Import an existing function from the module.
@@ -138,7 +138,7 @@ pub fn function4(
   func: fn(a, b, c, d) -> ret,
 ) -> Expression(fn(a, b, c, d) -> ret) {
   let name = function.get_function_name(func)
-  expression.unchecked_ident(get_reference(imported) <> "." <> name)
+  expression.raw(get_reference(imported) <> "." <> name)
 }
 
 /// Import an existing function from the module.
@@ -148,7 +148,7 @@ pub fn function5(
   func: fn(a, b, c, d, e) -> ret,
 ) -> Expression(fn(a, b, c, d, e) -> ret) {
   let name = function.get_function_name(func)
-  expression.unchecked_ident(get_reference(imported) <> "." <> name)
+  expression.raw(get_reference(imported) <> "." <> name)
 }
 
 /// Import an existing function from the module.
@@ -158,7 +158,7 @@ pub fn function6(
   func: fn(a, b, c, d, e, f) -> ret,
 ) -> Expression(fn(a, b, c, d, e, f) -> ret) {
   let name = function.get_function_name(func)
-  expression.unchecked_ident(get_reference(imported) <> "." <> name)
+  expression.raw(get_reference(imported) <> "." <> name)
 }
 
 /// Import an existing function from the module.
@@ -168,7 +168,7 @@ pub fn function7(
   func: fn(a, b, c, d, e, f, g) -> ret,
 ) -> Expression(fn(a, b, c, d, e, f, g) -> ret) {
   let name = function.get_function_name(func)
-  expression.unchecked_ident(get_reference(imported) <> "." <> name)
+  expression.raw(get_reference(imported) <> "." <> name)
 }
 
 /// Import an existing function from the module.
@@ -178,7 +178,7 @@ pub fn function8(
   func: fn(a, b, c, d, e, f, g, h) -> ret,
 ) -> Expression(fn(a, b, c, d, e, f, g, h) -> ret) {
   let name = function.get_function_name(func)
-  expression.unchecked_ident(get_reference(imported) <> "." <> name)
+  expression.raw(get_reference(imported) <> "." <> name)
 }
 
 /// Import an existing function from the module.
@@ -188,7 +188,7 @@ pub fn function9(
   func: fn(a, b, c, d, e, f, g, h, i) -> ret,
 ) -> Expression(fn(a, b, c, d, e, f, g, h, i) -> ret) {
   let name = function.get_function_name(func)
-  expression.unchecked_ident(get_reference(imported) <> "." <> name)
+  expression.raw(get_reference(imported) <> "." <> name)
 }
 
 // }}}

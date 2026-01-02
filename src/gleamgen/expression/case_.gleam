@@ -9,12 +9,12 @@ import gleam/set
 import gleamgen/expression.{type Expression}
 import gleamgen/pattern.{type Pattern}
 import gleamgen/render
-import gleamgen/types.{type Unchecked}
+import gleamgen/types.{type Dynamic}
 
 pub type CaseExpression(input, output) {
   CaseExpression(
     input_expression: Expression(input),
-    cases: List(#(Pattern(Unchecked, Unchecked), Expression(output))),
+    cases: List(#(Pattern(Dynamic, Dynamic), Expression(output))),
   )
 }
 
@@ -73,7 +73,7 @@ pub fn with_pattern(
   handler: fn(pattern_output) -> Expression(output),
 ) {
   CaseExpression(old.input_expression, [
-    #(pattern |> pattern.to_unchecked(), handler(pattern.get_output(pattern))),
+    #(pattern |> pattern.to_dynamic(), handler(pattern.get_output(pattern))),
     ..old.cases
   ])
 }
@@ -103,8 +103,8 @@ pub fn build_expression(
                 |> list.map(pair.first)
                 |> list.reduce(fn(pattern_1, pattern_2) {
                   pattern.or(
-                    pattern_1 |> pattern.to_unchecked(),
-                    pattern_2 |> pattern.to_unchecked(),
+                    pattern_1 |> pattern.to_dynamic(),
+                    pattern_2 |> pattern.to_dynamic(),
                   )
                 })
               new_pattern
@@ -135,12 +135,12 @@ pub fn build_expression(
     list.all(case_.cases, fn(m) { pattern.can_match_on_multiple(m.0) })
 
   expression.new_case(
-    case_.input_expression |> expression.to_unchecked(),
+    case_.input_expression |> expression.to_dynamic(),
     simplified_patterns,
     all_can_match_on_multiple,
     case_.cases
       |> list.first()
       |> result.map(fn(c) { expression.type_(c.1) })
-      |> result.lazy_unwrap(fn() { types.unchecked() }),
+      |> result.lazy_unwrap(fn() { types.dynamic() }),
   )
 }

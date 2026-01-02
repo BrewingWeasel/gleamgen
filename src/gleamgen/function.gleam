@@ -5,26 +5,26 @@ import gleam/pair
 import gleam/result
 import gleamgen/expression
 import gleamgen/render
-import gleamgen/types.{type Unchecked}
+import gleamgen/types.{type Dynamic}
 
 pub type Function(type_, ret) {
   Function(
-    args: List(#(String, types.GeneratedType(Unchecked))),
+    args: List(#(String, types.GeneratedType(Dynamic))),
     returns: types.GeneratedType(ret),
     body: expression.Expression(ret),
   )
 }
 
 pub fn new_raw(
-  args args: List(#(String, types.GeneratedType(Unchecked))),
+  args args: List(#(String, types.GeneratedType(Dynamic))),
   returns returns: types.GeneratedType(ret),
-  handler handler: fn(List(expression.Expression(Unchecked))) ->
+  handler handler: fn(List(expression.Expression(Dynamic))) ->
     expression.Expression(ret),
-) -> Function(Unchecked, ret) {
+) -> Function(Dynamic, ret) {
   let body =
     handler(
       args
-      |> list.map(fn(arg) { expression.unchecked_ident(arg.0) }),
+      |> list.map(fn(arg) { expression.raw(arg.0) }),
     )
   Function(args:, returns:, body:)
 }
@@ -42,8 +42,8 @@ pub fn new1(
   returns returns: types.GeneratedType(ret),
   handler handler: fn(expression.Expression(arg1)) -> expression.Expression(ret),
 ) -> Function(fn(arg1) -> ret, ret) {
-  let body = handler(expression.unchecked_ident(arg1.0))
-  Function(args: [#(arg1.0, arg1.1 |> types.to_unchecked)], returns:, body:)
+  let body = handler(expression.raw(arg1.0))
+  Function(args: [#(arg1.0, arg1.1 |> types.to_dynamic)], returns:, body:)
 }
 
 // rest of repetitve functions
@@ -58,13 +58,13 @@ pub fn new2(
 ) -> Function(fn(arg1, arg2) -> ret, ret) {
   let body =
     handler(
-      expression.unchecked_ident(arg1.0),
-      expression.unchecked_ident(arg2.0),
+      expression.raw(arg1.0),
+      expression.raw(arg2.0),
     )
   Function(
     args: [
-      #(arg1.0, arg1.1 |> types.to_unchecked),
-      #(arg2.0, arg2.1 |> types.to_unchecked),
+      #(arg1.0, arg1.1 |> types.to_dynamic),
+      #(arg2.0, arg2.1 |> types.to_dynamic),
     ],
     returns:,
     body:,
@@ -85,15 +85,15 @@ pub fn new3(
 ) -> Function(fn(arg1, arg2, arg3) -> ret, ret) {
   let body =
     handler(
-      expression.unchecked_ident(arg1.0),
-      expression.unchecked_ident(arg2.0),
-      expression.unchecked_ident(arg3.0),
+      expression.raw(arg1.0),
+      expression.raw(arg2.0),
+      expression.raw(arg3.0),
     )
   Function(
     args: [
-      #(arg1.0, arg1.1 |> types.to_unchecked),
-      #(arg2.0, arg2.1 |> types.to_unchecked),
-      #(arg3.0, arg3.1 |> types.to_unchecked),
+      #(arg1.0, arg1.1 |> types.to_dynamic),
+      #(arg2.0, arg2.1 |> types.to_dynamic),
+      #(arg3.0, arg3.1 |> types.to_dynamic),
     ],
     returns:,
     body:,
@@ -116,17 +116,17 @@ pub fn new4(
 ) -> Function(fn(arg1, arg2, arg3, arg4) -> ret, ret) {
   let body =
     handler(
-      expression.unchecked_ident(arg1.0),
-      expression.unchecked_ident(arg2.0),
-      expression.unchecked_ident(arg3.0),
-      expression.unchecked_ident(arg4.0),
+      expression.raw(arg1.0),
+      expression.raw(arg2.0),
+      expression.raw(arg3.0),
+      expression.raw(arg4.0),
     )
   Function(
     args: [
-      #(arg1.0, arg1.1 |> types.to_unchecked),
-      #(arg2.0, arg2.1 |> types.to_unchecked),
-      #(arg3.0, arg3.1 |> types.to_unchecked),
-      #(arg4.0, arg4.1 |> types.to_unchecked),
+      #(arg1.0, arg1.1 |> types.to_dynamic),
+      #(arg2.0, arg2.1 |> types.to_dynamic),
+      #(arg3.0, arg3.1 |> types.to_dynamic),
+      #(arg4.0, arg4.1 |> types.to_dynamic),
     ],
     returns:,
     body:,
@@ -151,19 +151,19 @@ pub fn new5(
 ) -> Function(fn(arg1, arg2, arg3, arg4, arg5) -> ret, ret) {
   let body =
     handler(
-      expression.unchecked_ident(arg1.0),
-      expression.unchecked_ident(arg2.0),
-      expression.unchecked_ident(arg3.0),
-      expression.unchecked_ident(arg4.0),
-      expression.unchecked_ident(arg5.0),
+      expression.raw(arg1.0),
+      expression.raw(arg2.0),
+      expression.raw(arg3.0),
+      expression.raw(arg4.0),
+      expression.raw(arg5.0),
     )
   Function(
     args: [
-      #(arg1.0, arg1.1 |> types.to_unchecked),
-      #(arg2.0, arg2.1 |> types.to_unchecked),
-      #(arg3.0, arg3.1 |> types.to_unchecked),
-      #(arg4.0, arg4.1 |> types.to_unchecked),
-      #(arg5.0, arg5.1 |> types.to_unchecked),
+      #(arg1.0, arg1.1 |> types.to_dynamic),
+      #(arg2.0, arg2.1 |> types.to_dynamic),
+      #(arg3.0, arg3.1 |> types.to_dynamic),
+      #(arg4.0, arg4.1 |> types.to_dynamic),
+      #(arg5.0, arg5.1 |> types.to_dynamic),
     ],
     returns:,
     body:,
@@ -190,21 +190,21 @@ pub fn new6(
 ) -> Function(fn(arg1, arg2, arg3, arg4, arg5, arg6) -> ret, ret) {
   let body =
     handler(
-      expression.unchecked_ident(arg1.0),
-      expression.unchecked_ident(arg2.0),
-      expression.unchecked_ident(arg3.0),
-      expression.unchecked_ident(arg4.0),
-      expression.unchecked_ident(arg5.0),
-      expression.unchecked_ident(arg6.0),
+      expression.raw(arg1.0),
+      expression.raw(arg2.0),
+      expression.raw(arg3.0),
+      expression.raw(arg4.0),
+      expression.raw(arg5.0),
+      expression.raw(arg6.0),
     )
   Function(
     args: [
-      #(arg1.0, arg1.1 |> types.to_unchecked),
-      #(arg2.0, arg2.1 |> types.to_unchecked),
-      #(arg3.0, arg3.1 |> types.to_unchecked),
-      #(arg4.0, arg4.1 |> types.to_unchecked),
-      #(arg5.0, arg5.1 |> types.to_unchecked),
-      #(arg6.0, arg6.1 |> types.to_unchecked),
+      #(arg1.0, arg1.1 |> types.to_dynamic),
+      #(arg2.0, arg2.1 |> types.to_dynamic),
+      #(arg3.0, arg3.1 |> types.to_dynamic),
+      #(arg4.0, arg4.1 |> types.to_dynamic),
+      #(arg5.0, arg5.1 |> types.to_dynamic),
+      #(arg6.0, arg6.1 |> types.to_dynamic),
     ],
     returns:,
     body:,
@@ -233,23 +233,23 @@ pub fn new7(
 ) -> Function(fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7) -> ret, ret) {
   let body =
     handler(
-      expression.unchecked_ident(arg1.0),
-      expression.unchecked_ident(arg2.0),
-      expression.unchecked_ident(arg3.0),
-      expression.unchecked_ident(arg4.0),
-      expression.unchecked_ident(arg5.0),
-      expression.unchecked_ident(arg6.0),
-      expression.unchecked_ident(arg7.0),
+      expression.raw(arg1.0),
+      expression.raw(arg2.0),
+      expression.raw(arg3.0),
+      expression.raw(arg4.0),
+      expression.raw(arg5.0),
+      expression.raw(arg6.0),
+      expression.raw(arg7.0),
     )
   Function(
     args: [
-      #(arg1.0, arg1.1 |> types.to_unchecked),
-      #(arg2.0, arg2.1 |> types.to_unchecked),
-      #(arg3.0, arg3.1 |> types.to_unchecked),
-      #(arg4.0, arg4.1 |> types.to_unchecked),
-      #(arg5.0, arg5.1 |> types.to_unchecked),
-      #(arg6.0, arg6.1 |> types.to_unchecked),
-      #(arg7.0, arg7.1 |> types.to_unchecked),
+      #(arg1.0, arg1.1 |> types.to_dynamic),
+      #(arg2.0, arg2.1 |> types.to_dynamic),
+      #(arg3.0, arg3.1 |> types.to_dynamic),
+      #(arg4.0, arg4.1 |> types.to_dynamic),
+      #(arg5.0, arg5.1 |> types.to_dynamic),
+      #(arg6.0, arg6.1 |> types.to_dynamic),
+      #(arg7.0, arg7.1 |> types.to_dynamic),
     ],
     returns:,
     body:,
@@ -280,25 +280,25 @@ pub fn new8(
 ) -> Function(fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) -> ret, ret) {
   let body =
     handler(
-      expression.unchecked_ident(arg1.0),
-      expression.unchecked_ident(arg2.0),
-      expression.unchecked_ident(arg3.0),
-      expression.unchecked_ident(arg4.0),
-      expression.unchecked_ident(arg5.0),
-      expression.unchecked_ident(arg6.0),
-      expression.unchecked_ident(arg7.0),
-      expression.unchecked_ident(arg8.0),
+      expression.raw(arg1.0),
+      expression.raw(arg2.0),
+      expression.raw(arg3.0),
+      expression.raw(arg4.0),
+      expression.raw(arg5.0),
+      expression.raw(arg6.0),
+      expression.raw(arg7.0),
+      expression.raw(arg8.0),
     )
   Function(
     args: [
-      #(arg1.0, arg1.1 |> types.to_unchecked),
-      #(arg2.0, arg2.1 |> types.to_unchecked),
-      #(arg3.0, arg3.1 |> types.to_unchecked),
-      #(arg4.0, arg4.1 |> types.to_unchecked),
-      #(arg5.0, arg5.1 |> types.to_unchecked),
-      #(arg6.0, arg6.1 |> types.to_unchecked),
-      #(arg7.0, arg7.1 |> types.to_unchecked),
-      #(arg8.0, arg8.1 |> types.to_unchecked),
+      #(arg1.0, arg1.1 |> types.to_dynamic),
+      #(arg2.0, arg2.1 |> types.to_dynamic),
+      #(arg3.0, arg3.1 |> types.to_dynamic),
+      #(arg4.0, arg4.1 |> types.to_dynamic),
+      #(arg5.0, arg5.1 |> types.to_dynamic),
+      #(arg6.0, arg6.1 |> types.to_dynamic),
+      #(arg7.0, arg7.1 |> types.to_dynamic),
+      #(arg8.0, arg8.1 |> types.to_dynamic),
     ],
     returns:,
     body:,
@@ -334,27 +334,27 @@ pub fn new9(
 ) {
   let body =
     handler(
-      expression.unchecked_ident(arg1.0),
-      expression.unchecked_ident(arg2.0),
-      expression.unchecked_ident(arg3.0),
-      expression.unchecked_ident(arg4.0),
-      expression.unchecked_ident(arg5.0),
-      expression.unchecked_ident(arg6.0),
-      expression.unchecked_ident(arg7.0),
-      expression.unchecked_ident(arg8.0),
-      expression.unchecked_ident(arg9.0),
+      expression.raw(arg1.0),
+      expression.raw(arg2.0),
+      expression.raw(arg3.0),
+      expression.raw(arg4.0),
+      expression.raw(arg5.0),
+      expression.raw(arg6.0),
+      expression.raw(arg7.0),
+      expression.raw(arg8.0),
+      expression.raw(arg9.0),
     )
   Function(
     args: [
-      #(arg1.0, arg1.1 |> types.to_unchecked),
-      #(arg2.0, arg2.1 |> types.to_unchecked),
-      #(arg3.0, arg3.1 |> types.to_unchecked),
-      #(arg4.0, arg4.1 |> types.to_unchecked),
-      #(arg5.0, arg5.1 |> types.to_unchecked),
-      #(arg6.0, arg6.1 |> types.to_unchecked),
-      #(arg7.0, arg7.1 |> types.to_unchecked),
-      #(arg8.0, arg8.1 |> types.to_unchecked),
-      #(arg9.0, arg9.1 |> types.to_unchecked),
+      #(arg1.0, arg1.1 |> types.to_dynamic),
+      #(arg2.0, arg2.1 |> types.to_dynamic),
+      #(arg3.0, arg3.1 |> types.to_dynamic),
+      #(arg4.0, arg4.1 |> types.to_dynamic),
+      #(arg5.0, arg5.1 |> types.to_dynamic),
+      #(arg6.0, arg6.1 |> types.to_dynamic),
+      #(arg7.0, arg7.1 |> types.to_dynamic),
+      #(arg8.0, arg8.1 |> types.to_dynamic),
+      #(arg9.0, arg9.1 |> types.to_dynamic),
     ],
     returns:,
     body:,
@@ -365,9 +365,9 @@ pub fn new9(
 
 @external(erlang, "gleamgen_ffi", "identity")
 @external(javascript, "../gleamgen_ffi.mjs", "identity")
-pub fn to_unchecked(
+pub fn to_dynamic(
   type_: Function(a, b),
-) -> Function(types.Unchecked, types.Unchecked)
+) -> Function(types.Dynamic, types.Dynamic)
 
 @external(erlang, "gleamgen_ffi", "get_function_name")
 @external(javascript, "../gleamgen_ffi.mjs", "get_function_name")
@@ -378,7 +378,8 @@ pub fn anonymous(function: Function(type_, ret)) -> expression.Expression(type_)
   let type_ =
     function.args
     |> list.map(pair.second)
-    |> types.unchecked_function(function.returns |> types.to_unchecked())
+    |> types.dynamic_function(function.returns |> types.to_dynamic())
+    |> types.coerce_dynamic_unsafe()
 
   let renderer = fn(context) { render(function, context, option.None) }
 

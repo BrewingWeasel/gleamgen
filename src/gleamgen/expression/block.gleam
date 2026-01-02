@@ -30,7 +30,7 @@ import gleamgen/types
 /// }
 ///```
 ///
-/// Blocks also can be created without the use syntax through `new` and `new_unchecked`
+/// Blocks also can be created without the use syntax through `new` and `new_dynamic`
 pub opaque type BlockBuilder(type_) {
   BlockBuilder(
     contents: List(expression.Statement),
@@ -38,17 +38,17 @@ pub opaque type BlockBuilder(type_) {
   )
 }
 
-/// Used as the final expression in a block. If you want a dynamic final expression see `ending_unchecked`.
+/// Used as the final expression in a block. If you want a dynamic final expression see `ending_dynamic`.
 ///
 /// This will set the type of the block to the type of the expression passed in.
 pub fn ending_block(expr: Expression(type_)) -> BlockBuilder(type_) {
   BlockBuilder(
-    [expr |> expression.to_unchecked |> expression.ExpressionStatement],
+    [expr |> expression.to_dynamic |> expression.ExpressionStatement],
     return: expression.type_(expr),
   )
 }
 
-pub fn ending_unchecked(
+pub fn ending_dynamic(
   statements: List(expression.Statement),
 ) -> BlockBuilder(type_) {
   BlockBuilder(
@@ -57,11 +57,11 @@ pub fn ending_unchecked(
       |> result.map(fn(s) {
         case s {
           expression.ExpressionStatement(expr) ->
-            expression.type_(expr) |> types.unsafe_from_unchecked()
-          expression.LetDeclaration(_, _, _) -> types.unchecked()
+            expression.type_(expr) |> types.coerce_dynamic_unsafe()
+          expression.LetDeclaration(_, _, _) -> types.dynamic()
         }
       })
-      |> result.unwrap(types.unchecked()),
+      |> result.unwrap(types.dynamic()),
   )
 }
 
@@ -72,10 +72,10 @@ pub fn new(
   expression.new_block(statements, return)
 }
 
-pub fn new_unchecked(
+pub fn new_dynamic(
   statements: List(expression.Statement),
 ) -> expression.Expression(any) {
-  expression.new_block(statements, types.unchecked())
+  expression.new_block(statements, types.dynamic())
 }
 
 pub fn with_let_declaration(
@@ -83,11 +83,11 @@ pub fn with_let_declaration(
   value: Expression(type_),
   handler: fn(Expression(type_)) -> BlockBuilder(ret),
 ) -> BlockBuilder(ret) {
-  let rest = handler(expression.unchecked_ident(variable))
+  let rest = handler(expression.raw(variable))
   BlockBuilder(..rest, contents: [
     expression.LetDeclaration(
       variable,
-      value |> expression.to_unchecked(),
+      value |> expression.to_dynamic(),
       False,
     ),
     ..rest.contents
@@ -104,17 +104,17 @@ pub fn with_matching_let_declaration(
   BlockBuilder(..rest, contents: [
     expression.LetDeclaration(
       pattern
-        |> pattern.to_unchecked()
+        |> pattern.to_dynamic()
         |> pattern.render(1)
         |> render.to_string(),
-      value |> expression.to_unchecked(),
+      value |> expression.to_dynamic(),
       assert_,
     ),
     ..rest.contents
   ])
 }
 
-pub fn with_statements_unchecked(
+pub fn with_statements_dynamic(
   statements: List(expression.Statement),
   handler: fn() -> BlockBuilder(ret),
 ) -> BlockBuilder(ret) {
@@ -128,7 +128,7 @@ pub fn with_expression(
 ) -> BlockBuilder(ret) {
   let rest = handler()
   BlockBuilder(..rest, contents: [
-    expression |> expression.to_unchecked |> expression.ExpressionStatement,
+    expression |> expression.to_dynamic |> expression.ExpressionStatement,
     ..rest.contents
   ])
 }
@@ -141,8 +141,8 @@ pub fn build(builder: BlockBuilder(ret)) -> Expression(ret) {
 
 pub type UseFunction(callback_args, ret) {
   UseFunction(
-    function: Expression(types.Unchecked),
-    args: List(Expression(types.Unchecked)),
+    function: Expression(types.Dynamic),
+    args: List(Expression(types.Dynamic)),
   )
 }
 
@@ -150,7 +150,7 @@ pub fn use_function1(
   func: Expression(fn(a, callback) -> ret),
   arg1: Expression(a),
 ) -> UseFunction(callback, ret) {
-  UseFunction(expression.to_unchecked(func), [expression.to_unchecked(arg1)])
+  UseFunction(expression.to_dynamic(func), [expression.to_dynamic(arg1)])
 }
 
 pub fn use_function2(
@@ -158,9 +158,9 @@ pub fn use_function2(
   arg1: Expression(a),
   arg2: Expression(b),
 ) -> UseFunction(callback, ret) {
-  UseFunction(expression.to_unchecked(func), [
-    expression.to_unchecked(arg1),
-    expression.to_unchecked(arg2),
+  UseFunction(expression.to_dynamic(func), [
+    expression.to_dynamic(arg1),
+    expression.to_dynamic(arg2),
   ])
 }
 
@@ -170,10 +170,10 @@ pub fn use_function3(
   arg2: Expression(b),
   arg3: Expression(c),
 ) -> UseFunction(callback, ret) {
-  UseFunction(expression.to_unchecked(func), [
-    expression.to_unchecked(arg1),
-    expression.to_unchecked(arg2),
-    expression.to_unchecked(arg3),
+  UseFunction(expression.to_dynamic(func), [
+    expression.to_dynamic(arg1),
+    expression.to_dynamic(arg2),
+    expression.to_dynamic(arg3),
   ])
 }
 
@@ -184,11 +184,11 @@ pub fn use_function4(
   arg3: Expression(c),
   arg4: Expression(d),
 ) -> UseFunction(callback, ret) {
-  UseFunction(expression.to_unchecked(func), [
-    expression.to_unchecked(arg1),
-    expression.to_unchecked(arg2),
-    expression.to_unchecked(arg3),
-    expression.to_unchecked(arg4),
+  UseFunction(expression.to_dynamic(func), [
+    expression.to_dynamic(arg1),
+    expression.to_dynamic(arg2),
+    expression.to_dynamic(arg3),
+    expression.to_dynamic(arg4),
   ])
 }
 
@@ -200,12 +200,12 @@ pub fn use_function5(
   arg4: Expression(d),
   arg5: Expression(e),
 ) -> UseFunction(callback, ret) {
-  UseFunction(expression.to_unchecked(func), [
-    expression.to_unchecked(arg1),
-    expression.to_unchecked(arg2),
-    expression.to_unchecked(arg3),
-    expression.to_unchecked(arg4),
-    expression.to_unchecked(arg5),
+  UseFunction(expression.to_dynamic(func), [
+    expression.to_dynamic(arg1),
+    expression.to_dynamic(arg2),
+    expression.to_dynamic(arg3),
+    expression.to_dynamic(arg4),
+    expression.to_dynamic(arg5),
   ])
 }
 
@@ -218,13 +218,13 @@ pub fn use_function6(
   arg5: Expression(e),
   arg6: Expression(f),
 ) -> UseFunction(callback, ret) {
-  UseFunction(expression.to_unchecked(func), [
-    expression.to_unchecked(arg1),
-    expression.to_unchecked(arg2),
-    expression.to_unchecked(arg3),
-    expression.to_unchecked(arg4),
-    expression.to_unchecked(arg5),
-    expression.to_unchecked(arg6),
+  UseFunction(expression.to_dynamic(func), [
+    expression.to_dynamic(arg1),
+    expression.to_dynamic(arg2),
+    expression.to_dynamic(arg3),
+    expression.to_dynamic(arg4),
+    expression.to_dynamic(arg5),
+    expression.to_dynamic(arg6),
   ])
 }
 
@@ -238,14 +238,14 @@ pub fn use_function7(
   arg6: Expression(f),
   arg7: Expression(g),
 ) -> UseFunction(callback, ret) {
-  UseFunction(expression.to_unchecked(func), [
-    expression.to_unchecked(arg1),
-    expression.to_unchecked(arg2),
-    expression.to_unchecked(arg3),
-    expression.to_unchecked(arg4),
-    expression.to_unchecked(arg5),
-    expression.to_unchecked(arg6),
-    expression.to_unchecked(arg7),
+  UseFunction(expression.to_dynamic(func), [
+    expression.to_dynamic(arg1),
+    expression.to_dynamic(arg2),
+    expression.to_dynamic(arg3),
+    expression.to_dynamic(arg4),
+    expression.to_dynamic(arg5),
+    expression.to_dynamic(arg6),
+    expression.to_dynamic(arg7),
   ])
 }
 
@@ -260,15 +260,15 @@ pub fn use_function8(
   arg7: Expression(g),
   arg8: Expression(h),
 ) -> UseFunction(callback, ret) {
-  UseFunction(expression.to_unchecked(func), [
-    expression.to_unchecked(arg1),
-    expression.to_unchecked(arg2),
-    expression.to_unchecked(arg3),
-    expression.to_unchecked(arg4),
-    expression.to_unchecked(arg5),
-    expression.to_unchecked(arg6),
-    expression.to_unchecked(arg7),
-    expression.to_unchecked(arg8),
+  UseFunction(expression.to_dynamic(func), [
+    expression.to_dynamic(arg1),
+    expression.to_dynamic(arg2),
+    expression.to_dynamic(arg3),
+    expression.to_dynamic(arg4),
+    expression.to_dynamic(arg5),
+    expression.to_dynamic(arg6),
+    expression.to_dynamic(arg7),
+    expression.to_dynamic(arg8),
   ])
 }
 
@@ -284,24 +284,24 @@ pub fn use_function9(
   arg8: Expression(h),
   arg9: Expression(i),
 ) -> UseFunction(callback, ret) {
-  UseFunction(expression.to_unchecked(func), [
-    expression.to_unchecked(arg1),
-    expression.to_unchecked(arg2),
-    expression.to_unchecked(arg3),
-    expression.to_unchecked(arg4),
-    expression.to_unchecked(arg5),
-    expression.to_unchecked(arg6),
-    expression.to_unchecked(arg7),
-    expression.to_unchecked(arg8),
-    expression.to_unchecked(arg9),
+  UseFunction(expression.to_dynamic(func), [
+    expression.to_dynamic(arg1),
+    expression.to_dynamic(arg2),
+    expression.to_dynamic(arg3),
+    expression.to_dynamic(arg4),
+    expression.to_dynamic(arg5),
+    expression.to_dynamic(arg6),
+    expression.to_dynamic(arg7),
+    expression.to_dynamic(arg8),
+    expression.to_dynamic(arg9),
   ])
 }
 
-pub fn use_function_unchecked(
+pub fn use_function_dynamic(
   func: Expression(any),
-  args: List(Expression(types.Unchecked)),
+  args: List(Expression(types.Dynamic)),
 ) -> UseFunction(callback, ret) {
-  UseFunction(expression.to_unchecked(func), args)
+  UseFunction(expression.to_dynamic(func), args)
 }
 
 pub fn with_use0(
@@ -321,7 +321,7 @@ pub fn with_use1(
   arg1: String,
   callback: fn(Expression(a)) -> BlockBuilder(ret),
 ) -> BlockBuilder(ret) {
-  let rest = callback(expression.unchecked_ident(arg1))
+  let rest = callback(expression.raw(arg1))
   BlockBuilder(..rest, contents: [
     expression.new_use(use_function.function, use_function.args, [arg1])
       |> expression.ExpressionStatement,
@@ -336,7 +336,7 @@ pub fn with_use2(
   callback: fn(Expression(a), Expression(b)) -> BlockBuilder(ret),
 ) -> BlockBuilder(ret) {
   let rest =
-    callback(expression.unchecked_ident(arg1), expression.unchecked_ident(arg2))
+    callback(expression.raw(arg1), expression.raw(arg2))
   BlockBuilder(..rest, contents: [
     expression.new_use(use_function.function, use_function.args, [arg1, arg2])
       |> expression.ExpressionStatement,
@@ -353,9 +353,9 @@ pub fn with_use3(
 ) -> BlockBuilder(ret) {
   let rest =
     callback(
-      expression.unchecked_ident(arg1),
-      expression.unchecked_ident(arg2),
-      expression.unchecked_ident(arg3),
+      expression.raw(arg1),
+      expression.raw(arg2),
+      expression.raw(arg3),
     )
   BlockBuilder(..rest, contents: [
     expression.new_use(use_function.function, use_function.args, [
@@ -379,10 +379,10 @@ pub fn with_use4(
 ) -> BlockBuilder(ret) {
   let rest =
     callback(
-      expression.unchecked_ident(arg1),
-      expression.unchecked_ident(arg2),
-      expression.unchecked_ident(arg3),
-      expression.unchecked_ident(arg4),
+      expression.raw(arg1),
+      expression.raw(arg2),
+      expression.raw(arg3),
+      expression.raw(arg4),
     )
   BlockBuilder(..rest, contents: [
     expression.new_use(use_function.function, use_function.args, [
@@ -414,11 +414,11 @@ pub fn with_use5(
 ) -> BlockBuilder(ret) {
   let rest =
     callback(
-      expression.unchecked_ident(arg1),
-      expression.unchecked_ident(arg2),
-      expression.unchecked_ident(arg3),
-      expression.unchecked_ident(arg4),
-      expression.unchecked_ident(arg5),
+      expression.raw(arg1),
+      expression.raw(arg2),
+      expression.raw(arg3),
+      expression.raw(arg4),
+      expression.raw(arg5),
     )
   BlockBuilder(..rest, contents: [
     expression.new_use(use_function.function, use_function.args, [
@@ -453,12 +453,12 @@ pub fn with_use6(
 ) -> BlockBuilder(ret) {
   let rest =
     callback(
-      expression.unchecked_ident(arg1),
-      expression.unchecked_ident(arg2),
-      expression.unchecked_ident(arg3),
-      expression.unchecked_ident(arg4),
-      expression.unchecked_ident(arg5),
-      expression.unchecked_ident(arg6),
+      expression.raw(arg1),
+      expression.raw(arg2),
+      expression.raw(arg3),
+      expression.raw(arg4),
+      expression.raw(arg5),
+      expression.raw(arg6),
     )
   BlockBuilder(..rest, contents: [
     expression.new_use(use_function.function, use_function.args, [
@@ -496,13 +496,13 @@ pub fn with_use7(
 ) -> BlockBuilder(ret) {
   let rest =
     callback(
-      expression.unchecked_ident(arg1),
-      expression.unchecked_ident(arg2),
-      expression.unchecked_ident(arg3),
-      expression.unchecked_ident(arg4),
-      expression.unchecked_ident(arg5),
-      expression.unchecked_ident(arg6),
-      expression.unchecked_ident(arg7),
+      expression.raw(arg1),
+      expression.raw(arg2),
+      expression.raw(arg3),
+      expression.raw(arg4),
+      expression.raw(arg5),
+      expression.raw(arg6),
+      expression.raw(arg7),
     )
   BlockBuilder(..rest, contents: [
     expression.new_use(use_function.function, use_function.args, [
@@ -543,14 +543,14 @@ pub fn with_use8(
 ) -> BlockBuilder(ret) {
   let rest =
     callback(
-      expression.unchecked_ident(arg1),
-      expression.unchecked_ident(arg2),
-      expression.unchecked_ident(arg3),
-      expression.unchecked_ident(arg4),
-      expression.unchecked_ident(arg5),
-      expression.unchecked_ident(arg6),
-      expression.unchecked_ident(arg7),
-      expression.unchecked_ident(arg8),
+      expression.raw(arg1),
+      expression.raw(arg2),
+      expression.raw(arg3),
+      expression.raw(arg4),
+      expression.raw(arg5),
+      expression.raw(arg6),
+      expression.raw(arg7),
+      expression.raw(arg8),
     )
   BlockBuilder(..rest, contents: [
     expression.new_use(use_function.function, use_function.args, [
@@ -594,15 +594,15 @@ pub fn with_use9(
 ) -> BlockBuilder(ret) {
   let rest =
     callback(
-      expression.unchecked_ident(arg1),
-      expression.unchecked_ident(arg2),
-      expression.unchecked_ident(arg3),
-      expression.unchecked_ident(arg4),
-      expression.unchecked_ident(arg5),
-      expression.unchecked_ident(arg6),
-      expression.unchecked_ident(arg7),
-      expression.unchecked_ident(arg8),
-      expression.unchecked_ident(arg9),
+      expression.raw(arg1),
+      expression.raw(arg2),
+      expression.raw(arg3),
+      expression.raw(arg4),
+      expression.raw(arg5),
+      expression.raw(arg6),
+      expression.raw(arg7),
+      expression.raw(arg8),
+      expression.raw(arg9),
     )
   BlockBuilder(..rest, contents: [
     expression.new_use(use_function.function, use_function.args, [
@@ -621,13 +621,13 @@ pub fn with_use9(
   ])
 }
 
-pub fn with_use_unchecked(
+pub fn with_use_dynamic(
   use_function: UseFunction(any_func, ret),
   args: List(String),
-  callback: fn(List(expression.Expression(types.Unchecked))) ->
+  callback: fn(List(expression.Expression(types.Dynamic))) ->
     BlockBuilder(ret),
 ) -> BlockBuilder(ret) {
-  let rest = callback(list.map(args, expression.unchecked_ident))
+  let rest = callback(list.map(args, expression.raw))
   BlockBuilder(..rest, contents: [
     expression.new_use(use_function.function, use_function.args, args)
       |> expression.ExpressionStatement,

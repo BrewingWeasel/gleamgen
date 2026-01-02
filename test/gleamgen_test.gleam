@@ -560,7 +560,7 @@ pub fn block_in_function_test() {
 
   let result =
     function.new0(types.int, fn() { block_expr })
-    |> function.to_unchecked()
+    |> function.to_dynamic()
     |> function.render(render.default_context(), option.Some("test_function"))
     |> render.to_string()
 
@@ -687,7 +687,7 @@ pub fn module_with_function_test() {
         |> definition.with_publicity(True),
       function.new0(returns: types.nil, handler: fn() {
         expression.call1(
-          import_.unchecked_ident(io, "println"),
+          import_.raw_ident(io, "println"),
           expression.call1(describer, expression.string("program")),
         )
       }),
@@ -722,7 +722,7 @@ pub fn module_import_constructor_test() {
   let mod = {
     use option_module <- module.with_import(import_.new(["gleam", "option"]))
 
-    let option_type = import_.unchecked_type(option_module, "Option")
+    let option_type = import_.raw_type(option_module, "Option")
 
     use _option_from_str <- module.with_function(
       definition.new(name: "option_from_string")
@@ -1210,7 +1210,7 @@ pub fn module_with_custom_type_test() {
             ),
           )
           use <- block.with_expression(expression.call1(describer, cat_var))
-          block.ending_unchecked([])
+          block.ending_dynamic([])
         }
         |> block.build()
       }),
@@ -1340,7 +1340,7 @@ pub fn module_case_on_custom_type_test() {
             ),
           )
           use <- block.with_expression(expression.call1(describer, cat_var))
-          block.ending_unchecked([])
+          block.ending_dynamic([])
         }
         |> block.build()
       }),
@@ -1633,36 +1633,36 @@ pub fn generate() -> MoreAwesomeResult(String, Bool) {
 pub fn case_unchecked_variant_test() {
   let custom_variant =
     variant.new("CustomVariant")
-    |> variant.with_arguments_unchecked(
+    |> variant.with_arguments_dynamic(
       list.range(0, 10)
       |> list.map(fn(x) {
         #(
           option.Some("arg" <> int.to_string(x)),
-          types.int |> types.to_unchecked(),
+          types.int |> types.to_dynamic(),
         )
       }),
     )
-    |> variant.to_unchecked()
+    |> variant.to_dynamic()
 
   let custom_type =
     custom.new(#())
-    |> custom.with_unchecked_variants(fn(_) { [custom_variant] })
+    |> custom.with_dynamic_variants(fn(_) { [custom_variant] })
 
   let mod = {
     use int_module <- module.with_import(import_.new(["gleam", "int"]))
 
-    use _, custom_constructors <- module.with_custom_type_unchecked(
+    use _, custom_constructors <- module.with_custom_type_dynamic(
       definition.new(name: "VariantHolder") |> definition.with_publicity(True),
       custom_type,
     )
     let assert [custom_variant, ..] = custom_constructors
 
     let match_on =
-      expression.call_unchecked(
-        constructor.to_expression_unchecked(custom_variant),
+      expression.call_dynamic(
+        constructor.to_expression_dynamic(custom_variant),
         list.range(0, 15)
           |> list.map(fn(x) {
-            expression.int(x + 4) |> expression.to_unchecked()
+            expression.int(x + 4) |> expression.to_dynamic()
           }),
       )
 
@@ -1672,17 +1672,17 @@ pub fn case_unchecked_variant_test() {
       function.new0(returns: types.int, handler: fn() {
         case_.new(match_on)
         |> case_.with_pattern(
-          pattern.from_constructor_unchecked(
+          pattern.from_constructor_dynamic(
             custom_variant,
             list.range(0, 15)
               |> list.map(fn(x) {
                 case x % 2 {
                   0 ->
                     pattern.int_literal(x + 4)
-                    |> pattern.to_unchecked()
+                    |> pattern.to_dynamic()
                   _ ->
                     pattern.variable("value" <> int.to_string(x))
-                    |> pattern.to_unchecked()
+                    |> pattern.to_dynamic()
                 }
               }),
           ),
@@ -1690,7 +1690,7 @@ pub fn case_unchecked_variant_test() {
             expression.call1(
               import_.function1(int_module, int.sum),
               expression.list(details)
-                |> expression.unsafe_from_unchecked(),
+                |> expression.coerce_dynamic_unsafe(),
             )
           },
         )
@@ -1763,7 +1763,7 @@ pub fn module_with_unchecked_custom_types_test() {
     list.range(0, 20)
     |> list.map(fn(i) {
       variant.new("Variant" <> int.to_string(i))
-      |> variant.with_arguments_unchecked(
+      |> variant.with_arguments_dynamic(
         list.range(0, i)
         |> list.reverse()
         |> list.rest()
@@ -1772,19 +1772,19 @@ pub fn module_with_unchecked_custom_types_test() {
         |> list.map(fn(x) {
           #(
             option.Some("arg" <> int.to_string(x)),
-            types.int |> types.to_unchecked(),
+            types.int |> types.to_dynamic(),
           )
         }),
       )
-      |> variant.to_unchecked()
+      |> variant.to_dynamic()
     })
 
   let custom_type =
     custom.new(#())
-    |> custom.with_unchecked_variants(fn(_) { all_variants })
+    |> custom.with_dynamic_variants(fn(_) { all_variants })
 
   let mod = {
-    use custom_type_type, custom_constructors <- module.with_custom_type_unchecked(
+    use custom_type_type, custom_constructors <- module.with_custom_type_dynamic(
       definition.new(name: "VariantHolder")
         |> definition.with_publicity(True),
       custom_type,
@@ -1796,7 +1796,7 @@ pub fn module_with_unchecked_custom_types_test() {
       definition.new(name: "get_variant")
         |> definition.with_publicity(True),
       function.new0(returns: custom.to_type(custom_type_type), handler: fn() {
-        constructor.to_expression_unchecked(variant0)
+        constructor.to_expression_dynamic(variant0)
       }),
     )
     use _get_other_variant <- module.with_function(
@@ -1804,7 +1804,7 @@ pub fn module_with_unchecked_custom_types_test() {
         |> definition.with_publicity(True),
       function.new0(returns: custom.to_type(custom_type_type), handler: fn() {
         expression.call3(
-          constructor.to_expression_unchecked(variant3),
+          constructor.to_expression_dynamic(variant3),
           expression.int(1),
           expression.int(2),
           expression.int(3),

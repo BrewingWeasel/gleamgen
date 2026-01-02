@@ -27,7 +27,7 @@ pub fn extend_module_from_string_test() {
         |> definition.with_publicity(True),
       function.new0(types.nil, fn() {
         expression.call1(
-          expression.unchecked_ident("println_int"),
+          expression.raw("println_int"),
           expression.int(46),
         )
       }),
@@ -119,7 +119,7 @@ pub fn module_definition_placement_test() {
         |> definition.with_position(definition.Top),
       function.new0(types.nil, fn() {
         expression.call1(
-          expression.unchecked_ident("println_int"),
+          expression.raw("println_int"),
           expression.int(46),
         )
       }),

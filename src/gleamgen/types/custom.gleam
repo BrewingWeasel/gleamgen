@@ -3,12 +3,12 @@ import gleam/list
 import gleam/option
 import gleam/result
 import gleamgen/render
-import gleamgen/types.{type Unchecked}
+import gleamgen/types.{type Dynamic}
 import gleamgen/types/variant.{type Variant}
 
 pub type CustomTypeBuilder(repr, variants, generics) {
   CustomTypeBuilder(
-    variants: List(Variant(Unchecked)),
+    variants: List(Variant(Dynamic)),
     generics_list: List(String),
     generics: generics,
   )
@@ -45,16 +45,16 @@ pub fn new(_typed_representation: a) -> CustomTypeBuilder(a, #(), #()) {
   CustomTypeBuilder(variants: [], generics: #(), generics_list: [])
 }
 
-pub fn new_unchecked(
+pub fn new_dynamic(
   _typed_representation: repr,
-  variants: List(Variant(Unchecked)),
+  variants: List(Variant(Dynamic)),
   generics_list: List(String),
-) -> CustomTypeBuilder(repr, a, List(types.GeneratedType(Unchecked))) {
+) -> CustomTypeBuilder(repr, a, List(types.GeneratedType(Dynamic))) {
   CustomTypeBuilder(
     variants:,
     generics_list:,
     generics: list.map(generics_list, fn(t) {
-      types.generic(t) |> types.to_unchecked
+      types.generic(t) |> types.to_dynamic
     }),
   )
 }
@@ -70,7 +70,7 @@ pub fn with_generic(
   )
 }
 
-// TODO: with generics unchecked
+// TODO: with generics dynamic
 
 pub fn with_variant(
   old: CustomTypeBuilder(repr, old, generics),
@@ -78,7 +78,7 @@ pub fn with_variant(
 ) -> CustomTypeBuilder(repr, #(old, new), generics) {
   CustomTypeBuilder(
     variants: [
-      old.generics |> variant |> variant.to_unchecked(),
+      old.generics |> variant |> variant.to_dynamic(),
       ..old.variants
     ],
     generics: old.generics,
@@ -86,10 +86,10 @@ pub fn with_variant(
   )
 }
 
-pub fn with_unchecked_variants(
+pub fn with_dynamic_variants(
   old: CustomTypeBuilder(repr, old, generics),
-  variants: fn(generics) -> List(Variant(Unchecked)),
-) -> CustomTypeBuilder(repr, Unchecked, generics) {
+  variants: fn(generics) -> List(Variant(Dynamic)),
+) -> CustomTypeBuilder(repr, Dynamic, generics) {
   CustomTypeBuilder(
     variants: list.append(
       old.generics |> variants |> list.reverse(),
@@ -100,9 +100,9 @@ pub fn with_unchecked_variants(
   )
 }
 
-pub fn to_unchecked(
+pub fn to_dynamic(
   old: CustomTypeBuilder(_repr, _, _),
-) -> CustomTypeBuilder(Unchecked, Nil, Nil) {
+) -> CustomTypeBuilder(Dynamic, Nil, Nil) {
   let CustomTypeBuilder(variants, _, generics_list:) = old
   CustomTypeBuilder(variants:, generics: Nil, generics_list:)
 }
@@ -123,7 +123,7 @@ pub fn to_type1(
 ) -> types.GeneratedType(
   CustomType(repr, Generics1(types.GeneratedType(type_a))),
 ) {
-  types.custom_type(input.module, input.name, [type1 |> types.to_unchecked()])
+  types.custom_type(input.module, input.name, [type1 |> types.to_dynamic()])
 }
 
 pub fn to_type2(
@@ -140,8 +140,8 @@ pub fn to_type2(
   ),
 ) {
   types.custom_type(input.module, input.name, [
-    type1 |> types.to_unchecked(),
-    type2 |> types.to_unchecked(),
+    type1 |> types.to_dynamic(),
+    type2 |> types.to_dynamic(),
   ])
 }
 
@@ -168,9 +168,9 @@ pub fn to_type3(
   ),
 ) {
   types.custom_type(input.module, input.name, [
-    type1 |> types.to_unchecked(),
-    type2 |> types.to_unchecked(),
-    type3 |> types.to_unchecked(),
+    type1 |> types.to_dynamic(),
+    type2 |> types.to_dynamic(),
+    type3 |> types.to_dynamic(),
   ])
 }
 
@@ -200,10 +200,10 @@ pub fn to_type4(
   ),
 ) {
   types.custom_type(input.module, input.name, [
-    type1 |> types.to_unchecked(),
-    type2 |> types.to_unchecked(),
-    type3 |> types.to_unchecked(),
-    type4 |> types.to_unchecked(),
+    type1 |> types.to_dynamic(),
+    type2 |> types.to_dynamic(),
+    type3 |> types.to_dynamic(),
+    type4 |> types.to_dynamic(),
   ])
 }
 
@@ -236,11 +236,11 @@ pub fn to_type5(
   ),
 ) {
   types.custom_type(input.module, input.name, [
-    type1 |> types.to_unchecked(),
-    type2 |> types.to_unchecked(),
-    type3 |> types.to_unchecked(),
-    type4 |> types.to_unchecked(),
-    type5 |> types.to_unchecked(),
+    type1 |> types.to_dynamic(),
+    type2 |> types.to_dynamic(),
+    type3 |> types.to_dynamic(),
+    type4 |> types.to_dynamic(),
+    type5 |> types.to_dynamic(),
   ])
 }
 

@@ -5,7 +5,7 @@ import gleamgen/types/variant
 
 /// Use to_expression[n] or to_expression_unchecked to create an expression from the constructor.
 pub opaque type Constructor(construct_to, args, generics) {
-  Constructor(variant: variant.Variant(types.Unchecked))
+  Constructor(variant: variant.Variant(types.Dynamic))
 }
 
 pub type Variants1(a) =
@@ -37,7 +37,7 @@ pub type Variants9(a, b, c, d, e, f, g, h, i) =
 
 @internal
 pub fn new(
-  variant: variant.Variant(types.Unchecked),
+  variant: variant.Variant(types.Dynamic),
 ) -> Constructor(construct_to, a, generics) {
   Constructor(variant)
 }
@@ -45,13 +45,13 @@ pub fn new(
 pub fn to_expression0(
   constructor: Constructor(construct_to, #(), generics),
 ) -> expression.Expression(construct_to) {
-  expression.unchecked_ident(constructor.variant.name)
+  expression.raw(constructor.variant.name)
 }
 
 pub fn to_expression1(
   constructor: Constructor(construct_to, Variants1(a), generics),
 ) -> expression.Expression(fn(a) -> custom.CustomType(construct_to, generics)) {
-  expression.unchecked_ident(constructor.variant.name)
+  expression.raw(constructor.variant.name)
 }
 
 // rest of repetitive expression generators
@@ -62,7 +62,7 @@ pub fn to_expression2(
 ) -> expression.Expression(
   fn(a, b) -> custom.CustomType(construct_to, generics),
 ) {
-  expression.unchecked_ident(constructor.variant.name)
+  expression.raw(constructor.variant.name)
 }
 
 pub fn to_expression3(
@@ -70,25 +70,25 @@ pub fn to_expression3(
 ) -> expression.Expression(
   fn(a, b, c) -> custom.CustomType(construct_to, generics),
 ) {
-  expression.unchecked_ident(constructor.variant.name)
+  expression.raw(constructor.variant.name)
 }
 
 pub fn to_expression4(
   constructor: Constructor(construct_to, Variants4(a, b, c, d), generics),
 ) -> expression.Expression(fn(a, b, c, d) -> construct_to) {
-  expression.unchecked_ident(constructor.variant.name)
+  expression.raw(constructor.variant.name)
 }
 
 pub fn to_expression5(
   constructor: Constructor(construct_to, Variants5(a, b, c, d, e), generics),
 ) -> expression.Expression(fn(a, b, c, d, e) -> construct_to) {
-  expression.unchecked_ident(constructor.variant.name)
+  expression.raw(constructor.variant.name)
 }
 
 pub fn to_expression6(
   constructor: Constructor(construct_to, Variants6(a, b, c, d, e, f), generics),
 ) -> expression.Expression(fn(a, b, c, d, e, f) -> construct_to) {
-  expression.unchecked_ident(constructor.variant.name)
+  expression.raw(constructor.variant.name)
 }
 
 pub fn to_expression7(
@@ -98,7 +98,7 @@ pub fn to_expression7(
     generics,
   ),
 ) -> expression.Expression(fn(a, b, c, d, e, f, g) -> construct_to) {
-  expression.unchecked_ident(constructor.variant.name)
+  expression.raw(constructor.variant.name)
 }
 
 pub fn to_expression8(
@@ -108,7 +108,7 @@ pub fn to_expression8(
     generics,
   ),
 ) -> expression.Expression(fn(a, b, c, d, e, f, g, h) -> construct_to) {
-  expression.unchecked_ident(constructor.variant.name)
+  expression.raw(constructor.variant.name)
 }
 
 pub fn to_expression9(
@@ -118,15 +118,15 @@ pub fn to_expression9(
     generics,
   ),
 ) -> expression.Expression(fn(a, b, c, d, e, f, g, h, i) -> construct_to) {
-  expression.unchecked_ident(constructor.variant.name)
+  expression.raw(constructor.variant.name)
 }
 
 // }}}
 
-pub fn to_expression_unchecked(
+pub fn to_expression_dynamic(
   constructor: Constructor(construct_to, _, _),
 ) -> expression.Expression(a) {
-  expression.unchecked_ident(constructor.variant.name)
+  expression.raw(constructor.variant.name)
 }
 
 pub fn name(constructor: Constructor(_, _, _)) -> String {

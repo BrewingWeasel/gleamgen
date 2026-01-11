@@ -96,8 +96,8 @@ pub fn list_prepend(
     prepending
       |> list.first()
       |> result.map(type_)
-      |> result.lazy_unwrap(fn() { types.dynamic() })
-      |> types.list(),
+      |> result.map(types.list)
+      |> result.unwrap(original.type_),
   )
 }
 
@@ -674,6 +674,51 @@ pub fn new_block(expressions, return) -> Expression(type_) {
 }
 
 @internal
+pub fn add_to_or_create_block(
+  update_with: Statement,
+  next_expression: Expression(type_),
+) -> Expression(type_) {
+  case next_expression.internal {
+    Block(expressions) ->
+      Expression(
+        internal: Block([update_with, ..expressions]),
+        type_: next_expression.type_,
+      )
+    _ ->
+      Expression(
+        internal: Block([
+          update_with,
+          ExpressionStatement(to_dynamic(next_expression)),
+        ]),
+        type_: next_expression.type_,
+      )
+  }
+}
+
+@internal
+pub fn add_statements_to_or_create_block(
+  update_with: List(Statement),
+  next_expression: Expression(type_),
+) -> Expression(type_) {
+  case next_expression.internal {
+    Block(statements) ->
+      Expression(
+        internal: Block(list.append(update_with, statements)),
+        type_: next_expression.type_,
+      )
+    _ ->
+      Expression(
+        internal: Block(
+          list.append(update_with, [
+            ExpressionStatement(to_dynamic(next_expression)),
+          ]),
+        ),
+        type_: next_expression.type_,
+      )
+  }
+}
+
+@internal
 pub fn new_use(
   function: Expression(a),
   args,
@@ -729,6 +774,7 @@ pub fn coerce_dynamic_unsafe(type_: Expression(t1)) -> Expression(t2)
 // Statements
 // ----------------------------------------------------------------------------
 
+@internal
 pub type Statement {
   LetDeclaration(String, Expression(types.Dynamic), assert_: Bool)
   ExpressionStatement(Expression(types.Dynamic))

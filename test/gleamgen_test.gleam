@@ -11,9 +11,9 @@ import gleamgen/expression/case_
 import gleamgen/expression/constructor
 import gleamgen/function
 import gleamgen/import_
-import gleamgen/pattern
 import gleamgen/module
 import gleamgen/module/definition
+import gleamgen/pattern
 import gleamgen/render
 import gleamgen/types
 import gleamgen/types/custom
@@ -530,9 +530,8 @@ pub fn simple_block_test() {
         "y",
         expression.math_operator(x, expression.Add, expression.int(5)),
       )
-      block.ending_block(y)
+      y
     }
-    |> block.build()
     |> expression.render(render.default_context())
     |> render.to_string()
 
@@ -547,16 +546,14 @@ pub fn simple_block_test() {
 }
 
 pub fn block_in_function_test() {
-  let block_expr =
-    {
-      use x <- block.with_let_declaration("x", expression.int(4))
-      use y <- block.with_let_declaration(
-        "y",
-        expression.math_operator(x, expression.Add, expression.int(5)),
-      )
-      block.ending_block(y)
-    }
-    |> block.build()
+  let block_expr = {
+    use x <- block.with_let_declaration("x", expression.int(4))
+    use y <- block.with_let_declaration(
+      "y",
+      expression.math_operator(x, expression.Add, expression.int(5)),
+    )
+    y
+  }
 
   let result =
     function.new0(types.int, fn() { block_expr })
@@ -588,13 +585,8 @@ pub fn simple_anonymous_function_test() {
           ),
         ),
       )
-      block.ending_block(expression.call2(
-        func,
-        expression.int(2),
-        expression.int(3),
-      ))
+      expression.call2(func, expression.int(2), expression.int(3))
     }
-    |> block.build()
     |> expression.render(render.default_context())
     |> render.to_string()
 
@@ -638,13 +630,8 @@ pub fn block_with_let_matching_test() {
         x,
         False,
       )
-      block.ending_block(expression.math_operator(
-        y,
-        expression.Add,
-        expression.int(3),
-      ))
+      expression.math_operator(y, expression.Add, expression.int(3))
     }
-    |> block.build()
     |> expression.render(render.default_context())
     |> render.to_string()
 
@@ -788,26 +775,21 @@ pub fn basic_use_test() {
       function.new0(
         returns: types.result(types.int, types.string),
         handler: fn() {
-          let block = {
-            use res <- block.with_let_declaration(
-              "res",
-              expression.ok(expression.int(3)),
-            )
-            use ok_value <- block.with_use1(
-              block.use_function1(
-                import_.function2(result_module, result.try),
-                res,
-              ),
-              "ok_value",
-            )
+          use res <- block.with_let_declaration(
+            "res",
+            expression.ok(expression.int(3)),
+          )
+          use ok_value <- block.with_use1(
+            block.use_function1(
+              import_.function2(result_module, result.try),
+              res,
+            ),
+            "ok_value",
+          )
 
-            block.ending_block(
-              ok_value
-              |> expression.math_operator(expression.Add, expression.int(5))
-              |> expression.ok,
-            )
-          }
-          block.build(block)
+          ok_value
+          |> expression.math_operator(expression.Add, expression.int(5))
+          |> expression.ok
         },
       ),
     )
@@ -842,33 +824,28 @@ pub fn two_use_test() {
       function.new0(
         returns: types.result(types.int, types.string),
         handler: fn() {
-          let block = {
-            use res <- block.with_let_declaration(
-              "res",
-              expression.ok(expression.int(3)),
-            )
+          use res <- block.with_let_declaration(
+            "res",
+            expression.ok(expression.int(3)),
+          )
 
-            use ok_value <- block.with_use1(
-              block.use_function1(
-                import_.function2(result_module, result.try),
-                res,
-              ),
-              "ok_value",
-            )
+          use ok_value <- block.with_use1(
+            block.use_function1(
+              import_.function2(result_module, result.try),
+              res,
+            ),
+            "ok_value",
+          )
 
-            use <- block.with_use0(block.use_function2(
-              import_.function3(bool_module, bool.guard),
-              expression.equals(ok_value, expression.int(2)),
-              expression.error(expression.string("not equal to 2")),
-            ))
+          use <- block.with_use0(block.use_function2(
+            import_.function3(bool_module, bool.guard),
+            expression.equals(ok_value, expression.int(2)),
+            expression.error(expression.string("not equal to 2")),
+          ))
 
-            block.ending_block(
-              ok_value
-              |> expression.math_operator(expression.Add, expression.int(5))
-              |> expression.ok,
-            )
-          }
-          block.build(block)
+          ok_value
+          |> expression.math_operator(expression.Add, expression.int(5))
+          |> expression.ok
         },
       ),
     )
@@ -906,45 +883,37 @@ pub fn result_test() {
         arg1: #("res", types.result(types.string, types.int)),
         returns: types.result(types.bool, types.int),
         handler: fn(res) {
-          let block = {
-            use _ <- block.with_let_declaration(
-              "v",
-              expression.call2(
-                import_.function2(result_module, result.unwrap),
-                expression.ok(expression.string("hi")),
-                expression.string("hey"),
-              ),
+          use _ <- block.with_let_declaration(
+            "v",
+            expression.call2(
+              import_.function2(result_module, result.unwrap),
+              expression.ok(expression.string("hi")),
+              expression.string("hey"),
+            ),
+          )
+
+          let special_pattern =
+            pattern.or(
+              pattern.ok(pattern.string_literal("")),
+              pattern.error(pattern.int_literal(0)),
             )
 
-            let special_pattern =
-              pattern.or(
-                pattern.ok(pattern.string_literal("")),
-                pattern.error(pattern.int_literal(0)),
-              )
-
-            block.ending_block(
-              case_.new(res)
-              |> case_.with_pattern(special_pattern, fn(_) {
-                expression.ok(expression.bool(True))
-              })
-              |> case_.with_pattern(
-                pattern.ok(pattern.variable("str")),
-                fn(str) {
-                  expression.call1(
-                    import_.function1(string_module, string.length),
-                    str,
-                  )
-                  |> expression.error()
-                },
-              )
-              |> case_.with_pattern(
-                pattern.error(pattern.variable("number")),
-                fn(number) { expression.error(number) },
-              )
-              |> case_.build_expression(),
+          case_.new(res)
+          |> case_.with_pattern(special_pattern, fn(_) {
+            expression.ok(expression.bool(True))
+          })
+          |> case_.with_pattern(pattern.ok(pattern.variable("str")), fn(str) {
+            expression.call1(
+              import_.function1(string_module, string.length),
+              str,
             )
-          }
-          block |> block.build()
+            |> expression.error()
+          })
+          |> case_.with_pattern(
+            pattern.error(pattern.variable("number")),
+            fn(number) { expression.error(number) },
+          )
+          |> case_.build_expression()
         },
       ),
     )
@@ -1210,9 +1179,8 @@ pub fn module_with_custom_type_test() {
             ),
           )
           use <- block.with_expression(expression.call1(describer, cat_var))
-          block.ending_dynamic([])
+          expression.nil()
         }
-        |> block.build()
       }),
     )
 
@@ -1239,6 +1207,7 @@ pub fn main() -> Nil {
   describer(dog)
   let cat = Cat(\"jake\", True)
   describer(cat)
+  Nil
 }"
 
   assert result == expected
@@ -1340,9 +1309,8 @@ pub fn module_case_on_custom_type_test() {
             ),
           )
           use <- block.with_expression(expression.call1(describer, cat_var))
-          block.ending_dynamic([])
+          expression.nil()
         }
-        |> block.build()
       }),
     )
 
@@ -1375,6 +1343,7 @@ pub fn main() -> Nil {
   describer(dog)
   let cat = Cat(\"jake\", True)
   describer(cat)
+  Nil
 }"
 
   assert result == expected
@@ -1410,41 +1379,35 @@ pub fn module_let_on_custom_type_test() {
     use _describe <- module.with_function(
       definition.new("describer") |> definition.with_publicity(True),
       function.new0(returns: types.string, handler: fn() {
-        {
-          use bones <- block.with_matching_let_declaration(
-            pattern.from_constructor1(
-              dog_constructor,
-              pattern.variable("bones"),
-            ),
-            expression.construct1(
-              constructor.to_expression1(dog_constructor),
-              expression.int(4),
-            ),
-            True,
-          )
+        use bones <- block.with_matching_let_declaration(
+          pattern.from_constructor1(dog_constructor, pattern.variable("bones")),
+          expression.construct1(
+            constructor.to_expression1(dog_constructor),
+            expression.int(4),
+          ),
+          True,
+        )
 
-          use #(name, Nil) <- block.with_matching_let_declaration(
-            pattern.from_constructor2(
-              cat_constructor,
-              pattern.as_(pattern.string_literal("jake"), "name"),
-              pattern.bool_literal(True),
-            ),
-            expression.construct2(
-              constructor.to_expression2(cat_constructor),
-              expression.string("jake"),
-              expression.bool(True),
-            ),
-            True,
-          )
-          block.ending_block(expression.concat_string(
-            expression.concat_string(
-              name,
-              expression.string(" knows a dog with this many bones: "),
-            ),
-            expression.call1(int_to_string, bones),
-          ))
-        }
-        |> block.build()
+        use #(name, Nil) <- block.with_matching_let_declaration(
+          pattern.from_constructor2(
+            cat_constructor,
+            pattern.as_(pattern.string_literal("jake"), "name"),
+            pattern.bool_literal(True),
+          ),
+          expression.construct2(
+            constructor.to_expression2(cat_constructor),
+            expression.string("jake"),
+            expression.bool(True),
+          ),
+          True,
+        )
+        expression.concat_string(
+          expression.concat_string(
+            name,
+            expression.string(" knows a dog with this many bones: "),
+          ),
+          expression.call1(int_to_string, bones),
+        )
       }),
     )
 
@@ -1502,21 +1465,18 @@ pub fn module_with_custom_type_generics_test() {
       function.new0(
         returns: custom.to_type2(awesome_type, types.int, types.bool),
         handler: fn() {
-          {
-            use _ <- block.with_let_declaration(
-              "whoo",
-              expression.call1(
-                constructor.to_expression1(ok_awesome_constructor),
-                expression.int(4),
-              ),
-            )
-            block.ending_block(expression.call2(
-              constructor.to_expression2(less_ok_awesome_constructor),
-              expression.int(23),
-              expression.bool(True),
-            ))
-          }
-          |> block.build()
+          use _ <- block.with_let_declaration(
+            "whoo",
+            expression.call1(
+              constructor.to_expression1(ok_awesome_constructor),
+              expression.int(4),
+            ),
+          )
+          expression.call2(
+            constructor.to_expression2(less_ok_awesome_constructor),
+            expression.int(23),
+            expression.bool(True),
+          )
         },
       ),
     )
@@ -1589,21 +1549,18 @@ pub fn module_with_custom_type_generics_multiple_ways_test() {
       function.new0(
         returns: custom.to_type2(awesome_type, types.string, types.bool),
         handler: fn() {
-          {
-            use _ <- block.with_let_declaration(
-              "whoo",
-              expression.call1(
-                constructor.to_expression1(first_ok_constructor),
-                expression.int(4),
-              ),
-            )
-            block.ending_block(expression.call2(
-              constructor.to_expression2(less_ok_constructor),
-              expression.string("hi"),
-              expression.bool(True),
-            ))
-          }
-          |> block.build()
+          use _ <- block.with_let_declaration(
+            "whoo",
+            expression.call1(
+              constructor.to_expression1(first_ok_constructor),
+              expression.int(4),
+            ),
+          )
+          expression.call2(
+            constructor.to_expression2(less_ok_constructor),
+            expression.string("hi"),
+            expression.bool(True),
+          )
         },
       ),
     )
@@ -1661,9 +1618,7 @@ pub fn case_unchecked_variant_test() {
       expression.call_dynamic(
         constructor.to_expression_dynamic(custom_variant),
         list.range(0, 15)
-          |> list.map(fn(x) {
-            expression.int(x + 4) |> expression.to_dynamic()
-          }),
+          |> list.map(fn(x) { expression.int(x + 4) |> expression.to_dynamic() }),
       )
 
     use _ <- module.with_function(

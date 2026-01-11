@@ -1,5 +1,4 @@
 import gleam/list
-import gleam/result
 import gleamgen/expression.{type Expression}
 import gleamgen/pattern
 import gleamgen/render
@@ -29,42 +28,6 @@ import gleamgen/types
 ///   y
 /// }
 ///```
-///
-/// Blocks also can be created without the use syntax through `new` and `new_dynamic`
-pub opaque type BlockBuilder(type_) {
-  BlockBuilder(
-    contents: List(expression.Statement),
-    return: types.GeneratedType(type_),
-  )
-}
-
-/// Used as the final expression in a block. If you want a dynamic final expression see `ending_dynamic`.
-///
-/// This will set the type of the block to the type of the expression passed in.
-pub fn ending_block(expr: Expression(type_)) -> BlockBuilder(type_) {
-  BlockBuilder(
-    [expr |> expression.to_dynamic |> expression.ExpressionStatement],
-    return: expression.type_(expr),
-  )
-}
-
-pub fn ending_dynamic(
-  statements: List(expression.Statement),
-) -> BlockBuilder(type_) {
-  BlockBuilder(
-    statements,
-    return: list.last(statements)
-      |> result.map(fn(s) {
-        case s {
-          expression.ExpressionStatement(expr) ->
-            expression.type_(expr) |> types.coerce_dynamic_unsafe()
-          expression.LetDeclaration(_, _, _) -> types.dynamic()
-        }
-      })
-      |> result.unwrap(types.dynamic()),
-  )
-}
-
 pub fn new(
   statements: List(expression.Statement),
   return: types.GeneratedType(type_),
@@ -81,27 +44,23 @@ pub fn new_dynamic(
 pub fn with_let_declaration(
   variable: String,
   value: Expression(type_),
-  handler: fn(Expression(type_)) -> BlockBuilder(ret),
-) -> BlockBuilder(ret) {
+  handler: fn(Expression(type_)) -> Expression(ret),
+) -> Expression(ret) {
   let rest = handler(expression.raw(variable))
-  BlockBuilder(..rest, contents: [
-    expression.LetDeclaration(
-      variable,
-      value |> expression.to_dynamic(),
-      False,
-    ),
-    ..rest.contents
-  ])
+  expression.add_to_or_create_block(
+    expression.LetDeclaration(variable, value |> expression.to_dynamic(), False),
+    rest,
+  )
 }
 
 pub fn with_matching_let_declaration(
   pattern: pattern.Pattern(type_, output),
   value: Expression(type_),
   assert_ assert_: Bool,
-  handler handler: fn(output) -> BlockBuilder(ret),
-) -> BlockBuilder(ret) {
+  handler handler: fn(output) -> Expression(ret),
+) -> Expression(ret) {
   let rest = handler(pattern.get_output(pattern))
-  BlockBuilder(..rest, contents: [
+  expression.add_to_or_create_block(
     expression.LetDeclaration(
       pattern
         |> pattern.to_dynamic()
@@ -110,31 +69,27 @@ pub fn with_matching_let_declaration(
       value |> expression.to_dynamic(),
       assert_,
     ),
-    ..rest.contents
-  ])
-}
-
-pub fn with_statements_dynamic(
-  statements: List(expression.Statement),
-  handler: fn() -> BlockBuilder(ret),
-) -> BlockBuilder(ret) {
-  let rest = handler()
-  BlockBuilder(..rest, contents: list.append(statements, rest.contents))
+    rest,
+  )
 }
 
 pub fn with_expression(
   expression: Expression(type_),
-  handler: fn() -> BlockBuilder(ret),
-) -> BlockBuilder(ret) {
+  handler: fn() -> Expression(ret),
+) -> Expression(ret) {
   let rest = handler()
-  BlockBuilder(..rest, contents: [
+  expression.add_to_or_create_block(
     expression |> expression.to_dynamic |> expression.ExpressionStatement,
-    ..rest.contents
-  ])
+    rest,
+  )
 }
 
-pub fn build(builder: BlockBuilder(ret)) -> Expression(ret) {
-  expression.new_block(builder.contents, builder.return)
+pub fn with_statements(
+  statements: List(expression.Statement),
+  handler: fn() -> Expression(ret),
+) -> Expression(ret) {
+  let rest = handler()
+  expression.add_statements_to_or_create_block(statements, rest)
 }
 
 // Use expressions
@@ -306,42 +261,43 @@ pub fn use_function_dynamic(
 
 pub fn with_use0(
   use_function: UseFunction(fn() -> ret, ret),
-  callback: fn() -> BlockBuilder(ret),
-) -> BlockBuilder(ret) {
+  callback: fn() -> Expression(ret),
+) -> Expression(ret) {
   let rest = callback()
-  BlockBuilder(..rest, contents: [
+  expression.add_to_or_create_block(
     expression.new_use(use_function.function, use_function.args, [])
       |> expression.ExpressionStatement,
-    ..rest.contents
-  ])
+    rest,
+  )
 }
 
 pub fn with_use1(
   use_function: UseFunction(fn(a) -> ret, ret),
   arg1: String,
-  callback: fn(Expression(a)) -> BlockBuilder(ret),
-) -> BlockBuilder(ret) {
+  callback: fn(Expression(a)) -> Expression(ret),
+) -> Expression(ret) {
   let rest = callback(expression.raw(arg1))
-  BlockBuilder(..rest, contents: [
-    expression.new_use(use_function.function, use_function.args, [arg1])
-      |> expression.ExpressionStatement,
-    ..rest.contents
-  ])
+  expression.add_to_or_create_block(
+    expression.ExpressionStatement(
+      expression.new_use(use_function.function, use_function.args, [arg1]),
+    ),
+    rest,
+  )
 }
 
 pub fn with_use2(
   use_function: UseFunction(fn(a, b) -> ret, ret),
   arg1: String,
   arg2: String,
-  callback: fn(Expression(a), Expression(b)) -> BlockBuilder(ret),
-) -> BlockBuilder(ret) {
-  let rest =
-    callback(expression.raw(arg1), expression.raw(arg2))
-  BlockBuilder(..rest, contents: [
-    expression.new_use(use_function.function, use_function.args, [arg1, arg2])
-      |> expression.ExpressionStatement,
-    ..rest.contents
-  ])
+  callback: fn(Expression(a), Expression(b)) -> Expression(ret),
+) -> Expression(ret) {
+  let rest = callback(expression.raw(arg1), expression.raw(arg2))
+  expression.add_to_or_create_block(
+    expression.ExpressionStatement(
+      expression.new_use(use_function.function, use_function.args, [arg1, arg2]),
+    ),
+    rest,
+  )
 }
 
 pub fn with_use3(
@@ -349,23 +305,20 @@ pub fn with_use3(
   arg1: String,
   arg2: String,
   arg3: String,
-  callback: fn(Expression(a), Expression(b), Expression(c)) -> BlockBuilder(ret),
-) -> BlockBuilder(ret) {
+  callback: fn(Expression(a), Expression(b), Expression(c)) -> Expression(ret),
+) -> Expression(ret) {
   let rest =
-    callback(
-      expression.raw(arg1),
-      expression.raw(arg2),
-      expression.raw(arg3),
-    )
-  BlockBuilder(..rest, contents: [
-    expression.new_use(use_function.function, use_function.args, [
-      arg1,
-      arg2,
-      arg3,
-    ])
-      |> expression.ExpressionStatement,
-    ..rest.contents
-  ])
+    callback(expression.raw(arg1), expression.raw(arg2), expression.raw(arg3))
+  expression.add_to_or_create_block(
+    expression.ExpressionStatement(
+      expression.new_use(use_function.function, use_function.args, [
+        arg1,
+        arg2,
+        arg3,
+      ]),
+    ),
+    rest,
+  )
 }
 
 pub fn with_use4(
@@ -375,8 +328,8 @@ pub fn with_use4(
   arg3: String,
   arg4: String,
   callback: fn(Expression(a), Expression(b), Expression(c), Expression(d)) ->
-    BlockBuilder(ret),
-) -> BlockBuilder(ret) {
+    Expression(ret),
+) -> Expression(ret) {
   let rest =
     callback(
       expression.raw(arg1),
@@ -384,16 +337,17 @@ pub fn with_use4(
       expression.raw(arg3),
       expression.raw(arg4),
     )
-  BlockBuilder(..rest, contents: [
-    expression.new_use(use_function.function, use_function.args, [
-      arg1,
-      arg2,
-      arg3,
-      arg4,
-    ])
-      |> expression.ExpressionStatement,
-    ..rest.contents
-  ])
+  expression.add_to_or_create_block(
+    expression.ExpressionStatement(
+      expression.new_use(use_function.function, use_function.args, [
+        arg1,
+        arg2,
+        arg3,
+        arg4,
+      ]),
+    ),
+    rest,
+  )
 }
 
 pub fn with_use5(
@@ -410,8 +364,8 @@ pub fn with_use5(
     Expression(d),
     Expression(e),
   ) ->
-    BlockBuilder(ret),
-) -> BlockBuilder(ret) {
+    Expression(ret),
+) -> Expression(ret) {
   let rest =
     callback(
       expression.raw(arg1),
@@ -420,17 +374,18 @@ pub fn with_use5(
       expression.raw(arg4),
       expression.raw(arg5),
     )
-  BlockBuilder(..rest, contents: [
-    expression.new_use(use_function.function, use_function.args, [
-      arg1,
-      arg2,
-      arg3,
-      arg4,
-      arg5,
-    ])
-      |> expression.ExpressionStatement,
-    ..rest.contents
-  ])
+  expression.add_to_or_create_block(
+    expression.ExpressionStatement(
+      expression.new_use(use_function.function, use_function.args, [
+        arg1,
+        arg2,
+        arg3,
+        arg4,
+        arg5,
+      ]),
+    ),
+    rest,
+  )
 }
 
 pub fn with_use6(
@@ -449,8 +404,8 @@ pub fn with_use6(
     Expression(e),
     Expression(f),
   ) ->
-    BlockBuilder(ret),
-) -> BlockBuilder(ret) {
+    Expression(ret),
+) -> Expression(ret) {
   let rest =
     callback(
       expression.raw(arg1),
@@ -460,18 +415,19 @@ pub fn with_use6(
       expression.raw(arg5),
       expression.raw(arg6),
     )
-  BlockBuilder(..rest, contents: [
-    expression.new_use(use_function.function, use_function.args, [
-      arg1,
-      arg2,
-      arg3,
-      arg4,
-      arg5,
-      arg6,
-    ])
-      |> expression.ExpressionStatement,
-    ..rest.contents
-  ])
+  expression.add_to_or_create_block(
+    expression.ExpressionStatement(
+      expression.new_use(use_function.function, use_function.args, [
+        arg1,
+        arg2,
+        arg3,
+        arg4,
+        arg5,
+        arg6,
+      ]),
+    ),
+    rest,
+  )
 }
 
 pub fn with_use7(
@@ -492,8 +448,8 @@ pub fn with_use7(
     Expression(f),
     Expression(g),
   ) ->
-    BlockBuilder(ret),
-) -> BlockBuilder(ret) {
+    Expression(ret),
+) -> Expression(ret) {
   let rest =
     callback(
       expression.raw(arg1),
@@ -504,19 +460,20 @@ pub fn with_use7(
       expression.raw(arg6),
       expression.raw(arg7),
     )
-  BlockBuilder(..rest, contents: [
-    expression.new_use(use_function.function, use_function.args, [
-      arg1,
-      arg2,
-      arg3,
-      arg4,
-      arg5,
-      arg6,
-      arg7,
-    ])
-      |> expression.ExpressionStatement,
-    ..rest.contents
-  ])
+  expression.add_to_or_create_block(
+    expression.ExpressionStatement(
+      expression.new_use(use_function.function, use_function.args, [
+        arg1,
+        arg2,
+        arg3,
+        arg4,
+        arg5,
+        arg6,
+        arg7,
+      ]),
+    ),
+    rest,
+  )
 }
 
 pub fn with_use8(
@@ -539,8 +496,8 @@ pub fn with_use8(
     Expression(g),
     Expression(h),
   ) ->
-    BlockBuilder(ret),
-) -> BlockBuilder(ret) {
+    Expression(ret),
+) -> Expression(ret) {
   let rest =
     callback(
       expression.raw(arg1),
@@ -552,20 +509,21 @@ pub fn with_use8(
       expression.raw(arg7),
       expression.raw(arg8),
     )
-  BlockBuilder(..rest, contents: [
-    expression.new_use(use_function.function, use_function.args, [
-      arg1,
-      arg2,
-      arg3,
-      arg4,
-      arg5,
-      arg6,
-      arg7,
-      arg8,
-    ])
-      |> expression.ExpressionStatement,
-    ..rest.contents
-  ])
+  expression.add_to_or_create_block(
+    expression.ExpressionStatement(
+      expression.new_use(use_function.function, use_function.args, [
+        arg1,
+        arg2,
+        arg3,
+        arg4,
+        arg5,
+        arg6,
+        arg7,
+        arg8,
+      ]),
+    ),
+    rest,
+  )
 }
 
 pub fn with_use9(
@@ -590,8 +548,8 @@ pub fn with_use9(
     Expression(h),
     Expression(i),
   ) ->
-    BlockBuilder(ret),
-) -> BlockBuilder(ret) {
+    Expression(ret),
+) -> Expression(ret) {
   let rest =
     callback(
       expression.raw(arg1),
@@ -604,33 +562,33 @@ pub fn with_use9(
       expression.raw(arg8),
       expression.raw(arg9),
     )
-  BlockBuilder(..rest, contents: [
-    expression.new_use(use_function.function, use_function.args, [
-      arg1,
-      arg2,
-      arg3,
-      arg4,
-      arg5,
-      arg6,
-      arg7,
-      arg8,
-      arg9,
-    ])
-      |> expression.ExpressionStatement,
-    ..rest.contents
-  ])
+  expression.add_to_or_create_block(
+    expression.ExpressionStatement(
+      expression.new_use(use_function.function, use_function.args, [
+        arg1,
+        arg2,
+        arg3,
+        arg4,
+        arg5,
+        arg6,
+        arg7,
+        arg8,
+        arg9,
+      ]),
+    ),
+    rest,
+  )
 }
 
 pub fn with_use_dynamic(
   use_function: UseFunction(any_func, ret),
   args: List(String),
-  callback: fn(List(expression.Expression(types.Dynamic))) ->
-    BlockBuilder(ret),
-) -> BlockBuilder(ret) {
+  callback: fn(List(Expression(types.Dynamic))) -> Expression(ret),
+) -> Expression(ret) {
   let rest = callback(list.map(args, expression.raw))
-  BlockBuilder(..rest, contents: [
+  expression.add_to_or_create_block(
     expression.new_use(use_function.function, use_function.args, args)
       |> expression.ExpressionStatement,
-    ..rest.contents
-  ])
+    rest,
+  )
 }

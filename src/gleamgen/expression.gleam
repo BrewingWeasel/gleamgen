@@ -30,6 +30,7 @@ type InternalExpression(type_) {
   Ident(String)
   Todo(Option(String))
   Panic(Option(String))
+  Assert(condition: Expression(Bool), as_string: Option(String))
   MathOperator(Expression(Int), MathOperator, Expression(Int))
   ConcatString(Expression(String), Expression(String))
   MathOperatorFloat(Expression(Float), MathOperator, Expression(Float))
@@ -357,6 +358,14 @@ pub fn todo_(as_string: Option(String)) -> Expression(a) {
 /// ```
 pub fn panic_(as_string: Option(String)) -> Expression(a) {
   Expression(Panic(as_string), types.dynamic())
+}
+
+/// Create an assert expression with an optional as clause
+pub fn assert_(
+  condition: Expression(Bool),
+  as_string: Option(String),
+) -> Expression(Nil) {
+  Expression(Assert(condition, as_string), types.nil)
 }
 
 pub fn ok(ok_value: Expression(ok)) -> Expression(Result(ok, err)) {
@@ -821,11 +830,16 @@ pub fn render(
       |> render.Render(details: render.RenderedDetails(used_imports:))
     }
     Todo(as_string) ->
-      render_panicking_expression("todo", as_string)
+      render_panicking_expression(doc.from_string("todo"), as_string)
       |> render.Render(details: render.empty_details)
     Panic(as_string) ->
-      render_panicking_expression("panic", as_string)
+      render_panicking_expression(doc.from_string("panic"), as_string)
       |> render.Render(details: render.empty_details)
+    Assert(condition:, as_string:) -> {
+      let assert_ = create_assert(condition, context)
+      render_panicking_expression(assert_.doc, as_string)
+      |> render.Render(details: assert_.details)
+    }
     ConcatString(expr1, expr2) ->
       render_operator(expr1, expr2, doc.from_string("<>"), context)
     MathOperator(expr1, op, expr2) ->
@@ -873,16 +887,30 @@ pub fn render(
   }
 }
 
-fn render_panicking_expression(name: String, as_string: Option(String)) {
+fn create_assert(condition: Expression(Bool), context) -> render.Rendered {
+  let rendered_condition = render(condition, context)
+  doc.concat([
+    doc.from_string("assert"),
+    doc.space,
+    rendered_condition.doc,
+  ])
+  |> render.Render(details: rendered_condition.details)
+}
+
+fn render_panicking_expression(
+  begin_with: doc.Document,
+  as_string: Option(String),
+) {
   case as_string {
     Some(value) ->
       doc.concat([
-        doc.from_string(name <> " as"),
+        begin_with,
+        doc.from_string(" as"),
         doc.space,
         value |> render.escape_string() |> doc.from_string(),
       ])
       |> doc.group
-    None -> doc.from_string(name)
+    None -> begin_with
   }
 }
 

@@ -228,6 +228,26 @@ pub fn simple_todo_test() {
   assert result == expected
 }
 
+pub fn simple_assert_test() {
+  let condition =
+    expression.equals(
+      expression.int(2),
+      expression.math_operator(
+        expression.int(5),
+        expression.Sub,
+        expression.int(3),
+      ),
+    )
+  let result =
+    expression.assert_(condition, option.Some("5 - 3 is 2"))
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "assert 2 == 5 - 3 as \"5 - 3 is 2\""
+
+  assert result == expected
+}
+
 pub fn simple_float_subtraction_test() {
   let result =
     expression.float(3.3)

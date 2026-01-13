@@ -46,10 +46,7 @@ pub fn get_reference(imported: ImportedModule) -> String {
   }
 }
 
-pub fn raw_ident(
-  imported: ImportedModule,
-  name: String,
-) -> Expression(any) {
+pub fn raw_ident(imported: ImportedModule, name: String) -> Expression(any) {
   expression.raw(get_reference(imported) <> "." <> name)
 }
 

@@ -56,11 +56,7 @@ pub fn new2(
   handler handler: fn(expression.Expression(arg1), expression.Expression(arg2)) ->
     expression.Expression(ret),
 ) -> Function(fn(arg1, arg2) -> ret, ret) {
-  let body =
-    handler(
-      expression.raw(arg1.0),
-      expression.raw(arg2.0),
-    )
+  let body = handler(expression.raw(arg1.0), expression.raw(arg2.0))
   Function(
     args: [
       #(arg1.0, arg1.1 |> types.to_dynamic),

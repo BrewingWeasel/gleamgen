@@ -402,9 +402,7 @@ pub fn to_dynamic(type_: GeneratedType(t)) -> GeneratedType(Dynamic)
 
 @external(erlang, "gleamgen_ffi", "identity")
 @external(javascript, "../gleamgen_ffi.mjs", "identity")
-pub fn coerce_dynamic_unsafe(
-  type_: GeneratedType(Dynamic),
-) -> GeneratedType(a)
+pub fn coerce_dynamic_unsafe(type_: GeneratedType(Dynamic)) -> GeneratedType(a)
 
 pub fn render_type(type_: GeneratedType(a)) -> Result(render.Rendered, Nil) {
   case type_ {

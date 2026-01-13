@@ -77,10 +77,7 @@ pub fn with_variant(
   variant: fn(generics) -> Variant(new),
 ) -> CustomTypeBuilder(repr, #(old, new), generics) {
   CustomTypeBuilder(
-    variants: [
-      old.generics |> variant |> variant.to_dynamic(),
-      ..old.variants
-    ],
+    variants: [old.generics |> variant |> variant.to_dynamic(), ..old.variants],
     generics: old.generics,
     generics_list: old.generics_list,
   )

@@ -81,10 +81,7 @@ pub fn concat_string(
   starting initial: String,
   variable variable: String,
 ) -> Pattern(String, Expression(a)) {
-  StringConcat(
-    #(initial, variable),
-    output: expression.raw(variable),
-  )
+  StringConcat(#(initial, variable), output: expression.raw(variable))
 }
 
 pub fn ok(ok_pattern: Pattern(a, a_output)) -> Pattern(Result(a, err), a_output) {
@@ -129,10 +126,7 @@ pub fn as_(
   original: Pattern(input, _),
   name: String,
 ) -> Pattern(input, Expression(input)) {
-  As(
-    #(original |> to_dynamic(), name),
-    output: expression.raw(name),
-  )
+  As(#(original |> to_dynamic(), name), output: expression.raw(name))
 }
 
 pub fn from_constructor_dynamic(

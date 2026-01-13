@@ -228,9 +228,7 @@ pub fn replace_function(
           let #(details, value) = case definition.value {
             Predefined(PredefinedFunction(f), _, _) -> #(
               definition.details |> definition.set_predefined(False),
-              Function(
-                func(option.Some(f.definition)) |> function.to_dynamic(),
-              ),
+              Function(func(option.Some(f.definition)) |> function.to_dynamic()),
             )
             v -> #(definition.details, v)
           }
@@ -284,10 +282,7 @@ pub fn with_custom_type1(
       constructor.new(variant1),
     )
   Module(..rest, definitions: [
-    Definition(
-      details:,
-      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
-    ),
+    Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
     ..rest.definitions
   ])
 }
@@ -312,10 +307,7 @@ pub fn with_custom_type2(
       constructor.new(variant2),
     )
   Module(..rest, definitions: [
-    Definition(
-      details:,
-      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
-    ),
+    Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
     ..rest.definitions
   ])
 }
@@ -340,10 +332,7 @@ pub fn with_custom_type3(
       constructor.new(variant3),
     )
   Module(..rest, definitions: [
-    Definition(
-      details:,
-      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
-    ),
+    Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
     ..rest.definitions
   ])
 }
@@ -370,10 +359,7 @@ pub fn with_custom_type4(
       constructor.new(variant4),
     )
   Module(..rest, definitions: [
-    Definition(
-      details:,
-      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
-    ),
+    Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
     ..rest.definitions
   ])
 }
@@ -406,10 +392,7 @@ pub fn with_custom_type5(
       constructor.new(variant5),
     )
   Module(..rest, definitions: [
-    Definition(
-      details:,
-      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
-    ),
+    Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
     ..rest.definitions
   ])
 }
@@ -445,10 +428,7 @@ pub fn with_custom_type6(
       constructor.new(variant6),
     )
   Module(..rest, definitions: [
-    Definition(
-      details:,
-      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
-    ),
+    Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
     ..rest.definitions
   ])
 }
@@ -493,10 +473,7 @@ pub fn with_custom_type7(
       constructor.new(variant7),
     )
   Module(..rest, definitions: [
-    Definition(
-      details:,
-      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
-    ),
+    Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
     ..rest.definitions
   ])
 }
@@ -544,10 +521,7 @@ pub fn with_custom_type8(
       constructor.new(variant8),
     )
   Module(..rest, definitions: [
-    Definition(
-      details:,
-      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
-    ),
+    Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
     ..rest.definitions
   ])
 }
@@ -598,10 +572,7 @@ pub fn with_custom_type9(
       constructor.new(variant9),
     )
   Module(..rest, definitions: [
-    Definition(
-      details:,
-      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
-    ),
+    Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
     ..rest.definitions
   ])
 }
@@ -623,10 +594,7 @@ pub fn with_custom_type_dynamic(
       type_.variants |> list.reverse() |> list.map(constructor.new),
     )
   Module(..rest, definitions: [
-    Definition(
-      details:,
-      value: CustomTypeBuilder(type_ |> custom.to_dynamic()),
-    ),
+    Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
     ..rest.definitions
   ])
 }

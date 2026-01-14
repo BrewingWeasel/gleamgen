@@ -229,6 +229,28 @@ pub fn simple_todo_test() {
   assert result == expected
 }
 
+pub fn echo_without_as_test() {
+  let result =
+    expression.echo_(expression.int(3), option.None)
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "echo 3"
+
+  assert result == expected
+}
+
+pub fn echo_with_as_test() {
+  let result =
+    expression.echo_(expression.int(3), option.Some("should be 3"))
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "echo 3 as \"should be 3\""
+
+  assert result == expected
+}
+
 pub fn simple_assert_test() {
   let condition =
     expression.equals(

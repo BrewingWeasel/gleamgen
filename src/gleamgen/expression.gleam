@@ -30,6 +30,7 @@ type InternalExpression(type_) {
   Ident(String)
   Todo(Option(String))
   Panic(Option(String))
+  Echo(expression: Expression(types.Dynamic), as_string: Option(String))
   Assert(condition: Expression(Bool), as_string: Option(String))
   MathOperator(Expression(Int), MathOperator, Expression(Int))
   ConcatString(Expression(String), Expression(String))
@@ -366,6 +367,13 @@ pub fn assert_(
   as_string: Option(String),
 ) -> Expression(Nil) {
   Expression(Assert(condition, as_string), types.nil)
+}
+
+pub fn echo_(
+  expression: Expression(a),
+  as_string: Option(String),
+) -> Expression(a) {
+  Expression(Echo(to_dynamic(expression), as_string), expression.type_)
 }
 
 pub fn ok(ok_value: Expression(ok)) -> Expression(Result(ok, err)) {
@@ -840,6 +848,11 @@ pub fn render(
       render_panicking_expression(assert_.doc, as_string)
       |> render.Render(details: assert_.details)
     }
+    Echo(expression:, as_string:) -> {
+      let echo_ = create_echo(expression, context)
+      render_panicking_expression(echo_.doc, as_string)
+      |> render.Render(details: echo_.details)
+    }
     ConcatString(expr1, expr2) ->
       render_operator(expr1, expr2, doc.from_string("<>"), context)
     MathOperator(expr1, op, expr2) ->
@@ -885,6 +898,19 @@ pub fn render(
     Use(func, args, callback_args) ->
       render_use(func, args, callback_args, context)
   }
+}
+
+fn create_echo(
+  expression: Expression(types.Dynamic),
+  context: render.Context,
+) -> render.Rendered {
+  let rendered_expr = render(expression, context)
+  doc.concat([
+    doc.from_string("echo"),
+    doc.space,
+    rendered_expr.doc,
+  ])
+  |> render.Render(details: rendered_expr.details)
 }
 
 fn create_assert(condition: Expression(Bool), context) -> render.Rendered {

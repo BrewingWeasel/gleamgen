@@ -9,6 +9,7 @@ import gleamgen/expression
 import gleamgen/expression/block
 import gleamgen/expression/case_
 import gleamgen/expression/constructor
+import gleamgen/expression/statement
 import gleamgen/function
 import gleamgen/import_
 import gleamgen/module
@@ -660,6 +661,44 @@ pub fn block_with_let_matching_test() {
   let x = Ok(4)
   let Ok(y) | Error(y) = x
   y + 3
+}"
+
+  assert result == expected
+}
+
+pub fn block_dynamic_contents_test() {
+  let statements =
+    list.range(0, 3)
+    |> list.map(fn(index) {
+      let #(arguments, callback_arguments) =
+        list.range(0, index)
+        |> list.map(fn(arg_index) {
+          let argument = expression.to_dynamic(expression.int(arg_index))
+          #(argument, "_callback" <> int.to_string(arg_index))
+        })
+        |> list.unzip()
+      statement.dynamic_use(
+        expression.raw("with_args" <> int.to_string(index)),
+        arguments,
+        callback_arguments,
+      )
+    })
+
+  let result =
+    {
+      use <- block.with_statements(statements)
+      expression.nil()
+    }
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "{
+  use _callback0 <- with_args0(0)
+  use _callback0, _callback1 <- with_args1(0, 1)
+  use _callback0, _callback1, _callback2 <- with_args2(0, 1, 2)
+  use _callback0, _callback1, _callback2, _callback3 <- with_args3(0, 1, 2, 3)
+  Nil
 }"
 
   assert result == expected

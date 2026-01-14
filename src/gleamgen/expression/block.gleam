@@ -1,3 +1,4 @@
+import gleamgen/expression/statement
 import gleam/list
 import gleamgen/expression.{type Expression}
 import gleamgen/pattern
@@ -29,14 +30,14 @@ import gleamgen/types
 /// }
 ///```
 pub fn new(
-  statements: List(expression.Statement),
+  statements: List(statement.Statement),
   return: types.GeneratedType(type_),
 ) -> expression.Expression(type_) {
   expression.new_block(statements, return)
 }
 
 pub fn new_dynamic(
-  statements: List(expression.Statement),
+  statements: List(statement.Statement),
 ) -> expression.Expression(any) {
   expression.new_block(statements, types.dynamic())
 }
@@ -85,7 +86,7 @@ pub fn with_expression(
 }
 
 pub fn with_statements(
-  statements: List(expression.Statement),
+  statements: List(statement.Statement),
   handler: fn() -> Expression(ret),
 ) -> Expression(ret) {
   let rest = handler()

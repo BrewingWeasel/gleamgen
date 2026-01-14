@@ -785,7 +785,7 @@ pub fn coerce_dynamic_unsafe(type_: Expression(t1)) -> Expression(t2)
 
 @internal
 pub type Statement {
-  LetDeclaration(String, Expression(types.Dynamic), assert_: Bool)
+  LetDeclaration(name: String, value: Expression(types.Dynamic), assert_: Bool)
   ExpressionStatement(Expression(types.Dynamic))
 }
 

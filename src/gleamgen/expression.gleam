@@ -26,6 +26,7 @@ type InternalExpression(type_) {
     initial: Option(Expression(types.Dynamic)),
   )
   Equals(Expression(types.Dynamic), Expression(types.Dynamic))
+  NotEquals(Expression(types.Dynamic), Expression(types.Dynamic))
   TupleLiteral(List(Expression(types.Dynamic)))
   Ident(String)
   Todo(Option(String))
@@ -109,6 +110,10 @@ pub fn tuple1(arg1: Expression(a)) -> Expression(#(a)) {
 
 pub fn equals(first: Expression(a), second: Expression(a)) -> Expression(Bool) {
   Expression(Equals(first |> to_dynamic(), second |> to_dynamic()), types.bool)
+}
+
+pub fn not_equals(first: Expression(a), second: Expression(a)) -> Expression(Bool) {
+  Expression(NotEquals(first |> to_dynamic(), second |> to_dynamic()), types.bool)
 }
 
 // Remaining repetitive tuple functions
@@ -892,6 +897,8 @@ pub fn render(
     Block(expressions) -> render_block(expressions, context)
     Equals(expr1, expr2) ->
       render_operator(expr1, expr2, doc.from_string("=="), context)
+    NotEquals(expr1, expr2) ->
+      render_operator(expr1, expr2, doc.from_string("!="), context)
     Case(to_match_on, patterns, all_can_match_on_multiple) ->
       render_case(to_match_on, patterns, all_can_match_on_multiple, context)
     AnonymousFunction(renderer) -> renderer(context)

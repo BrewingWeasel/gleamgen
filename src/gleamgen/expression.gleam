@@ -34,8 +34,10 @@ type InternalExpression(type_) {
   Echo(expression: Expression(types.Dynamic), as_string: Option(String))
   Assert(condition: Expression(Bool), as_string: Option(String))
   MathOperator(Expression(Int), MathOperator, Expression(Int))
-  ConcatString(Expression(String), Expression(String))
   MathOperatorFloat(Expression(Float), MathOperator, Expression(Float))
+  Comparison(Expression(Int), Comparison, Expression(Int))
+  ComparisonFloat(Expression(Float), Comparison, Expression(Float))
+  ConcatString(Expression(String), Expression(String))
   Call(Expression(types.Dynamic), List(Expression(types.Dynamic)))
   SingleConstructor(Expression(types.Dynamic))
   Block(List(Statement))
@@ -112,8 +114,14 @@ pub fn equals(first: Expression(a), second: Expression(a)) -> Expression(Bool) {
   Expression(Equals(first |> to_dynamic(), second |> to_dynamic()), types.bool)
 }
 
-pub fn not_equals(first: Expression(a), second: Expression(a)) -> Expression(Bool) {
-  Expression(NotEquals(first |> to_dynamic(), second |> to_dynamic()), types.bool)
+pub fn not_equals(
+  first: Expression(a),
+  second: Expression(a),
+) -> Expression(Bool) {
+  Expression(
+    NotEquals(first |> to_dynamic(), second |> to_dynamic()),
+    types.bool,
+  )
 }
 
 // Remaining repetitive tuple functions
@@ -401,6 +409,9 @@ pub type MathOperator {
   Sub
   Mul
   Div
+}
+
+pub type Comparison {
   GreaterThan
   GreaterThanOrEqual
   LessThan
@@ -426,12 +437,12 @@ pub fn math_operator(
 /// ```gleam
 /// expression.math_operator_float(
 ///   expression.float(3.3),
-///   expression.GreaterThan,
+///   expression.Sub,
 ///   expression.unchecked_ident("other_float")
 /// )
 /// |> expression.render(render.default_context())
 /// |> render.to_string()
-/// // -> "3 >. other_float"
+/// // -> "3.3 -. other_float"
 /// ```
 pub fn math_operator_float(
   expr1: Expression(Float),
@@ -439,6 +450,22 @@ pub fn math_operator_float(
   expr2: Expression(Float),
 ) -> Expression(Int) {
   Expression(MathOperatorFloat(expr1, op, expr2), types.int)
+}
+
+pub fn comparison(
+  expr1: Expression(Int),
+  operator: Comparison,
+  expr2: Expression(Int),
+) -> Expression(Bool) {
+  Expression(Comparison(expr1, operator, expr2), types.bool)
+}
+
+pub fn comparison_float(
+  expr1: Expression(Float),
+  operator: Comparison,
+  expr2: Expression(Float),
+) -> Expression(Bool) {
+  Expression(ComparisonFloat(expr1, operator, expr2), types.bool)
 }
 
 /// Call a function or constructor with no arguments
@@ -869,10 +896,6 @@ pub fn render(
           Sub -> doc.from_string("-")
           Mul -> doc.from_string("*")
           Div -> doc.from_string("/")
-          GreaterThan -> doc.from_string(">")
-          GreaterThanOrEqual -> doc.from_string(">=")
-          LessThan -> doc.from_string("<")
-          LessThanOrEqual -> doc.from_string("<=")
         },
         context,
       )
@@ -885,13 +908,27 @@ pub fn render(
           Sub -> doc.from_string("-.")
           Mul -> doc.from_string("*.")
           Div -> doc.from_string("/.")
-          GreaterThan -> doc.from_string(">.")
-          GreaterThanOrEqual -> doc.from_string(">=.")
-          LessThan -> doc.from_string("<.")
-          LessThanOrEqual -> doc.from_string("<=.")
         },
         context,
       )
+    Comparison(expr1, operator, expr2) -> {
+      let operator_doc = case operator {
+        GreaterThan -> doc.from_string(">")
+        GreaterThanOrEqual -> doc.from_string(">=")
+        LessThan -> doc.from_string("<")
+        LessThanOrEqual -> doc.from_string("<=")
+      }
+      render_operator(expr1, expr2, operator_doc, context)
+    }
+    ComparisonFloat(expr1, operator, expr2) -> {
+      let operator_doc = case operator {
+        GreaterThan -> doc.from_string(">.")
+        GreaterThanOrEqual -> doc.from_string(">=.")
+        LessThan -> doc.from_string("<.")
+        LessThanOrEqual -> doc.from_string("<=.")
+      }
+      render_operator(expr1, expr2, operator_doc, context)
+    }
     Call(func, args) -> render_call(func, args, context)
     SingleConstructor(constructor) -> render_constructor(constructor, context)
     Block(expressions) -> render_block(expressions, context)

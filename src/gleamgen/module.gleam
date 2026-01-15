@@ -210,10 +210,18 @@ pub fn with_dynamic_imports(
   Module(..rest, imports: list.append(list.reverse(modules), rest.imports))
 }
 
+pub type ReplacementConfig {
+  ReplacementInline
+  ReplacementUpdateDefinition(
+    fn(definition.Definition) -> definition.Definition,
+  )
+}
+
 pub fn replace_function(
   function_name: String,
   module: Module,
   func: fn(Option(glance.Function)) -> function.Function(func_type, ret),
+  config: ReplacementConfig,
   handler: fn(Module, Expression(func_type)) -> Module,
 ) -> Module {
   let rest = handler(module, expression.raw(function_name))
@@ -225,11 +233,22 @@ pub fn replace_function(
             definition.details.name != function_name,
             definition,
           )
+
           let #(details, value) = case definition.value {
-            Predefined(PredefinedFunction(f), _, _) -> #(
-              definition.details |> definition.set_predefined(False),
-              Function(func(option.Some(f.definition)) |> function.to_dynamic()),
-            )
+            Predefined(PredefinedFunction(f), _, _) -> {
+              let details = case config {
+                ReplacementInline -> definition.details
+                ReplacementUpdateDefinition(update_fn) ->
+                  update_fn(definition.details)
+              }
+
+              #(
+                definition.set_predefined(details, False),
+                Function(
+                  func(option.Some(f.definition)) |> function.to_dynamic(),
+                ),
+              )
+            }
             v -> #(definition.details, v)
           }
           Definition(details:, value:)

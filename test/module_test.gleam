@@ -165,6 +165,7 @@ pub fn module_replace_function_test() {
           expression.call1(io_print, expression.call1(int_to_string, arg))
         })
       },
+      module.ReplacementInline,
     )
 
     mod
@@ -179,6 +180,56 @@ import gleam/io
 
 /// Prints an integer
 pub fn println_int(int: Int) -> Nil {
+  io.print(int.to_string(int))
+}"
+
+  assert result == expected
+}
+
+pub fn module_replace_function_make_private_test() {
+  let mod = {
+    let mod = module.from_string(sample_module)
+    use int_mod <- module.with_import(import_.new(["gleam", "int"]))
+    use io_mod <- module.with_import(import_.new(["gleam", "io"]))
+
+    let io_print =
+      import_.value_of_type(io_mod, "print", types.reference(io.print))
+
+    let int_to_string =
+      import_.value_of_type(
+        int_mod,
+        "to_string",
+        types.reference(int.to_string),
+      )
+
+    let replacement_method =
+      module.ReplacementUpdateDefinition(fn(definition) {
+        definition.with_publicity(definition, False)
+      })
+
+    use mod, _println_int <- module.replace_function(
+      "println_int",
+      mod,
+      fn(_original_function) {
+        function.new1(#("int", types.int), types.nil, fn(arg) {
+          expression.call1(io_print, expression.call1(int_to_string, arg))
+        })
+      },
+      replacement_method,
+    )
+
+    mod
+  }
+
+  let result =
+    mod |> module.render(render.default_context()) |> render.to_string()
+
+  let expected =
+    "import gleam/int
+import gleam/io
+
+/// Prints an integer
+fn println_int(int: Int) -> Nil {
   io.print(int.to_string(int))
 }"
 

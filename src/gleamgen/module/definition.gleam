@@ -60,6 +60,7 @@ pub fn with_position(
   Definition(..definition, position:)
 }
 
+@internal
 pub fn with_text_before(
   definition: Definition,
   text_before: String,

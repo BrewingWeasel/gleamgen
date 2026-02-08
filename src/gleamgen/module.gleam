@@ -11,17 +11,16 @@ import gleamgen/expression.{type Expression}
 import gleamgen/expression/constructor
 import gleamgen/function
 import gleamgen/import_
-import gleamgen/internal/module_text
 import gleamgen/module/definition
 import gleamgen/render
+import gleamgen/source
 import gleamgen/types.{type Dynamic}
 import gleamgen/types/custom
 
 pub opaque type ExternalModule {
   ExternalModule(
-    module: Option(glance.Module),
+    module: Option(source.SourceMapped(glance.Module)),
     definitions: List(ModuleDefinition),
-    parse_error: Option(glance.Error),
   )
 }
 
@@ -50,13 +49,15 @@ pub opaque type Definable {
   CustomTypeBuilder(custom.CustomTypeBuilder(Dynamic, Nil, Nil))
   Constant(Expression(Dynamic))
   TypeAlias(types.GeneratedType(Dynamic))
-  Predefined(ast: PredefinedDefinition, text_before: String, content: String)
+  Predefined(
+    ast: PredefinedDefinition,
+    text_before: String,
+    content: String,
+    source: source.Source,
+  )
 }
 
-fn arrange_definitions(
-  module: glance.Module,
-  module_text: module_text.ModuleText,
-) {
+pub fn from_source_map(module: source.SourceMapped(glance.Module)) -> Module {
   let get_location = fn(definition: PredefinedDefinition) {
     case definition {
       PredefinedImport(def) -> def.definition.location
@@ -67,25 +68,21 @@ fn arrange_definitions(
     }
   }
 
-  let #(module, _module_text) =
+  let #(module, _source) =
     [
-      list.map(module.imports, PredefinedImport),
-      list.map(module.constants, PredefinedConstant),
-      list.map(module.custom_types, PredefinedCustomType),
-      list.map(module.type_aliases, PredefinedTypeAlias),
-      list.map(module.functions, PredefinedFunction),
+      list.map(module.contents.imports, PredefinedImport),
+      list.map(module.contents.constants, PredefinedConstant),
+      list.map(module.contents.custom_types, PredefinedCustomType),
+      list.map(module.contents.type_aliases, PredefinedTypeAlias),
+      list.map(module.contents.functions, PredefinedFunction),
     ]
     |> list.flatten()
     |> list.sort(fn(first, second) {
       int.compare(get_location(first).start, get_location(second).start)
     })
-    |> module_text.fold(
-      module_text,
-      Module(
-        [],
-        [],
-        option.Some(ExternalModule(option.Some(module), [], option.None)),
-      ),
+    |> source.fold(
+      module.source,
+      Module([], [], option.Some(ExternalModule(option.Some(module), []))),
       handle_existing_definition,
       get_location,
     )
@@ -97,11 +94,12 @@ fn handle_existing_definition(
   module: Module,
   before_text: String,
   definition_text: String,
+  source: source.Source,
 ) -> Module {
   let add_definition = fn(name, publicity, attributes) {
     let external_module =
       module.external_module
-      |> option.unwrap(ExternalModule(option.None, [], option.None))
+      |> option.unwrap(ExternalModule(option.None, []))
 
     let is_public = case publicity {
       glance.Public -> True
@@ -120,7 +118,12 @@ fn handle_existing_definition(
     let new_definition =
       Definition(
         details:,
-        value: Predefined(predefined_definition, before_text, definition_text),
+        value: Predefined(
+          predefined_definition,
+          before_text,
+          definition_text,
+          source,
+        ),
       )
 
     Module(
@@ -166,22 +169,6 @@ fn handle_existing_definition(
   }
 }
 
-pub fn from_string(module_text: String) -> Module {
-  case glance.module(module_text) {
-    Ok(parsed_module) -> {
-      let module_text = module_text.from_string(module_text)
-      arrange_definitions(parsed_module, module_text)
-    }
-    Error(err) -> {
-      Module(
-        [],
-        [],
-        option.Some(ExternalModule(option.None, [], option.Some(err))),
-      )
-    }
-  }
-}
-
 pub fn with_constant(
   details: definition.Definition,
   value: Expression(t),
@@ -220,7 +207,8 @@ pub type ReplacementConfig {
 pub fn replace_function(
   function_name: String,
   module: Module,
-  func: fn(Option(glance.Function)) -> function.Function(func_type, ret),
+  func: fn(Option(source.SourceMapped(glance.Function))) ->
+    function.Function(func_type, ret),
   config: ReplacementConfig,
   handler: fn(Module, Expression(func_type)) -> Module,
 ) -> Module {
@@ -235,7 +223,7 @@ pub fn replace_function(
           )
 
           let #(details, value) = case definition.value {
-            Predefined(PredefinedFunction(f), _, _) -> {
+            Predefined(PredefinedFunction(f), _, _, source:) -> {
               let details = case config {
                 ReplacementInline -> definition.details
                 ReplacementUpdateDefinition(update_fn) ->
@@ -245,7 +233,13 @@ pub fn replace_function(
               #(
                 definition.set_predefined(details, False),
                 Function(
-                  func(option.Some(f.definition)) |> function.to_dynamic(),
+                  func(
+                    option.Some(source.SourceMapped(
+                      contents: f.definition,
+                      source:,
+                    )),
+                  )
+                  |> function.to_dynamic(),
                 ),
               )
             }
@@ -851,7 +845,7 @@ fn render_definition(definition: ModuleDefinition, context) {
         function.render(func, context, option.Some(definition.details.name))
       #(rendered.doc, rendered.details)
     }
-    Predefined(_, _, content) -> {
+    Predefined(_, _, content, _source) -> {
       #(doc.from_string(content), render.empty_details)
     }
   }

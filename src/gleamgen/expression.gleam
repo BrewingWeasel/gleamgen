@@ -29,6 +29,7 @@ type InternalExpression(type_) {
   NotEquals(Expression(types.Dynamic), Expression(types.Dynamic))
   TupleLiteral(List(Expression(types.Dynamic)))
   Ident(String)
+  RawDoc(doc.Document)
   Todo(Option(String))
   Panic(Option(String))
   Echo(expression: Expression(types.Dynamic), as_string: Option(String))
@@ -328,6 +329,11 @@ pub fn tuple9(
 /// Provide an ident that could be of any type
 pub fn raw(value: String) -> Expression(a) {
   Expression(Ident(value), types.dynamic())
+}
+
+@internal
+pub fn raw_doc(value: doc.Document) -> Expression(a) {
+  Expression(RawDoc(value), types.dynamic())
 }
 
 /// Provide a string to inject without any checking of the specified type
@@ -869,6 +875,7 @@ pub fn render(
       doc.from_string(value)
       |> render.Render(details: render.RenderedDetails(used_imports:))
     }
+    RawDoc(doc) -> render.Render(doc, details: render.empty_details)
     Todo(as_string) ->
       render_panicking_expression(doc.from_string("todo"), as_string)
       |> render.Render(details: render.empty_details)

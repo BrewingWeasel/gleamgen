@@ -1,12 +1,17 @@
 import gleam/int
 import gleam/io
+import gleam/list
+import gleam/option
 import gleam/string
 import gleamgen/expression
+import gleamgen/expression/block
+import gleamgen/expression/statement
 import gleamgen/function
 import gleamgen/import_
 import gleamgen/module
 import gleamgen/module/definition
 import gleamgen/render
+import gleamgen/source
 import gleamgen/types
 
 const sample_module = "import gleam/int
@@ -19,8 +24,9 @@ pub fn println_int(int: Int) {
 "
 
 pub fn extend_module_from_string_test() {
+  let assert Ok(source_map) = source.module_from_string(sample_module)
   let mod = {
-    let mod = module.from_string(sample_module)
+    let mod = module.from_source_map(source_map)
 
     use _ <- module.with_function(
       definition.new("main")
@@ -53,8 +59,9 @@ pub fn main() -> Nil {
 }
 
 pub fn extend_module_other_imports_test() {
+  let assert Ok(source_map) = source.module_from_string(sample_module)
   let mod = {
-    let mod = module.from_string(sample_module)
+    let mod = module.from_source_map(source_map)
     use string_mod <- module.with_import(import_.new(["gleam", "string"]))
     use io_mod <- module.with_import(import_.new(["gleam", "io"]))
 
@@ -107,8 +114,9 @@ pub fn main() -> Nil {
 }
 
 pub fn module_definition_placement_test() {
+  let assert Ok(source_map) = source.module_from_string(sample_module)
   let mod = {
-    let mod = module.from_string(sample_module)
+    let mod = module.from_source_map(source_map)
 
     use _ <- module.with_function(
       definition.new("main")
@@ -142,8 +150,9 @@ pub fn println_int(int: Int) {
 }
 
 pub fn module_replace_function_test() {
+  let assert Ok(source_map) = source.module_from_string(sample_module)
   let mod = {
-    let mod = module.from_string(sample_module)
+    let mod = module.from_source_map(source_map)
     use int_mod <- module.with_import(import_.new(["gleam", "int"]))
     use io_mod <- module.with_import(import_.new(["gleam", "io"]))
 
@@ -187,8 +196,9 @@ pub fn println_int(int: Int) -> Nil {
 }
 
 pub fn module_replace_function_make_private_test() {
+  let assert Ok(source_map) = source.module_from_string(sample_module)
   let mod = {
-    let mod = module.from_string(sample_module)
+    let mod = module.from_source_map(source_map)
     use int_mod <- module.with_import(import_.new(["gleam", "int"]))
     use io_mod <- module.with_import(import_.new(["gleam", "io"]))
 
@@ -234,4 +244,47 @@ fn println_int(int: Int) -> Nil {
 }"
 
   assert result == expected
+}
+
+const sample_module_with_many_statements = "import gleam/bool
+
+/// A function with many statements
+pub fn statements() -> Nil {
+  // Comment here
+  use <- bool.guard(False, Nil)
+  // And here
+  use <- bool.guard(False, Nil)
+  use <- bool.guard(False, Nil)
+
+  assert 5 > 2
+
+  Nil
+}"
+
+pub fn replace_function_update_statements_test() {
+  let assert Ok(source_map) =
+    source.module_from_string(sample_module_with_many_statements)
+  let mod = {
+    let mod = module.from_source_map(source_map)
+    use mod, _println_int <- module.replace_function(
+      "statements",
+      mod,
+      fn(original_function) {
+        let assert option.Some(function) = original_function
+        function.new0(types.nil, fn() {
+          source.get_function_body(function)
+          |> list.map(statement.from_source_map)
+          |> block.new_dynamic()
+        })
+      },
+      module.ReplacementInline,
+    )
+
+    mod
+  }
+
+  let result =
+    mod |> module.render(render.default_context()) |> render.to_string()
+
+  assert result == sample_module_with_many_statements
 }

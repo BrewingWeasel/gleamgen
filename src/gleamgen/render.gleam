@@ -28,7 +28,7 @@ pub fn default_context() -> Context {
 }
 
 pub fn to_string(to_render: Rendered) -> String {
-  doc.to_string(to_render.doc, 80)
+  to_render.doc |> doc.to_string(80) |> post_process()
 }
 
 @internal
@@ -79,5 +79,34 @@ fn do_escape_string(original: String, escaped: String) -> String {
       do_escape_string(rest, escaped <> c)
     }
     Error(Nil) -> escaped
+  }
+}
+
+fn post_process(string: String) -> String {
+  string
+  |> string.to_graphemes()
+  |> remove_space_newlines([], [])
+  |> list.reverse()
+  |> string.join("")
+}
+
+fn remove_space_newlines(
+  graphemes: List(String),
+  line_starting_spaces: List(String),
+  acc: List(String),
+) -> List(String) {
+  case graphemes {
+    ["\n", ..rest] -> remove_space_newlines(rest, [], ["\n", ..acc])
+    [" " as space, ..rest] | ["\t" as space, ..rest] ->
+      remove_space_newlines(rest, [space, ..line_starting_spaces], acc)
+
+    [first, ..rest] if line_starting_spaces != [] ->
+      remove_space_newlines(
+        rest,
+        [],
+        list.append([first, ..line_starting_spaces], acc),
+      )
+    [first, ..rest] -> remove_space_newlines(rest, [], [first, ..acc])
+    [] -> acc
   }
 }

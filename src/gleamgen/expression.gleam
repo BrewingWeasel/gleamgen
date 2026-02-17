@@ -1181,23 +1181,4 @@ fn render_operator(
     second_rendered.details,
   ))
 }
-
-@internal
-pub fn render_attribute(
-  x: #(String, types.GeneratedType(a)),
-  context: render.Context,
-) -> doc.Document {
-  case context.render_types {
-    True ->
-      doc.concat([
-        doc.from_string(x.0),
-        case types.render_type(x.1) {
-          Ok(rendered) ->
-            doc.concat([doc.from_string(":"), doc.space, rendered.doc])
-          Error(Nil) -> doc.empty
-        },
-      ])
-    False -> doc.from_string(x.0)
-  }
-}
 // vim: foldmethod=marker foldlevel=0

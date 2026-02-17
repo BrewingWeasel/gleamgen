@@ -1,6 +1,7 @@
 import glam/doc
 import gleam/list
 import gleam/string
+import gleamgen/render/config
 
 pub type Rendered {
   Render(doc: doc.Document, details: RenderedDetails)
@@ -20,11 +21,15 @@ pub fn merge_details(
 }
 
 pub type Context {
-  Context(render_types: Bool, include_brackets_current_level: Bool)
+  Context(config: config.Config, include_brackets_current_level: Bool)
 }
 
 pub fn default_context() -> Context {
-  Context(True, True)
+  Context(config.default_config, True)
+}
+
+pub fn context_from_config(config: config.Config) -> Context {
+  Context(config, True)
 }
 
 pub fn to_string(to_render: Rendered) -> String {

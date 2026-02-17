@@ -45,7 +45,7 @@ pub fn render(
 
   let name = doc.from_string(parameter.name)
   let addition = case types.render_type(parameter.type_) {
-    Ok(rendered) if context.render_types ->
+    Ok(rendered) if context.config.render_function_parameter_types ->
       doc.concat([doc.from_string(":"), doc.space, rendered.doc])
     _ -> doc.empty
   }

@@ -1,32 +1,32 @@
 import glam/doc
 import gleam/list
 import gleam/option
-import gleam/pair
 import gleam/result
 import gleamgen/expression
+import gleamgen/parameter.{type Parameter}
 import gleamgen/render
 import gleamgen/types.{type Dynamic}
 
 pub type Function(type_, ret) {
   Function(
-    args: List(#(String, types.GeneratedType(Dynamic))),
+    parameters: List(Parameter(Dynamic)),
     returns: types.GeneratedType(ret),
     body: expression.Expression(ret),
   )
 }
 
 pub fn new_raw(
-  args args: List(#(String, types.GeneratedType(Dynamic))),
+  parameters parameters: List(Parameter(Dynamic)),
   returns returns: types.GeneratedType(ret),
   handler handler: fn(List(expression.Expression(Dynamic))) ->
     expression.Expression(ret),
 ) -> Function(Dynamic, ret) {
   let body =
     handler(
-      args
-      |> list.map(fn(arg) { expression.raw(arg.0) }),
+      parameters
+      |> list.map(fn(param) { expression.raw(parameter.name(param)) }),
     )
-  Function(args:, returns:, body:)
+  Function(parameters, returns:, body:)
 }
 
 pub fn new0(
@@ -34,33 +34,41 @@ pub fn new0(
   handler handler: fn() -> expression.Expression(ret),
 ) -> Function(fn(arg1) -> ret, ret) {
   let body = handler()
-  Function(args: [], returns:, body:)
+  Function(parameters: [], returns:, body:)
 }
 
 pub fn new1(
-  arg1 arg1: #(String, types.GeneratedType(arg1)),
+  param1 param1: Parameter(param1),
   returns returns: types.GeneratedType(ret),
-  handler handler: fn(expression.Expression(arg1)) -> expression.Expression(ret),
-) -> Function(fn(arg1) -> ret, ret) {
-  let body = handler(expression.raw(arg1.0))
-  Function(args: [#(arg1.0, arg1.1 |> types.to_dynamic)], returns:, body:)
+  handler handler: fn(expression.Expression(param1)) ->
+    expression.Expression(ret),
+) -> Function(fn(param1) -> ret, ret) {
+  let body = handler(expression.raw(parameter.name(param1)))
+  Function(parameters: [parameter.to_dynamic(param1)], returns:, body:)
 }
 
 // rest of repetitve functions
 // {{{
 
 pub fn new2(
-  arg1 arg1: #(String, types.GeneratedType(arg1)),
-  arg2 arg2: #(String, types.GeneratedType(arg2)),
+  param1 param1: Parameter(param1),
+  param2 param2: Parameter(param2),
   returns returns: types.GeneratedType(ret),
-  handler handler: fn(expression.Expression(arg1), expression.Expression(arg2)) ->
+  handler handler: fn(
+    expression.Expression(param1),
+    expression.Expression(param2),
+  ) ->
     expression.Expression(ret),
-) -> Function(fn(arg1, arg2) -> ret, ret) {
-  let body = handler(expression.raw(arg1.0), expression.raw(arg2.0))
+) -> Function(fn(param1, param2) -> ret, ret) {
+  let body =
+    handler(
+      expression.raw(parameter.name(param1)),
+      expression.raw(parameter.name(param2)),
+    )
   Function(
-    args: [
-      #(arg1.0, arg1.1 |> types.to_dynamic),
-      #(arg2.0, arg2.1 |> types.to_dynamic),
+    parameters: [
+      parameter.to_dynamic(param1),
+      parameter.to_dynamic(param2),
     ],
     returns:,
     body:,
@@ -68,28 +76,28 @@ pub fn new2(
 }
 
 pub fn new3(
-  arg1 arg1: #(String, types.GeneratedType(arg1)),
-  arg2 arg2: #(String, types.GeneratedType(arg2)),
-  arg3 arg3: #(String, types.GeneratedType(arg3)),
+  param1 param1: Parameter(param1),
+  param2 param2: Parameter(param2),
+  param3 param3: Parameter(param3),
   returns returns: types.GeneratedType(ret),
   handler handler: fn(
-    expression.Expression(arg1),
-    expression.Expression(arg2),
-    expression.Expression(arg3),
+    expression.Expression(param1),
+    expression.Expression(param2),
+    expression.Expression(param3),
   ) ->
     expression.Expression(ret),
-) -> Function(fn(arg1, arg2, arg3) -> ret, ret) {
+) -> Function(fn(param1, param2, param3) -> ret, ret) {
   let body =
     handler(
-      expression.raw(arg1.0),
-      expression.raw(arg2.0),
-      expression.raw(arg3.0),
+      expression.raw(parameter.name(param1)),
+      expression.raw(parameter.name(param2)),
+      expression.raw(parameter.name(param3)),
     )
   Function(
-    args: [
-      #(arg1.0, arg1.1 |> types.to_dynamic),
-      #(arg2.0, arg2.1 |> types.to_dynamic),
-      #(arg3.0, arg3.1 |> types.to_dynamic),
+    parameters: [
+      parameter.to_dynamic(param1),
+      parameter.to_dynamic(param2),
+      parameter.to_dynamic(param3),
     ],
     returns:,
     body:,
@@ -97,32 +105,32 @@ pub fn new3(
 }
 
 pub fn new4(
-  arg1 arg1: #(String, types.GeneratedType(arg1)),
-  arg2 arg2: #(String, types.GeneratedType(arg2)),
-  arg3 arg3: #(String, types.GeneratedType(arg3)),
-  arg4 arg4: #(String, types.GeneratedType(arg4)),
+  param1 param1: Parameter(param1),
+  param2 param2: Parameter(param2),
+  param3 param3: Parameter(param3),
+  param4 param4: Parameter(param4),
   returns returns: types.GeneratedType(ret),
   handler handler: fn(
-    expression.Expression(arg1),
-    expression.Expression(arg2),
-    expression.Expression(arg3),
-    expression.Expression(arg4),
+    expression.Expression(param1),
+    expression.Expression(param2),
+    expression.Expression(param3),
+    expression.Expression(param4),
   ) ->
     expression.Expression(ret),
-) -> Function(fn(arg1, arg2, arg3, arg4) -> ret, ret) {
+) -> Function(fn(param1, param2, param3, param4) -> ret, ret) {
   let body =
     handler(
-      expression.raw(arg1.0),
-      expression.raw(arg2.0),
-      expression.raw(arg3.0),
-      expression.raw(arg4.0),
+      expression.raw(parameter.name(param1)),
+      expression.raw(parameter.name(param2)),
+      expression.raw(parameter.name(param3)),
+      expression.raw(parameter.name(param4)),
     )
   Function(
-    args: [
-      #(arg1.0, arg1.1 |> types.to_dynamic),
-      #(arg2.0, arg2.1 |> types.to_dynamic),
-      #(arg3.0, arg3.1 |> types.to_dynamic),
-      #(arg4.0, arg4.1 |> types.to_dynamic),
+    parameters: [
+      parameter.to_dynamic(param1),
+      parameter.to_dynamic(param2),
+      parameter.to_dynamic(param3),
+      parameter.to_dynamic(param4),
     ],
     returns:,
     body:,
@@ -130,36 +138,36 @@ pub fn new4(
 }
 
 pub fn new5(
-  arg1 arg1: #(String, types.GeneratedType(arg1)),
-  arg2 arg2: #(String, types.GeneratedType(arg2)),
-  arg3 arg3: #(String, types.GeneratedType(arg3)),
-  arg4 arg4: #(String, types.GeneratedType(arg4)),
-  arg5 arg5: #(String, types.GeneratedType(arg5)),
+  param1 param1: Parameter(param1),
+  param2 param2: Parameter(param2),
+  param3 param3: Parameter(param3),
+  param4 param4: Parameter(param4),
+  param5 param5: Parameter(param5),
   returns returns: types.GeneratedType(ret),
   handler handler: fn(
-    expression.Expression(arg1),
-    expression.Expression(arg2),
-    expression.Expression(arg3),
-    expression.Expression(arg4),
-    expression.Expression(arg5),
+    expression.Expression(param1),
+    expression.Expression(param2),
+    expression.Expression(param3),
+    expression.Expression(param4),
+    expression.Expression(param5),
   ) ->
     expression.Expression(ret),
-) -> Function(fn(arg1, arg2, arg3, arg4, arg5) -> ret, ret) {
+) -> Function(fn(param1, param2, param3, param4, param5) -> ret, ret) {
   let body =
     handler(
-      expression.raw(arg1.0),
-      expression.raw(arg2.0),
-      expression.raw(arg3.0),
-      expression.raw(arg4.0),
-      expression.raw(arg5.0),
+      expression.raw(parameter.name(param1)),
+      expression.raw(parameter.name(param2)),
+      expression.raw(parameter.name(param3)),
+      expression.raw(parameter.name(param4)),
+      expression.raw(parameter.name(param5)),
     )
   Function(
-    args: [
-      #(arg1.0, arg1.1 |> types.to_dynamic),
-      #(arg2.0, arg2.1 |> types.to_dynamic),
-      #(arg3.0, arg3.1 |> types.to_dynamic),
-      #(arg4.0, arg4.1 |> types.to_dynamic),
-      #(arg5.0, arg5.1 |> types.to_dynamic),
+    parameters: [
+      parameter.to_dynamic(param1),
+      parameter.to_dynamic(param2),
+      parameter.to_dynamic(param3),
+      parameter.to_dynamic(param4),
+      parameter.to_dynamic(param5),
     ],
     returns:,
     body:,
@@ -167,40 +175,40 @@ pub fn new5(
 }
 
 pub fn new6(
-  arg1 arg1: #(String, types.GeneratedType(arg1)),
-  arg2 arg2: #(String, types.GeneratedType(arg2)),
-  arg3 arg3: #(String, types.GeneratedType(arg3)),
-  arg4 arg4: #(String, types.GeneratedType(arg4)),
-  arg5 arg5: #(String, types.GeneratedType(arg5)),
-  arg6 arg6: #(String, types.GeneratedType(arg6)),
+  param1 param1: Parameter(param1),
+  param2 param2: Parameter(param2),
+  param3 param3: Parameter(param3),
+  param4 param4: Parameter(param4),
+  param5 param5: Parameter(param5),
+  param6 param6: Parameter(param6),
   returns returns: types.GeneratedType(ret),
   handler handler: fn(
-    expression.Expression(arg1),
-    expression.Expression(arg2),
-    expression.Expression(arg3),
-    expression.Expression(arg4),
-    expression.Expression(arg5),
-    expression.Expression(arg6),
+    expression.Expression(param1),
+    expression.Expression(param2),
+    expression.Expression(param3),
+    expression.Expression(param4),
+    expression.Expression(param5),
+    expression.Expression(param6),
   ) ->
     expression.Expression(ret),
-) -> Function(fn(arg1, arg2, arg3, arg4, arg5, arg6) -> ret, ret) {
+) -> Function(fn(param1, param2, param3, param4, param5, param6) -> ret, ret) {
   let body =
     handler(
-      expression.raw(arg1.0),
-      expression.raw(arg2.0),
-      expression.raw(arg3.0),
-      expression.raw(arg4.0),
-      expression.raw(arg5.0),
-      expression.raw(arg6.0),
+      expression.raw(parameter.name(param1)),
+      expression.raw(parameter.name(param2)),
+      expression.raw(parameter.name(param3)),
+      expression.raw(parameter.name(param4)),
+      expression.raw(parameter.name(param5)),
+      expression.raw(parameter.name(param6)),
     )
   Function(
-    args: [
-      #(arg1.0, arg1.1 |> types.to_dynamic),
-      #(arg2.0, arg2.1 |> types.to_dynamic),
-      #(arg3.0, arg3.1 |> types.to_dynamic),
-      #(arg4.0, arg4.1 |> types.to_dynamic),
-      #(arg5.0, arg5.1 |> types.to_dynamic),
-      #(arg6.0, arg6.1 |> types.to_dynamic),
+    parameters: [
+      parameter.to_dynamic(param1),
+      parameter.to_dynamic(param2),
+      parameter.to_dynamic(param3),
+      parameter.to_dynamic(param4),
+      parameter.to_dynamic(param5),
+      parameter.to_dynamic(param6),
     ],
     returns:,
     body:,
@@ -208,44 +216,47 @@ pub fn new6(
 }
 
 pub fn new7(
-  arg1 arg1: #(String, types.GeneratedType(arg1)),
-  arg2 arg2: #(String, types.GeneratedType(arg2)),
-  arg3 arg3: #(String, types.GeneratedType(arg3)),
-  arg4 arg4: #(String, types.GeneratedType(arg4)),
-  arg5 arg5: #(String, types.GeneratedType(arg5)),
-  arg6 arg6: #(String, types.GeneratedType(arg6)),
-  arg7 arg7: #(String, types.GeneratedType(arg7)),
+  param1 param1: Parameter(param1),
+  param2 param2: Parameter(param2),
+  param3 param3: Parameter(param3),
+  param4 param4: Parameter(param4),
+  param5 param5: Parameter(param5),
+  param6 param6: Parameter(param6),
+  param7 param7: Parameter(param7),
   returns returns: types.GeneratedType(ret),
   handler handler: fn(
-    expression.Expression(arg1),
-    expression.Expression(arg2),
-    expression.Expression(arg3),
-    expression.Expression(arg4),
-    expression.Expression(arg5),
-    expression.Expression(arg6),
-    expression.Expression(arg7),
+    expression.Expression(param1),
+    expression.Expression(param2),
+    expression.Expression(param3),
+    expression.Expression(param4),
+    expression.Expression(param5),
+    expression.Expression(param6),
+    expression.Expression(param7),
   ) ->
     expression.Expression(ret),
-) -> Function(fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7) -> ret, ret) {
+) -> Function(
+  fn(param1, param2, param3, param4, param5, param6, param7) -> ret,
+  ret,
+) {
   let body =
     handler(
-      expression.raw(arg1.0),
-      expression.raw(arg2.0),
-      expression.raw(arg3.0),
-      expression.raw(arg4.0),
-      expression.raw(arg5.0),
-      expression.raw(arg6.0),
-      expression.raw(arg7.0),
+      expression.raw(parameter.name(param1)),
+      expression.raw(parameter.name(param2)),
+      expression.raw(parameter.name(param3)),
+      expression.raw(parameter.name(param4)),
+      expression.raw(parameter.name(param5)),
+      expression.raw(parameter.name(param6)),
+      expression.raw(parameter.name(param7)),
     )
   Function(
-    args: [
-      #(arg1.0, arg1.1 |> types.to_dynamic),
-      #(arg2.0, arg2.1 |> types.to_dynamic),
-      #(arg3.0, arg3.1 |> types.to_dynamic),
-      #(arg4.0, arg4.1 |> types.to_dynamic),
-      #(arg5.0, arg5.1 |> types.to_dynamic),
-      #(arg6.0, arg6.1 |> types.to_dynamic),
-      #(arg7.0, arg7.1 |> types.to_dynamic),
+    parameters: [
+      parameter.to_dynamic(param1),
+      parameter.to_dynamic(param2),
+      parameter.to_dynamic(param3),
+      parameter.to_dynamic(param4),
+      parameter.to_dynamic(param5),
+      parameter.to_dynamic(param6),
+      parameter.to_dynamic(param7),
     ],
     returns:,
     body:,
@@ -253,48 +264,51 @@ pub fn new7(
 }
 
 pub fn new8(
-  arg1 arg1: #(String, types.GeneratedType(arg1)),
-  arg2 arg2: #(String, types.GeneratedType(arg2)),
-  arg3 arg3: #(String, types.GeneratedType(arg3)),
-  arg4 arg4: #(String, types.GeneratedType(arg4)),
-  arg5 arg5: #(String, types.GeneratedType(arg5)),
-  arg6 arg6: #(String, types.GeneratedType(arg6)),
-  arg7 arg7: #(String, types.GeneratedType(arg7)),
-  arg8 arg8: #(String, types.GeneratedType(arg8)),
+  param1 param1: Parameter(param1),
+  param2 param2: Parameter(param2),
+  param3 param3: Parameter(param3),
+  param4 param4: Parameter(param4),
+  param5 param5: Parameter(param5),
+  param6 param6: Parameter(param6),
+  param7 param7: Parameter(param7),
+  param8 param8: Parameter(param8),
   returns returns: types.GeneratedType(ret),
   handler handler: fn(
-    expression.Expression(arg1),
-    expression.Expression(arg2),
-    expression.Expression(arg3),
-    expression.Expression(arg4),
-    expression.Expression(arg5),
-    expression.Expression(arg6),
-    expression.Expression(arg7),
-    expression.Expression(arg8),
+    expression.Expression(param1),
+    expression.Expression(param2),
+    expression.Expression(param3),
+    expression.Expression(param4),
+    expression.Expression(param5),
+    expression.Expression(param6),
+    expression.Expression(param7),
+    expression.Expression(param8),
   ) ->
     expression.Expression(ret),
-) -> Function(fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) -> ret, ret) {
+) -> Function(
+  fn(param1, param2, param3, param4, param5, param6, param7, param8) -> ret,
+  ret,
+) {
   let body =
     handler(
-      expression.raw(arg1.0),
-      expression.raw(arg2.0),
-      expression.raw(arg3.0),
-      expression.raw(arg4.0),
-      expression.raw(arg5.0),
-      expression.raw(arg6.0),
-      expression.raw(arg7.0),
-      expression.raw(arg8.0),
+      expression.raw(parameter.name(param1)),
+      expression.raw(parameter.name(param2)),
+      expression.raw(parameter.name(param3)),
+      expression.raw(parameter.name(param4)),
+      expression.raw(parameter.name(param5)),
+      expression.raw(parameter.name(param6)),
+      expression.raw(parameter.name(param7)),
+      expression.raw(parameter.name(param8)),
     )
   Function(
-    args: [
-      #(arg1.0, arg1.1 |> types.to_dynamic),
-      #(arg2.0, arg2.1 |> types.to_dynamic),
-      #(arg3.0, arg3.1 |> types.to_dynamic),
-      #(arg4.0, arg4.1 |> types.to_dynamic),
-      #(arg5.0, arg5.1 |> types.to_dynamic),
-      #(arg6.0, arg6.1 |> types.to_dynamic),
-      #(arg7.0, arg7.1 |> types.to_dynamic),
-      #(arg8.0, arg8.1 |> types.to_dynamic),
+    parameters: [
+      parameter.to_dynamic(param1),
+      parameter.to_dynamic(param2),
+      parameter.to_dynamic(param3),
+      parameter.to_dynamic(param4),
+      parameter.to_dynamic(param5),
+      parameter.to_dynamic(param6),
+      parameter.to_dynamic(param7),
+      parameter.to_dynamic(param8),
     ],
     returns:,
     body:,
@@ -302,55 +316,56 @@ pub fn new8(
 }
 
 pub fn new9(
-  arg1 arg1: #(String, types.GeneratedType(arg1)),
-  arg2 arg2: #(String, types.GeneratedType(arg2)),
-  arg3 arg3: #(String, types.GeneratedType(arg3)),
-  arg4 arg4: #(String, types.GeneratedType(arg4)),
-  arg5 arg5: #(String, types.GeneratedType(arg5)),
-  arg6 arg6: #(String, types.GeneratedType(arg6)),
-  arg7 arg7: #(String, types.GeneratedType(arg7)),
-  arg8 arg8: #(String, types.GeneratedType(arg8)),
-  arg9 arg9: #(String, types.GeneratedType(arg9)),
+  param1 param1: Parameter(param1),
+  param2 param2: Parameter(param2),
+  param3 param3: Parameter(param3),
+  param4 param4: Parameter(param4),
+  param5 param5: Parameter(param5),
+  param6 param6: Parameter(param6),
+  param7 param7: Parameter(param7),
+  param8 param8: Parameter(param8),
+  param9 param9: Parameter(param9),
   returns returns: types.GeneratedType(ret),
   handler handler: fn(
-    expression.Expression(arg1),
-    expression.Expression(arg2),
-    expression.Expression(arg3),
-    expression.Expression(arg4),
-    expression.Expression(arg5),
-    expression.Expression(arg6),
-    expression.Expression(arg7),
-    expression.Expression(arg8),
-    expression.Expression(arg9),
+    expression.Expression(param1),
+    expression.Expression(param2),
+    expression.Expression(param3),
+    expression.Expression(param4),
+    expression.Expression(param5),
+    expression.Expression(param6),
+    expression.Expression(param7),
+    expression.Expression(param8),
+    expression.Expression(param9),
   ) ->
     expression.Expression(ret),
 ) -> Function(
-  fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) -> ret,
+  fn(param1, param2, param3, param4, param5, param6, param7, param8, param9) ->
+    ret,
   ret,
 ) {
   let body =
     handler(
-      expression.raw(arg1.0),
-      expression.raw(arg2.0),
-      expression.raw(arg3.0),
-      expression.raw(arg4.0),
-      expression.raw(arg5.0),
-      expression.raw(arg6.0),
-      expression.raw(arg7.0),
-      expression.raw(arg8.0),
-      expression.raw(arg9.0),
+      expression.raw(parameter.name(param1)),
+      expression.raw(parameter.name(param2)),
+      expression.raw(parameter.name(param3)),
+      expression.raw(parameter.name(param4)),
+      expression.raw(parameter.name(param5)),
+      expression.raw(parameter.name(param6)),
+      expression.raw(parameter.name(param7)),
+      expression.raw(parameter.name(param8)),
+      expression.raw(parameter.name(param9)),
     )
   Function(
-    args: [
-      #(arg1.0, arg1.1 |> types.to_dynamic),
-      #(arg2.0, arg2.1 |> types.to_dynamic),
-      #(arg3.0, arg3.1 |> types.to_dynamic),
-      #(arg4.0, arg4.1 |> types.to_dynamic),
-      #(arg5.0, arg5.1 |> types.to_dynamic),
-      #(arg6.0, arg6.1 |> types.to_dynamic),
-      #(arg7.0, arg7.1 |> types.to_dynamic),
-      #(arg8.0, arg8.1 |> types.to_dynamic),
-      #(arg9.0, arg9.1 |> types.to_dynamic),
+    parameters: [
+      parameter.to_dynamic(param1),
+      parameter.to_dynamic(param2),
+      parameter.to_dynamic(param3),
+      parameter.to_dynamic(param4),
+      parameter.to_dynamic(param5),
+      parameter.to_dynamic(param6),
+      parameter.to_dynamic(param7),
+      parameter.to_dynamic(param8),
+      parameter.to_dynamic(param9),
     ],
     returns:,
     body:,
@@ -372,8 +387,8 @@ pub fn get_function_name(type_: a) -> String
 
 pub fn anonymous(function: Function(type_, ret)) -> expression.Expression(type_) {
   let type_ =
-    function.args
-    |> list.map(pair.second)
+    function.parameters
+    |> list.map(parameter.type_)
     |> types.dynamic_function(function.returns |> types.to_dynamic())
     |> types.coerce_dynamic_unsafe()
 
@@ -387,9 +402,11 @@ pub fn render(
   context: render.Context,
   name: option.Option(String),
 ) -> render.Rendered {
-  let rendered_args =
-    func.args
-    |> list.map(expression.render_attribute(_, context))
+  let is_anonymous = option.is_none(name)
+
+  let rendered_params =
+    func.parameters
+    |> list.map(parameter.render(_, include_labels: !is_anonymous, context:))
     |> render.pretty_list()
 
   let rendered_type = types.render_type(func.returns)
@@ -407,7 +424,7 @@ pub fn render(
   doc.concat([
     doc.from_string("fn"),
     rendered_name,
-    rendered_args,
+    rendered_params,
     doc.space,
     case rendered_type {
       Ok(returned) ->

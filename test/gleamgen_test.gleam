@@ -14,6 +14,7 @@ import gleamgen/function
 import gleamgen/import_
 import gleamgen/module
 import gleamgen/module/definition
+import gleamgen/parameter
 import gleamgen/pattern
 import gleamgen/render
 import gleamgen/types
@@ -621,8 +622,8 @@ pub fn simple_anonymous_function_test() {
         "func",
         function.anonymous(
           function.new2(
-            #("x", types.int),
-            #("y", types.int),
+            parameter.new("x", types.int),
+            parameter.new("y", types.int),
             types.int,
             handler: fn(x, y) { expression.math_operator(x, expression.Add, y) },
           ),
@@ -726,6 +727,90 @@ pub fn block_dynamic_contents_test() {
   assert result == expected
 }
 
+pub fn function_with_labeled_parameters_test() {
+  let mod = {
+    use _sum_of_2_numbers <- module.with_function(
+      definition.new(name: "sum_of_2_numbers")
+        |> definition.with_publicity(True),
+      function.new2(
+        param1: parameter.new("num1", types.int)
+          |> parameter.with_label("first"),
+        param2: parameter.new("num2", types.int)
+          |> parameter.with_label("second"),
+        returns: types.int,
+        handler: fn(num1, num2) {
+          expression.math_operator(num1, expression.Add, num2)
+        },
+      ),
+    )
+
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "pub fn sum_of_2_numbers(first num1: Int, second num2: Int) -> Int {
+  num1 + num2
+}"
+
+  assert result == expected
+}
+
+pub fn anonymous_functions_ignore_labels_test() {
+  let add_function =
+    function.new2(
+      param1: parameter.new("num1", types.int)
+        |> parameter.with_label("first"),
+      param2: parameter.new("num2", types.int)
+        |> parameter.with_label("second"),
+      returns: types.int,
+      handler: fn(num1, num2) {
+        expression.math_operator(num1, expression.Add, num2)
+      },
+    )
+  let mod = {
+    use _sum_of_2_numbers <- module.with_function(
+      definition.new(name: "sum_of_2_numbers")
+        |> definition.with_publicity(True),
+      add_function,
+    )
+
+    use _sum_of_2_and_3 <- module.with_function(
+      definition.new(name: "sum_of_2_and_3")
+        |> definition.with_publicity(True),
+      function.new0(types.int, fn() {
+        expression.call2(
+          function.anonymous(add_function),
+          expression.int(2),
+          expression.int(3),
+        )
+      }),
+    )
+
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "pub fn sum_of_2_numbers(first num1: Int, second num2: Int) -> Int {
+  num1 + num2
+}
+
+pub fn sum_of_2_and_3() -> Int {
+  fn(num1: Int, num2: Int) -> Int { num1 + num2 }(2, 3)
+}"
+
+  assert result == expected
+}
+
 pub fn module_with_function_test() {
   let mod = {
     use io <- module.with_import(import_.new(["gleam", "io"]))
@@ -739,7 +824,7 @@ pub fn module_with_function_test() {
         |> definition.with_publicity(True)
         |> definition.with_attributes([definition.Internal]),
       function.new1(
-        arg1: #("thing", types.string),
+        param1: parameter.new("thing", types.string),
         returns: types.string,
         handler: fn(thing) {
           expression.string("The ")
@@ -796,7 +881,7 @@ pub fn module_import_constructor_test() {
       definition.new(name: "option_from_string")
         |> definition.with_publicity(True),
       function.new1(
-        arg1: #("str", types.string),
+        param1: parameter.new("str", types.string),
         returns: option_type |> custom.to_type1(types.string),
         handler: fn(str) {
           case_.new(str)
@@ -961,7 +1046,7 @@ pub fn result_test() {
       definition.new(name: "handle_result")
         |> definition.with_publicity(True),
       function.new1(
-        arg1: #("res", types.result(types.string, types.int)),
+        param1: parameter.new("res", types.result(types.string, types.int)),
         returns: types.result(types.bool, types.int),
         handler: fn(res) {
           use _ <- block.with_let_declaration(
@@ -1034,7 +1119,7 @@ pub fn module_with_type_alias_test() {
         |> definition.with_publicity(True)
         |> definition.with_attributes([definition.Internal]),
       function.new1(
-        arg1: #("thing", awesome_string),
+        param1: parameter.new("thing", awesome_string),
         returns: types.string,
         handler: fn(thing) {
           expression.string("Hi ")
@@ -1232,7 +1317,7 @@ pub fn module_with_custom_type_test() {
     use describer <- module.with_function(
       definition.new("describer") |> definition.with_publicity(True),
       function.new1(
-        arg1: #("animal", animal_type |> custom.to_type()),
+        param1: parameter.new("animal", animal_type |> custom.to_type()),
         returns: types.string,
         handler: fn(_thing) { expression.todo_(option.Some("implement me")) },
       ),
@@ -1324,7 +1409,7 @@ pub fn module_case_on_custom_type_test() {
     use describer <- module.with_function(
       definition.new("describer") |> definition.with_publicity(True),
       function.new1(
-        arg1: #("animal", animal_type |> custom.to_type()),
+        param1: parameter.new("animal", animal_type |> custom.to_type()),
         returns: types.string,
         handler: fn(animal) {
           case_.new(animal)

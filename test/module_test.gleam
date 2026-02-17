@@ -10,6 +10,7 @@ import gleamgen/function
 import gleamgen/import_
 import gleamgen/module
 import gleamgen/module/definition
+import gleamgen/parameter
 import gleamgen/render
 import gleamgen/source
 import gleamgen/types
@@ -170,7 +171,7 @@ pub fn module_replace_function_test() {
       "println_int",
       mod,
       fn(_original_function) {
-        function.new1(#("int", types.int), types.nil, fn(arg) {
+        function.new1(parameter.new("int", types.int), types.nil, fn(arg) {
           expression.call1(io_print, expression.call1(int_to_string, arg))
         })
       },
@@ -221,7 +222,7 @@ pub fn module_replace_function_make_private_test() {
       "println_int",
       mod,
       fn(_original_function) {
-        function.new1(#("int", types.int), types.nil, fn(arg) {
+        function.new1(parameter.new("int", types.int), types.nil, fn(arg) {
           expression.call1(io_print, expression.call1(int_to_string, arg))
         })
       },

@@ -5,7 +5,7 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
-import gleamgen/render
+import gleamgen/internal/render
 import gleamgen/types
 
 pub opaque type Expression(type_) {

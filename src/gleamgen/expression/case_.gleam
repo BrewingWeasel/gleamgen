@@ -7,8 +7,8 @@ import gleam/pair
 import gleam/result
 import gleam/set
 import gleamgen/expression.{type Expression}
+import gleamgen/internal/render
 import gleamgen/pattern.{type Pattern}
-import gleamgen/render
 import gleamgen/types.{type Dynamic}
 
 pub type CaseExpression(input, output) {

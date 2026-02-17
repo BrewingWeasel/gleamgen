@@ -3,7 +3,7 @@ import gleam/int
 import gleam/list
 import gleamgen/expression.{type Expression}
 import gleamgen/expression/constructor
-import gleamgen/render
+import gleamgen/internal/render
 import gleamgen/types
 import gleamgen/types/custom
 

@@ -1,7 +1,7 @@
 import glam/doc
 import glance
 import gleam/result
-import gleamgen/render
+import gleamgen/internal/render
 
 pub type Attribute {
   External(target: Target, module_name: String, function_name: String)

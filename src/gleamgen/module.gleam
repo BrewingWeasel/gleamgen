@@ -11,8 +11,8 @@ import gleamgen/expression.{type Expression}
 import gleamgen/expression/constructor
 import gleamgen/function
 import gleamgen/import_
+import gleamgen/internal/render
 import gleamgen/module/definition
-import gleamgen/render
 import gleamgen/source
 import gleamgen/types.{type Dynamic}
 import gleamgen/types/custom

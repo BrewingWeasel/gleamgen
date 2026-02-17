@@ -3,7 +3,7 @@ import gleam/list
 import gleam/option
 import gleam/result
 import gleam/string
-import gleamgen/render
+import gleamgen/internal/render
 
 pub type Dynamic
 

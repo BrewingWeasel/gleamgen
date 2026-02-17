@@ -2,7 +2,7 @@ import glam/doc
 import gleam/list
 import gleam/option
 import gleam/result
-import gleamgen/render
+import gleamgen/internal/render
 import gleamgen/types.{type Dynamic}
 import gleamgen/types/variant.{type Variant}
 

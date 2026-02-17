@@ -3,8 +3,8 @@ import gleam/list
 import gleam/option
 import gleam/result
 import gleamgen/expression
+import gleamgen/internal/render
 import gleamgen/parameter.{type Parameter}
-import gleamgen/render
 import gleamgen/types.{type Dynamic}
 
 pub type Function(type_, ret) {

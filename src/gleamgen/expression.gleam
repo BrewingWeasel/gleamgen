@@ -873,7 +873,9 @@ pub fn render(
         Error(Nil) -> []
       }
       doc.from_string(value)
-      |> render.Render(details: render.RenderedDetails(used_imports:))
+      |> render.Render(
+        details: render.RenderedDetails(..render.empty_details, used_imports:),
+      )
     }
     RawDoc(doc) -> render.Render(doc, details: render.empty_details)
     Todo(as_string) ->
@@ -1046,12 +1048,10 @@ fn render_case(to_match_on, patterns, all_can_match_on_multiple, context) {
       force_newlines: True,
     ),
   ])
-  |> render.Render(
-    details: render.RenderedDetails(used_imports: list.append(
-      rendered_match_on.details.used_imports,
-      matcher_details.used_imports,
-    )),
-  )
+  |> render.Render(details: render.merge_details(
+    rendered_match_on.details,
+    matcher_details,
+  ))
 }
 
 fn render_tuple(values, context) {

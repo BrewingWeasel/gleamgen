@@ -2,22 +2,33 @@ import glam/doc
 import gleam/list
 import gleam/string
 import gleamgen/render/config
+import gleamgen/render/report
 
 pub type Rendered {
   Render(doc: doc.Document, details: RenderedDetails)
 }
 
 pub type RenderedDetails {
-  RenderedDetails(used_imports: List(String))
+  RenderedDetails(used_imports: List(String), report: report.Report)
 }
 
-pub const empty_details = RenderedDetails([])
+pub const empty_details = RenderedDetails([], report.empty)
 
 pub fn merge_details(
   first: RenderedDetails,
   second: RenderedDetails,
 ) -> RenderedDetails {
-  RenderedDetails(list.append(first.used_imports, second.used_imports))
+  RenderedDetails(
+    used_imports: list.append(first.used_imports, second.used_imports),
+    report: report.Report(
+      warnings: list.append(first.report.warnings, second.report.warnings),
+      errors: list.append(first.report.errors, second.report.errors),
+    ),
+  )
+}
+
+pub fn merge_details_many(details: List(RenderedDetails)) -> RenderedDetails {
+  list.fold(details, empty_details, merge_details)
 }
 
 pub type Context {

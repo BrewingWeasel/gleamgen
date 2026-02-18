@@ -12,11 +12,13 @@ import gleamgen/expression/constructor
 import gleamgen/expression/statement
 import gleamgen/function
 import gleamgen/import_
+import gleamgen/internal/render
 import gleamgen/module
 import gleamgen/module/definition
 import gleamgen/parameter
 import gleamgen/pattern
-import gleamgen/render
+import gleamgen/render/config
+import gleamgen/render/report
 import gleamgen/types
 import gleamgen/types/custom
 import gleamgen/types/variant
@@ -758,6 +760,98 @@ pub fn function_with_labeled_parameters_test() {
 }"
 
   assert result == expected
+}
+
+pub fn function_with_auto_inserting_labeled_parameters_test() {
+  let mod = {
+    use _sum_of_2_numbers <- module.with_function(
+      definition.new(name: "sum_of_2_numbers")
+        |> definition.with_publicity(True),
+      function.new2(
+        param1: parameter.new("num1", types.int)
+          |> parameter.with_label("first"),
+        param2: parameter.new("num2", types.int),
+        returns: types.int,
+        handler: fn(num1, num2) {
+          expression.math_operator(num1, expression.Add, num2)
+        },
+      ),
+    )
+
+    module.eof()
+  }
+
+  let rendered = module.render(mod, render.default_context())
+  let result = render.to_string(rendered)
+
+  let expected =
+    "pub fn sum_of_2_numbers(first num1: Int, num2 num2: Int) -> Int {
+  num1 + num2
+}"
+
+  assert result == expected
+  assert rendered.details.report.warnings
+    == [
+      report.AutomaticallyAddedMissingLabels(["num2"]),
+    ]
+}
+
+pub fn function_notice_unlabeled_parameters_test() {
+  let mod = {
+    use _list_of_6_numbers <- module.with_function(
+      definition.new(name: "list_of_6_numbers")
+        |> definition.with_publicity(True),
+      function.new6(
+        param1: parameter.new("num1", types.int),
+        param2: parameter.new("num2", types.int)
+          |> parameter.with_label("second"),
+        param3: parameter.new("num3", types.int),
+        param4: parameter.new("num4", types.int),
+        param5: parameter.new("num5", types.int)
+          |> parameter.with_label("fifth"),
+        param6: parameter.new("num6", types.int),
+        returns: types.list(types.int),
+        handler: fn(num1, num2, num3, num4, num5, num6) {
+          expression.list([
+            num1,
+            num2,
+            num3,
+            num4,
+            num5,
+            num6,
+          ])
+        },
+      ),
+    )
+
+    module.eof()
+  }
+
+  let config =
+    render.context_from_config(
+      config.Config(..config.default_config, auto_fix_parameters: False),
+    )
+
+  let rendered = module.render(mod, config)
+  let result = render.to_string(rendered)
+
+  let expected =
+    "pub fn list_of_6_numbers(
+  num1: Int,
+  second num2: Int,
+  num3: Int,
+  num4: Int,
+  fifth num5: Int,
+  num6: Int,
+) -> List(Int) {
+  [num1, num2, num3, num4, num5, num6]
+}"
+
+  assert result == expected
+  assert rendered.details.report.errors
+    == [
+      report.MissingLabels(["num3", "num4", "num6"]),
+    ]
 }
 
 pub fn anonymous_functions_ignore_labels_test() {

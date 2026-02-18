@@ -405,9 +405,11 @@ pub fn render(
   let is_anonymous = option.is_none(name)
 
   let rendered_params =
-    func.parameters
-    |> list.map(parameter.render(_, include_labels: !is_anonymous, context:))
-    |> render.pretty_list()
+    parameter.render_parameters(
+      func.parameters,
+      include_labels: !is_anonymous,
+      context:,
+    )
 
   let rendered_type = types.render_type(func.returns)
   let rendered_body =
@@ -424,7 +426,7 @@ pub fn render(
   doc.concat([
     doc.from_string("fn"),
     rendered_name,
-    rendered_params,
+    rendered_params.doc,
     doc.space,
     case rendered_type {
       Ok(returned) ->
@@ -433,11 +435,14 @@ pub fn render(
     },
     render.body(rendered_body.doc, force_newlines:),
   ])
-  |> render.Render(details: render.merge_details(
-    rendered_type
-      |> result.map(fn(t) { t.details })
-      |> result.unwrap(render.empty_details),
-    rendered_body.details,
-  ))
+  |> render.Render(
+    details: render.merge_details_many([
+      rendered_params.details,
+      rendered_type
+        |> result.map(fn(t) { t.details })
+        |> result.unwrap(render.empty_details),
+      rendered_body.details,
+    ]),
+  )
 }
 // vim: foldmethod=marker foldlevel=0

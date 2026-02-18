@@ -436,7 +436,9 @@ pub fn render_type(type_: GeneratedType(a)) -> Result(render.Rendered, Nil) {
         Error(Nil) -> []
       }
       doc.from_string(t)
-      |> render.Render(details: render.RenderedDetails(used_imports:))
+      |> render.Render(
+        details: render.RenderedDetails(..render.empty_details, used_imports:),
+      )
       |> Ok
     }
     Generic(t) ->
@@ -470,18 +472,18 @@ fn render_custom(
   let rendered = render_type_list(types)
   use #(rendered_types, details) <- result.try(rendered)
 
-  let #(used_imports, import_details) = case module {
+  let #(used_imports, import_doc) = case module {
     option.Some(m) -> #([m, ..details.used_imports], doc.from_string(m <> "."))
     option.None -> #(details.used_imports, doc.empty)
   }
 
-  import_details
+  import_doc
   |> doc.append(doc.from_string(name))
   |> doc.append(case types {
     [] -> doc.empty
     _ -> render.pretty_list(rendered_types)
   })
-  |> render.Render(details: render.RenderedDetails(used_imports:))
+  |> render.Render(details: render.RenderedDetails(..details, used_imports:))
   |> Ok
 }
 
@@ -501,9 +503,9 @@ fn render_function(args, return) {
   use #(rendered_types, details) <- result.try(rendered)
   let return = render_type(return)
 
-  let used_imports = case return {
-    Ok(ret) -> list.append(ret.details.used_imports, details.used_imports)
-    Error(Nil) -> details.used_imports
+  let details = case return {
+    Ok(ret) -> render.merge_details(ret.details, details)
+    Error(Nil) -> details
   }
 
   doc.concat([
@@ -515,6 +517,6 @@ fn render_function(args, return) {
       Error(_) -> doc.empty
     },
   ])
-  |> render.Render(details: render.RenderedDetails(used_imports:))
+  |> render.Render(details:)
   |> Ok
 }

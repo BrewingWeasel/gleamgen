@@ -1,6 +1,6 @@
-import gleamgen/expression/statement
 import gleam/list
 import gleamgen/expression.{type Expression}
+import gleamgen/expression/statement
 import gleamgen/pattern
 import gleamgen/render
 import gleamgen/types
@@ -40,6 +40,16 @@ pub fn new_dynamic(
   statements: List(statement.Statement),
 ) -> expression.Expression(any) {
   expression.new_block(statements, types.dynamic())
+}
+
+pub fn with_comments(comments: List(String), handler: fn() -> Expression(ret)) {
+  let rest = handler()
+  expression.add_to_or_create_block(expression.Comment(comments), rest)
+}
+
+pub fn with_empty_line(handler: fn() -> Expression(ret)) {
+  let rest = handler()
+  expression.add_to_or_create_block(expression.Linebreak, rest)
 }
 
 pub fn with_let_declaration(

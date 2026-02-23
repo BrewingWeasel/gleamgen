@@ -833,6 +833,8 @@ pub fn coerce_dynamic_unsafe(type_: Expression(t1)) -> Expression(t2)
 pub type Statement {
   LetDeclaration(name: String, value: Expression(types.Dynamic), assert_: Bool)
   ExpressionStatement(Expression(types.Dynamic))
+  Comment(List(String))
+  Linebreak
 }
 
 // ----------------------------------------------------------------------------
@@ -1111,20 +1113,35 @@ pub fn render_statement(statement: Statement, context) -> render.Rendered {
       ])
       |> render.Render(details: rendered_value.details)
     }
+    Comment(comments) ->
+      comments
+      |> list.map(fn(comment) { doc.from_string("// " <> comment) })
+      |> doc.join(doc.line)
+      |> render.Render(details: render.empty_details)
+    Linebreak -> render.Render(doc.empty, render.empty_details)
     ExpressionStatement(expr) -> render(expr, context)
   }
 }
 
 fn render_block(statements, context) {
+  let corrected_statements = remove_incorrect_empty_lines(statements)
+
   let #(inner_statements, details) =
-    list.fold(statements, #([], render.empty_details), fn(acc, statement) {
-      let rendered =
-        render_statement(
-          statement,
-          render.Context(..context, include_brackets_current_level: True),
+    list.fold(
+      corrected_statements,
+      #([], render.empty_details),
+      fn(acc, statement) {
+        let rendered =
+          render_statement(
+            statement,
+            render.Context(..context, include_brackets_current_level: True),
+          )
+        #(
+          [rendered.doc, ..acc.0],
+          render.merge_details(rendered.details, acc.1),
         )
-      #([rendered.doc, ..acc.0], render.merge_details(rendered.details, acc.1))
-    })
+      },
+    )
 
   let inner =
     inner_statements
@@ -1136,6 +1153,24 @@ fn render_block(statements, context) {
     False -> inner
   }
   |> render.Render(details: details)
+}
+
+fn remove_incorrect_empty_lines(statements) {
+  let trimmed_beginning =
+    list.drop_while(statements, fn(statement) { statement == Linebreak })
+
+  do_remove_incorrect_empty_lines(trimmed_beginning, [], False)
+}
+
+fn do_remove_incorrect_empty_lines(statements, acc, was_just_empty_line: Bool) {
+  case statements {
+    [] -> list.reverse(acc)
+    [Linebreak, ..rest] -> do_remove_incorrect_empty_lines(rest, acc, True)
+    [other, ..rest] if was_just_empty_line ->
+      do_remove_incorrect_empty_lines(rest, [other, Linebreak, ..acc], False)
+    [other, ..rest] ->
+      do_remove_incorrect_empty_lines(rest, [other, ..acc], False)
+  }
 }
 
 fn render_expressions(

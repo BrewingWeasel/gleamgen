@@ -591,6 +591,122 @@ pub fn simple_block_test() {
   assert result == expected
 }
 
+pub fn block_with_comment_test() {
+  let result =
+    {
+      use x <- block.with_let_declaration("x", expression.int(4))
+      use <- block.with_comments(["should be 9"])
+      use y <- block.with_let_declaration(
+        "y",
+        expression.math_operator(x, expression.Add, expression.int(5)),
+      )
+      y
+    }
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "{
+  let x = 4
+  // should be 9
+  let y = x + 5
+  y
+}"
+
+  assert result == expected
+}
+
+pub fn block_with_empty_line_test() {
+  let result =
+    {
+      use x <- block.with_let_declaration("x", expression.int(4))
+      use <- block.with_empty_line()
+      use <- block.with_comments(["should be 9"])
+      use y <- block.with_let_declaration(
+        "y",
+        expression.math_operator(x, expression.Add, expression.int(5)),
+      )
+      use <- block.with_empty_line()
+      y
+    }
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "{
+  let x = 4
+
+  // should be 9
+  let y = x + 5
+
+  y
+}"
+
+  assert result == expected
+}
+
+pub fn block_with_invalid_multiple_empty_lines_test() {
+  let result =
+    {
+      use x <- block.with_let_declaration("x", expression.int(4))
+      use <- block.with_empty_line()
+      use <- block.with_empty_line()
+      use <- block.with_empty_line()
+      use <- block.with_comments(["should be 9"])
+      use y <- block.with_let_declaration(
+        "y",
+        expression.math_operator(x, expression.Add, expression.int(5)),
+      )
+      use <- block.with_empty_line()
+      use <- block.with_empty_line()
+      y
+    }
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "{
+  let x = 4
+
+  // should be 9
+  let y = x + 5
+
+  y
+}"
+
+  assert result == expected
+}
+
+pub fn block_with_empty_lines_at_start_and_end_test() {
+  let result =
+    {
+      use <- block.with_empty_line()
+      use x <- block.with_let_declaration("x", expression.int(4))
+      use <- block.with_empty_line()
+      use <- block.with_comments(["should be 9"])
+      use y <- block.with_let_declaration(
+        "y",
+        expression.math_operator(x, expression.Add, expression.int(5)),
+      )
+      use <- block.with_empty_line()
+      y
+    }
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "{
+  let x = 4
+
+  // should be 9
+  let y = x + 5
+
+  y
+}"
+
+  assert result == expected
+}
+
 pub fn block_in_function_test() {
   let block_expr = {
     use x <- block.with_let_declaration("x", expression.int(4))

@@ -6,6 +6,7 @@ import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import gleamgen/internal/render
+import gleamgen/render/config
 import gleamgen/types
 
 pub opaque type Expression(type_) {
@@ -53,6 +54,7 @@ type InternalExpression(type_) {
     args: List(Expression(types.Dynamic)),
     callback_args: List(String),
   )
+  WithConfig(Expression(types.Dynamic), config.Config)
 }
 
 // ----------------------------------------------------------------------------
@@ -812,6 +814,16 @@ pub fn type_(expr: Expression(t)) -> types.GeneratedType(t) {
   expr.type_
 }
 
+pub fn with_render_config(
+  expression: Expression(t),
+  config: config.Config,
+) -> Expression(t) {
+  Expression(
+    internal: WithConfig(to_dynamic(expression), config),
+    type_: expression.type_,
+  )
+}
+
 // ----------------------------------------------------------------------------
 // Expression type conversion functions
 // ----------------------------------------------------------------------------
@@ -952,6 +964,8 @@ pub fn render(
     AnonymousFunction(renderer) -> renderer(context)
     Use(func, args, callback_args) ->
       render_use(func, args, callback_args, context)
+    WithConfig(expr, config) ->
+      render(coerce_dynamic_unsafe(expr), render.Context(..context, config:))
   }
 }
 

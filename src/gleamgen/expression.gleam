@@ -44,7 +44,7 @@ type InternalExpression(type_) {
   Block(List(Statement))
   Case(
     Expression(types.Dynamic),
-    List(fn(render.Context, Int) -> render.Rendered),
+    fn(render.Context) -> List(fn(Int) -> render.Rendered),
     Bool,
   )
   AnonymousFunction(fn(render.Context) -> render.Rendered)
@@ -1017,6 +1017,7 @@ fn render_use(func, args, callback_args, context) {
   |> render.Render(details: call.details)
 }
 
+// TODO: clean up
 fn render_case(to_match_on, patterns, all_can_match_on_multiple, context) {
   let #(rendered_match_on, subject_count) = case to_match_on.internal {
     TupleLiteral(expressions) if all_can_match_on_multiple -> {
@@ -1031,7 +1032,7 @@ fn render_case(to_match_on, patterns, all_can_match_on_multiple, context) {
     _ -> #(render(to_match_on, context), 1)
   }
 
-  let patterns = list.map(patterns, fn(m) { m(context, subject_count) })
+  let patterns = list.map(patterns(context), fn(m) { m(subject_count) })
   let matcher_details =
     list.fold(
       list.map(patterns, fn(m) { m.details }),

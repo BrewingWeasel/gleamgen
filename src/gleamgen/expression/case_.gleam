@@ -81,9 +81,18 @@ pub fn with_pattern(
 pub fn build_expression(
   case_: CaseExpression(input, output),
 ) -> Expression(output) {
-  let patterns_combined = list.group(case_.cases, by: fn(pattern) { pattern.1 })
+  let create_patterns = fn(context: render.Context) {
+    let patterns_combined = case context.config.combine_equivalent_branches {
+      True -> list.group(case_.cases, by: fn(pattern) { pattern.1 })
+      False ->
+        case_.cases
+        |> list.map(fn(pattern) {
+          let #(_match_on, output) = pattern
+          #(output, [pattern])
+        })
+        |> dict.from_list()
+    }
 
-  let simplified_patterns =
     case_.cases
     |> list.reverse()
     |> list.map_fold(
@@ -91,11 +100,12 @@ pub fn build_expression(
       with: fn(previously_matched, pattern_details) {
         let #(pattern, output) = pattern_details
         use <- bool.guard(
-          when: set.contains(output, in: previously_matched),
+          when: set.contains(output, in: previously_matched)
+            && context.config.combine_equivalent_branches,
           return: #(previously_matched, Error(Nil)),
         )
 
-        let renderer = fn(context, number_of_subjects) {
+        let renderer = fn(number_of_subjects) {
           let pattern = case dict.get(patterns_combined, output) {
             Ok([_, _, ..] as repeated_patterns) -> {
               let assert Ok(new_pattern) =
@@ -130,13 +140,14 @@ pub fn build_expression(
     )
     |> pair.second()
     |> list.filter_map(function.identity)
+  }
 
   let all_can_match_on_multiple =
     list.all(case_.cases, fn(m) { pattern.can_match_on_multiple(m.0) })
 
   expression.new_case(
     case_.input_expression |> expression.to_dynamic(),
-    simplified_patterns,
+    create_patterns,
     all_can_match_on_multiple,
     case_.cases
       |> list.first()

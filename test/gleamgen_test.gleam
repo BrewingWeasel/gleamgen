@@ -568,6 +568,43 @@ pub fn case_merge_repeated_test() {
   assert result == expected
 }
 
+pub fn case_merge_repeated_config_disabled_test() {
+  let result =
+    case_.new(expression.string("hello"))
+    |> case_.with_pattern(
+      pattern.concat_string(starting: "I love ", variable: "thing"),
+      fn(thing) {
+        expression.concat_string(thing, expression.string("is good!"))
+      },
+    )
+    |> case_.with_pattern(
+      pattern.concat_string(
+        starting: "My favorite thing is ",
+        variable: "thing",
+      ),
+      fn(thing) {
+        expression.concat_string(thing, expression.string("is good!"))
+      },
+    )
+    |> case_.with_pattern(pattern.variable("_"), fn(_) {
+      expression.string("I don't know!")
+    })
+    |> case_.build_expression()
+    |> expression.render(render.context_from_config(
+      config.Config(..config.default_config, combine_equivalent_branches: False),
+    ))
+    |> render.to_string()
+
+  let expected =
+    "case \"hello\" {
+  \"I love \" <> thing -> thing <> \"is good!\"
+  \"My favorite thing is \" <> thing -> thing <> \"is good!\"
+  _ -> \"I don't know!\"
+}"
+
+  assert result == expected
+}
+
 pub fn simple_block_test() {
   let result =
     {

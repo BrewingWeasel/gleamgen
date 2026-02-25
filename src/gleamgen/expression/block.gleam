@@ -100,7 +100,7 @@ pub fn with_statements(
   handler: fn() -> Expression(ret),
 ) -> Expression(ret) {
   let rest = handler()
-  expression.add_statements_to_or_create_block(statements, rest)
+  expression.update_or_create_block(list.append(statements, _), rest)
 }
 
 // Use expressions

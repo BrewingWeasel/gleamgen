@@ -628,6 +628,37 @@ pub fn simple_block_test() {
   assert result == expected
 }
 
+pub fn let_declaration_with_type_test() {
+  let result =
+    {
+      use x <- block.with_let_declaration("x", expression.int(4))
+      expression.with_render_config(
+        {
+          use y <- block.with_let_declaration(
+            "y",
+            expression.math_operator(x, expression.Add, expression.int(5)),
+          )
+          y
+        },
+        config.Config(
+          ..config.default_config,
+          annotate_type_in_let_declarations: True,
+        ),
+      )
+    }
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "{
+  let x = 4
+  let y: Int = x + 5
+  y
+}"
+
+  assert result == expected
+}
+
 pub fn block_with_comment_test() {
   let result =
     {

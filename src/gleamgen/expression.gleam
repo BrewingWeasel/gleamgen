@@ -731,48 +731,37 @@ pub fn new_block(expressions, return) -> Expression(type_) {
 }
 
 @internal
-pub fn add_to_or_create_block(
-  update_with: Statement,
+pub fn update_or_create_block(
+  update_with: fn(List(Statement)) -> List(Statement),
   next_expression: Expression(type_),
 ) -> Expression(type_) {
   case next_expression.internal {
     Block(expressions) ->
       Expression(
-        internal: Block([update_with, ..expressions]),
-        type_: next_expression.type_,
-      )
-    _ ->
-      Expression(
-        internal: Block([
-          update_with,
-          ExpressionStatement(to_dynamic(next_expression)),
-        ]),
-        type_: next_expression.type_,
-      )
-  }
-}
-
-@internal
-pub fn add_statements_to_or_create_block(
-  update_with: List(Statement),
-  next_expression: Expression(type_),
-) -> Expression(type_) {
-  case next_expression.internal {
-    Block(statements) ->
-      Expression(
-        internal: Block(list.append(update_with, statements)),
+        internal: Block(update_with(expressions)),
         type_: next_expression.type_,
       )
     _ ->
       Expression(
         internal: Block(
-          list.append(update_with, [
+          update_with([
             ExpressionStatement(to_dynamic(next_expression)),
           ]),
         ),
         type_: next_expression.type_,
       )
   }
+}
+
+@internal
+pub fn add_to_or_create_block(
+  update_with: Statement,
+  next_expression: Expression(type_),
+) -> Expression(type_) {
+  update_or_create_block(
+    fn(statements) { [update_with, ..statements] },
+    next_expression,
+  )
 }
 
 @internal
@@ -1118,15 +1107,29 @@ pub fn render_statement(statement: Statement, context) -> render.Rendered {
         True -> "let assert "
         False -> "let "
       }
+
+      let #(type_annotation, details) = case types.render_type(value.type_) {
+        Ok(rendered_type) if context.config.annotate_type_in_let_declarations -> #(
+          doc.concat([
+            doc.from_string(":"),
+            doc.space,
+            rendered_type.doc,
+          ]),
+          render.merge_details(rendered_value.details, rendered_type.details),
+        )
+        _ -> #(doc.empty, rendered_value.details)
+      }
+
       doc.concat([
         doc.from_string(let_def),
         doc.from_string(variable),
+        type_annotation,
         doc.space,
         doc.from_string("="),
         doc.space,
         rendered_value.doc,
       ])
-      |> render.Render(details: rendered_value.details)
+      |> render.Render(details: details)
     }
     Comment(comments) ->
       comments
@@ -1134,6 +1137,15 @@ pub fn render_statement(statement: Statement, context) -> render.Rendered {
       |> doc.join(doc.line)
       |> render.Render(details: render.empty_details)
     Linebreak -> render.Render(doc.empty, render.empty_details)
+    ExpressionStatement(Expression(
+      WithConfig(Expression(internal: Block(statements), ..), config),
+      ..,
+    )) -> {
+      render_block(
+        statements,
+        render.Context(include_brackets_current_level: False, config:),
+      )
+    }
     ExpressionStatement(expr) -> render(expr, context)
   }
 }

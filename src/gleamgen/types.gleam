@@ -13,6 +13,7 @@ pub opaque type GeneratedType(type_) {
   GeneratedInt
   GeneratedFloat
   GeneratedNil
+  GeneratedBitArray
   GeneratedList(GeneratedType(Dynamic))
   GeneratedTuple(List(GeneratedType(Dynamic)))
   GeneratedFunction(List(GeneratedType(Dynamic)), GeneratedType(Dynamic))
@@ -31,6 +32,8 @@ pub const float: GeneratedType(Float) = GeneratedFloat
 pub const int: GeneratedType(Int) = GeneratedInt
 
 pub const string: GeneratedType(String) = GeneratedString
+
+pub const bit_array: GeneratedType(BitArray) = GeneratedBitArray
 
 pub fn generic(name: String) -> GeneratedType(a) {
   Generic(name)
@@ -424,6 +427,10 @@ pub fn render_type(type_: GeneratedType(a)) -> Result(render.Rendered, Nil) {
       |> Ok
     GeneratedNil ->
       doc.from_string("Nil")
+      |> render.Render(details: render.empty_details)
+      |> Ok
+    GeneratedBitArray ->
+      doc.from_string("BitArray")
       |> render.Render(details: render.empty_details)
       |> Ok
     GeneratedList(t) -> render_custom(option.None, "List", [t])

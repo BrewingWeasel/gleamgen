@@ -811,4 +811,31 @@ pub fn can_match_on_multiple(pattern: Pattern(_, _)) -> Bool {
     _ -> False
   }
 }
+
+/// Match `VariantName(p1, p2, …)` when the variant comes from another module.
+/// Pass `pattern.variable(\"field\") |> pattern.to_dynamic` for each field in order.
+/// The case handler receives each field’s pattern output, typically
+/// `expression.raw(\"field\")`, as a list in left-to-right order.
+pub fn foreign_variant(
+  variant_name: String,
+  field_patterns: List(Pattern(types.Dynamic, types.Dynamic)),
+) -> Pattern(types.Dynamic, List(Expression(types.Dynamic))) {
+  Constructor(
+    #(variant_name, list.map(field_patterns, to_dynamic)),
+    output: list.filter_map(field_patterns, get_pattern_output),
+  )
+}
+
+/// `Some(inner)`.
+pub fn option_some(inner: Pattern(a, a_out)) -> Pattern(types.Dynamic, a_out) {
+  Constructor(
+    #("Some", [inner |> to_dynamic]),
+    output: inner.output,
+  )
+}
+
+/// `None`.
+pub fn option_none() -> Pattern(types.Dynamic, Nil) {
+  Constructor(#("None", []), output: Nil)
+}
 // vim: foldmethod=marker foldlevel=0

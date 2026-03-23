@@ -1212,11 +1212,42 @@ fn render_expressions(
   #(rendered |> list.reverse(), details)
 }
 
+/// Render a call expression while handling block arguments context-sensitively.
+///
+/// Multi-statement blocks must stay wrapped in `{ ... }` when passed as call
+/// arguments, while single direct-return blocks can be unwrapped.
 fn render_call(func, args, context) {
-  let #(rendered_args, details) = render_expressions(args, context)
+  // We build `rendered_args` in reverse via prepending for efficiency:
+  // args [a, b] -> acc [b_doc, a_doc], then reverse before pretty_list.
+  let #(rendered_args, details) =
+    list.fold(args, #([], render.empty_details), fn(acc, arg) {
+      let rendered = render_call_argument(arg, context)
+      #([rendered.doc, ..acc.0], render.merge_details(rendered.details, acc.1))
+    })
   let caller = render(func, context)
-  doc.concat([caller.doc, render.pretty_list(rendered_args)])
+  doc.concat([caller.doc, render.pretty_list(list.reverse(rendered_args))])
   |> render.Render(details: render.merge_details(details, caller.details))
+}
+
+/// Render one call argument and preserve semantics for block arguments.
+///
+/// - `{ let x = ...; ... }` stays a block argument
+/// - `{ expr }` is simplified to `expr`
+fn render_call_argument(
+  arg: Expression(types.Dynamic),
+  context: render.Context,
+) {
+  case arg.internal {
+    // A block that only contains a returned expression can be passed directly.
+    Block([ExpressionStatement(expr)]) -> render(expr, context)
+    // Any larger block needs explicit braces when used as a call argument.
+    Block(_) ->
+      render(
+        arg,
+        render.Context(..context, include_brackets_current_level: True),
+      )
+    _ -> render(arg, context)
+  }
 }
 
 fn render_constructor(func, context) {

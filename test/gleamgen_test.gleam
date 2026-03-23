@@ -1315,6 +1315,43 @@ pub fn do_result() -> Result(Int, String) {
   assert result == expected
 }
 
+/// Regression test for rendering block arguments in call expressions.
+///
+/// Ensures calls like `result.try(...)` keep braces for block arguments with
+/// `let` statements, while still unwrapping single direct-return blocks.
+pub fn call_with_block_argument_test() {
+  let with_let =
+    expression.call_dynamic(expression.raw("result.try"), [
+      expression.ok(expression.int(3)) |> expression.to_dynamic(),
+      block.with_let_declaration("next", expression.int(4), fn(next) {
+        expression.ok(next)
+      })
+      |> expression.to_dynamic(),
+    ])
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected_with_let =
+    "result.try(Ok(3), {
+    let next = 4
+    Ok(next)
+  })"
+
+  assert with_let == expected_with_let
+
+  let direct_return =
+    expression.call_dynamic(expression.raw("result.try"), [
+      expression.ok(expression.int(3)) |> expression.to_dynamic(),
+      block.new_dynamic([statement.expression(expression.ok(expression.int(4)))]),
+    ])
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected_direct_return = "result.try(Ok(3), Ok(4))"
+
+  assert direct_return == expected_direct_return
+}
+
 pub fn result_test() {
   let mod = {
     use result_module <- module.with_import(import_.new(["gleam", "result"]))

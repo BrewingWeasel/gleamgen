@@ -1352,6 +1352,59 @@ pub fn call_with_block_argument_test() {
   assert direct_return == expected_direct_return
 }
 
+/// Regression test for list pattern helpers with zero-argument constructors.
+///
+/// Ensures `pattern.list_empty()` renders as `[]` (not `[]()`) and
+/// `pattern.list_spread("items")` renders as `[..items]`.
+pub fn case_with_list_empty_and_spread_pattern_test() {
+  let result =
+    case_.new(expression.list([]))
+    |> case_.with_pattern(pattern.list_empty(), fn(_) {
+      expression.string("empty")
+    })
+    |> case_.with_pattern(pattern.list_spread("items"), fn(_) {
+      expression.string("not empty")
+    })
+    |> case_.build_expression()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "case [] {
+  [] -> \"empty\"
+  [..items] -> \"not empty\"
+}"
+
+  assert result == expected
+}
+
+/// Regression test for option pattern helper rendering.
+///
+/// Ensures `pattern.option_some(...)` renders `Some(...)` and
+/// `pattern.option_none()` renders `None` (no zero-arg parentheses).
+pub fn case_with_option_pattern_helpers_test() {
+  let result =
+    case_.new(expression.raw("maybe_name"))
+    |> case_.with_pattern(
+      pattern.option_some(pattern.variable("name")),
+      fn(name) { expression.concat_string(name, expression.string("!")) },
+    )
+    |> case_.with_pattern(pattern.option_none(), fn(_) {
+      expression.string("anonymous")
+    })
+    |> case_.build_expression()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "case maybe_name {
+  Some(name) -> name <> \"!\"
+  None -> \"anonymous\"
+}"
+
+  assert result == expected
+}
+
 pub fn result_test() {
   let mod = {
     use result_module <- module.with_import(import_.new(["gleam", "result"]))

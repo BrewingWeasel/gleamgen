@@ -769,17 +769,24 @@ pub fn render(
       |> render.Render(details: original.details)
     }
     Constructor(#(name, patterns), ..) -> {
-      let #(details, rendered_patterns) =
-        patterns
-        |> list.map_fold(render.empty_details, fn(acc, m) {
-          let rendered = render(m, 1)
-          #(render.merge_details(acc, rendered.details), rendered.doc)
-        })
+      case patterns {
+        [] ->
+          doc.from_string(name)
+          |> render.Render(details: render.empty_details)
+        _ -> {
+          let #(details, rendered_patterns) =
+            patterns
+            |> list.map_fold(render.empty_details, fn(acc, m) {
+              let rendered = render(m, 1)
+              #(render.merge_details(acc, rendered.details), rendered.doc)
+            })
 
-      rendered_patterns
-      |> render.pretty_list()
-      |> doc.prepend(doc.from_string(name))
-      |> render.Render(details:)
+          rendered_patterns
+          |> render.pretty_list()
+          |> doc.prepend(doc.from_string(name))
+          |> render.Render(details:)
+        }
+      }
     }
     Tuple(patterns, ..) -> {
       let #(details, rendered_patterns) =
@@ -810,6 +817,19 @@ pub fn can_match_on_multiple(pattern: Pattern(_, _)) -> Bool {
     Variable(name: "_", ..) -> True
     _ -> False
   }
+}
+
+/// Renders `[]`. Use before `list_spread` so the empty case matches first.
+pub fn list_empty() -> Pattern(List(a), Nil) {
+  Constructor(#("[]", []), output: Nil)
+}
+
+/// Renders `[..name]` and binds the whole list to `name`.
+pub fn list_spread(name: String) -> Pattern(List(a), Expression(List(a))) {
+  Constructor(
+    #("[.." <> name <> "]", []),
+    output: expression.raw(name),
+  )
 }
 
 /// Match `VariantName(p1, p2, …)` when the variant comes from another module.

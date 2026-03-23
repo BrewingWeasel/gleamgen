@@ -1560,6 +1560,109 @@ pub fn main() -> Nil {
   assert result == expected
 }
 
+/// Regression test for `import_.new_with_exposing`: rendered `import path.{items}` and kept in output
+/// when nothing references the module prefix (only unqualified imports from the exposing list).
+pub fn module_import_with_exposing_test() {
+  let mod = {
+    use _string <- module.with_import(import_.new_with_exposing(
+      ["gleam", "string"],
+      "length",
+    ))
+
+    use _main <- module.with_function(
+      definition.new(name: "main")
+        |> definition.with_publicity(True),
+      function.new0(returns: types.nil, handler: fn() { expression.nil() }),
+    )
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "import gleam/string.{length}
+
+pub fn main() -> Nil {
+  Nil
+}"
+
+  assert result == expected
+}
+
+/// `import path.{items} as alias` — exposing must come before `as` in Gleam syntax.
+pub fn module_import_with_alias_and_exposing_test() {
+  let mod = {
+    use io <- module.with_import(import_.new_with_alias_and_exposing(
+      ["gleam", "io"],
+      "only_o",
+      "println",
+    ))
+
+    let io_print = import_.function1(io, io.println)
+
+    use _main <- module.with_function(
+      definition.new(name: "main")
+        |> definition.with_publicity(True),
+      function.new0(returns: types.nil, handler: fn() {
+        expression.call1(io_print, expression.string("hi"))
+      }),
+    )
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "import gleam/io.{println} as only_o
+
+pub fn main() -> Nil {
+  only_o.println(\"hi\")
+}"
+
+  assert result == expected
+}
+
+/// Duplicate module paths with separate exposing lists merge into one import (stable order).
+pub fn module_merge_imports_exposing_test() {
+  let mod = {
+    use _ <- module.with_import(import_.new_with_exposing(
+      ["gleam", "string"],
+      "reverse",
+    ))
+    use _ <- module.with_import(import_.new_with_exposing(
+      ["gleam", "string"],
+      "length",
+    ))
+
+    use _main <- module.with_function(
+      definition.new(name: "main")
+        |> definition.with_publicity(True),
+      function.new0(returns: types.nil, handler: fn() { expression.nil() }),
+    )
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "import gleam/string.{reverse, length}
+
+pub fn main() -> Nil {
+  Nil
+}"
+
+  assert result == expected
+}
+
 pub fn module_unused_import_test() {
   let mod = {
     use io <- module.with_import(import_.new_with_alias(

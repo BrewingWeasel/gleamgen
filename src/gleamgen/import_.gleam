@@ -12,6 +12,8 @@ pub type ImportedModule {
   ImportedModule(
     name: List(String),
     alias: Option(String),
+    /// When set, rendered as `import path.{inner}` (no braces in this string).
+    exposing: Option(String),
     before_text: String,
     predefined: Bool,
   )
@@ -21,6 +23,7 @@ pub fn new(name: List(String)) -> ImportedModule {
   ImportedModule(
     name: name,
     alias: option.None,
+    exposing: option.None,
     before_text: "",
     predefined: False,
   )
@@ -30,6 +33,33 @@ pub fn new_with_alias(name: List(String), alias: String) -> ImportedModule {
   ImportedModule(
     name: name,
     alias: option.Some(alias),
+    exposing: option.None,
+    before_text: "",
+    predefined: False,
+  )
+}
+
+/// Import with a Gleam exposing list, e.g. `new_with_exposing(["a", "b"], "type T, x")`
+/// renders `import a/b.{type T, x}`.
+pub fn new_with_exposing(name: List(String), exposing: String) -> ImportedModule {
+  ImportedModule(
+    name: name,
+    alias: option.None,
+    exposing: option.Some(exposing),
+    before_text: "",
+    predefined: False,
+  )
+}
+
+pub fn new_with_alias_and_exposing(
+  name: List(String),
+  alias: String,
+  exposing: String,
+) -> ImportedModule {
+  ImportedModule(
+    name: name,
+    alias: option.Some(alias),
+    exposing: option.Some(exposing),
     before_text: "",
     predefined: False,
   )
@@ -220,6 +250,7 @@ pub fn convert_import(
   ImportedModule(
     name:,
     alias: alias,
+    exposing: option.None,
     before_text: before_import,
     predefined: True,
   )
@@ -240,6 +271,19 @@ pub fn merge_imports(imports) {
   do_merge_imports(imports, option.None, [])
 }
 
+/// Combine exposing clauses when `merge_imports` collapses duplicate module paths.
+fn merge_exposing(
+  a: Option(String),
+  b: Option(String),
+) -> Option(String) {
+  case a, b {
+    option.None, option.None -> option.None
+    option.Some(x), option.None -> option.Some(x)
+    option.None, option.Some(y) -> option.Some(y)
+    option.Some(x), option.Some(y) -> option.Some(x <> ", " <> y)
+  }
+}
+
 fn do_merge_imports(
   imports_left: List(ImportedModule),
   last_import: Option(ImportedModule),
@@ -255,6 +299,7 @@ fn do_merge_imports(
             option.None, option.Some(a) -> option.Some(a)
             option.None, option.None -> option.None
           },
+          exposing: merge_exposing(last.exposing, import_.exposing),
           before_text: last.before_text <> import_.before_text,
           predefined: last.predefined || import_.predefined,
         )

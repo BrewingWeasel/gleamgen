@@ -1233,10 +1233,7 @@ fn render_call(func, args, context) {
 ///
 /// - `{ let x = ...; ... }` stays a block argument
 /// - `{ expr }` is simplified to `expr`
-fn render_call_argument(
-  arg: Expression(types.Dynamic),
-  context: render.Context,
-) {
+fn render_call_argument(arg: Expression(types.Dynamic), context: render.Context) {
   case arg.internal {
     // A block that only contains a returned expression can be passed directly.
     Block([ExpressionStatement(expr)]) -> render(expr, context)

@@ -73,7 +73,9 @@ pub fn render_parameters(
   )
 }
 
-fn parameter_type_details(param: Parameter(types.Dynamic)) -> render.RenderedDetails {
+fn parameter_type_details(
+  param: Parameter(types.Dynamic),
+) -> render.RenderedDetails {
   types.render_type(type_(param))
   |> result.map(fn(r) { r.details })
   |> result.unwrap(render.empty_details)
@@ -115,8 +117,7 @@ fn do_render_parameters(
         }
       }
 
-      let details =
-        render.merge_details(type_details_acc, label_details)
+      let details = render.merge_details(type_details_acc, label_details)
 
       render.Render(doc, details)
     }

@@ -64,7 +64,10 @@ pub fn new_predefined(name: List(String)) -> ImportedModule {
 }
 
 /// Like [`new_predefined`](#new_predefined) but with `as alias` (import always emitted).
-pub fn new_predefined_with_alias(name: List(String), alias: String) -> ImportedModule {
+pub fn new_predefined_with_alias(
+  name: List(String),
+  alias: String,
+) -> ImportedModule {
   ImportedModule(
     name: name,
     alias: option.Some(alias),
@@ -75,7 +78,10 @@ pub fn new_predefined_with_alias(name: List(String), alias: String) -> ImportedM
 }
 
 /// Like [`new_predefined`](#new_predefined) but with `.{exposing}` (import always emitted).
-pub fn new_predefined_with_exposing(name: List(String), exposing: String) -> ImportedModule {
+pub fn new_predefined_with_exposing(
+  name: List(String),
+  exposing: String,
+) -> ImportedModule {
   ImportedModule(
     name: name,
     alias: option.None,
@@ -306,10 +312,7 @@ pub fn merge_imports(imports) {
 }
 
 /// Combine exposing clauses when `merge_imports` collapses duplicate module paths.
-fn merge_exposing(
-  a: Option(String),
-  b: Option(String),
-) -> Option(String) {
+fn merge_exposing(a: Option(String), b: Option(String)) -> Option(String) {
   case a, b {
     option.None, option.None -> option.None
     option.Some(x), option.None -> option.Some(x)

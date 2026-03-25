@@ -16,11 +16,9 @@ pub fn sort_like_module_emits_one_structure_import_test() {
   let sm = gim.new(["cat_db", "structure"])
   let field_t = gtypes.custom_type(Some("structure"), "CatField", [])
   let func =
-    gfun.new1(
-      gparam.new("field", field_t),
-      gtypes.string,
-      fn(_f) { gex.string("x") },
-    )
+    gfun.new1(gparam.new("field", field_t), gtypes.string, fn(_f) {
+      gex.string("x")
+    })
   let details =
     gdef.new("cat_field_sql")
     |> gdef.with_publicity(True)
@@ -38,16 +36,13 @@ pub fn sort_like_module_emits_one_structure_import_test() {
 pub fn function_only_module_does_not_emit_import_lines_test() {
   let field_t = gtypes.custom_type(Some("structure"), "CatField", [])
   let func =
-    gfun.new1(
-      gparam.new("field", field_t),
-      gtypes.string,
-      fn(_f) { gex.string("x") },
-    )
+    gfun.new1(gparam.new("field", field_t), gtypes.string, fn(_f) {
+      gex.string("x")
+    })
   let details =
     gdef.new("cat_field_sql")
     |> gdef.with_publicity(True)
-  let mod =
-    gmod.with_function(details, func, fn(_) { gmod.eof() })
+  let mod = gmod.with_function(details, func, fn(_) { gmod.eof() })
   let s =
     gmod.render(mod, grender.default_context())
     |> grender.to_string()

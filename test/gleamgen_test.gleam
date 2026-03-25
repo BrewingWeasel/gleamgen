@@ -1326,7 +1326,7 @@ pub fn call_with_block_argument_test() {
       block.with_let_declaration("next", expression.int(4), fn(next) {
         expression.ok(next)
       })
-      |> expression.to_dynamic(),
+        |> expression.to_dynamic(),
     ])
     |> expression.render(render.default_context())
     |> render.to_string()

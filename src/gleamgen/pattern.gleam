@@ -824,6 +824,14 @@ pub fn list_empty() -> Pattern(List(a), Nil) {
   Constructor(#("[]", []), output: Nil)
 }
 
+/// Renders `[first, ..]` and binds the head element to `first`.
+pub fn list_first_discard_rest(first: String) -> Pattern(List(a), Expression(a)) {
+  Constructor(
+    #("[" <> first <> ", ..]", []),
+    output: expression.raw(first),
+  )
+}
+
 /// Renders `[..name]` and binds the whole list to `name`.
 pub fn list_spread(name: String) -> Pattern(List(a), Expression(List(a))) {
   Constructor(

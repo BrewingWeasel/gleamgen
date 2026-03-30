@@ -1315,10 +1315,42 @@ pub fn do_result() -> Result(Int, String) {
   assert result == expected
 }
 
+/// Regression test for single-expression blocks in `let` values (`render_block`).
+///
+/// A block value that is only one expression omits redundant `{ ... }`
+/// (e.g. `let y = x + 1`, not `let y = { x + 1 }`).
+pub fn single_expression_block_in_let_value_test() {
+  let value =
+    block.new_dynamic([
+      statement.expression(expression.math_operator(
+        expression.raw("x"),
+        expression.Add,
+        expression.int(1),
+      )),
+    ])
+
+  let result =
+    block.new_dynamic([
+      statement.dynamic_let("y", value, False),
+      statement.expression(expression.raw("y")),
+    ])
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "{
+  let y = x + 1
+  y
+}"
+
+  assert result == expected
+}
+
 /// Regression test for rendering block arguments in call expressions.
 ///
 /// Ensures calls like `result.try(...)` keep braces for block arguments with
-/// `let` statements, while still unwrapping single direct-return blocks.
+/// `let` statements, while still unwrapping single-expression blocks (via
+/// `render_block`).
 pub fn call_with_block_argument_test() {
   let with_let =
     expression.call_dynamic(expression.raw("result.try"), [

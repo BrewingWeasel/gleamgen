@@ -8,12 +8,19 @@ import gleamgen/function
 import gleamgen/types
 import gleamgen/types/custom
 
+/// One entry in an `import path.{ … }` exposing list.
+pub type ExposedItem {
+  /// Renders as `type name` or `type name as alias`.
+  ExposedType(name: String, alias: Option(String))
+  /// Renders as `name` or `name as alias`.
+  ExposedValue(name: String, alias: Option(String))
+}
+
 pub type ImportedModule {
   ImportedModule(
     name: List(String),
     alias: Option(String),
-    /// When set, rendered as `import path.{inner}` (no braces in this string).
-    exposing: Option(String),
+    exposing: List(ExposedItem),
     before_text: String,
     predefined: Bool,
   )
@@ -23,86 +30,46 @@ pub fn new(name: List(String)) -> ImportedModule {
   ImportedModule(
     name: name,
     alias: option.None,
-    exposing: option.None,
+    exposing: [],
     before_text: "",
     predefined: False,
   )
 }
 
-pub fn new_with_alias(name: List(String), alias: String) -> ImportedModule {
-  ImportedModule(
-    name: name,
-    alias: option.Some(alias),
-    exposing: option.None,
-    before_text: "",
-    predefined: False,
-  )
+pub fn with_alias(imported: ImportedModule, alias: String) -> ImportedModule {
+  ImportedModule(..imported, alias: option.Some(alias))
 }
 
-/// Import with a Gleam exposing list, e.g. `new_with_exposing(["a", "b"], "type T, x")`
-/// renders `import a/b.{type T, x}`.
-pub fn new_with_exposing(name: List(String), exposing: String) -> ImportedModule {
-  ImportedModule(
-    name: name,
-    alias: option.None,
-    exposing: option.Some(exposing),
-    before_text: "",
-    predefined: False,
-  )
-}
-
-/// Import is always emitted (even if the module reference is not found in rendered bodies).
-/// Use for transitive dependencies of embedded expressions (e.g. `cake/select` inside a sub-AST).
-pub fn new_predefined(name: List(String)) -> ImportedModule {
-  ImportedModule(
-    name: name,
-    alias: option.None,
-    exposing: option.None,
-    before_text: "",
-    predefined: True,
-  )
-}
-
-/// Like [`new_predefined`](#new_predefined) but with `as alias` (import always emitted).
-pub fn new_predefined_with_alias(
-  name: List(String),
-  alias: String,
+pub fn with_exposing(
+  imported: ImportedModule,
+  exposing: List(ExposedItem),
 ) -> ImportedModule {
-  ImportedModule(
-    name: name,
-    alias: option.Some(alias),
-    exposing: option.None,
-    before_text: "",
-    predefined: True,
-  )
+  ImportedModule(..imported, exposing: exposing)
 }
 
-/// Like [`new_predefined`](#new_predefined) but with `.{exposing}` (import always emitted).
-pub fn new_predefined_with_exposing(
-  name: List(String),
-  exposing: String,
+/// When `True`, the import line is always emitted even if static analysis finds
+/// no reference to the module prefix (e.g. types only nested inside other ASTs).
+pub fn with_predefined(
+  imported: ImportedModule,
+  predefined: Bool,
 ) -> ImportedModule {
-  ImportedModule(
-    name: name,
-    alias: option.None,
-    exposing: option.Some(exposing),
-    before_text: "",
-    predefined: True,
-  )
+  ImportedModule(..imported, predefined: predefined)
 }
 
-pub fn new_with_alias_and_exposing(
-  name: List(String),
-  alias: String,
-  exposing: String,
-) -> ImportedModule {
-  ImportedModule(
-    name: name,
-    alias: option.Some(alias),
-    exposing: option.Some(exposing),
-    before_text: "",
-    predefined: False,
-  )
+pub fn exposed_type(name: String) -> ExposedItem {
+  ExposedType(name, option.None)
+}
+
+pub fn exposed_type_as(name: String, alias: String) -> ExposedItem {
+  ExposedType(name, option.Some(alias))
+}
+
+pub fn exposed_value(name: String) -> ExposedItem {
+  ExposedValue(name, option.None)
+}
+
+pub fn exposed_value_as(name: String, alias: String) -> ExposedItem {
+  ExposedValue(name, option.Some(alias))
 }
 
 @internal
@@ -290,7 +257,7 @@ pub fn convert_import(
   ImportedModule(
     name:,
     alias: alias,
-    exposing: option.None,
+    exposing: [],
     before_text: before_import,
     predefined: True,
   )
@@ -311,14 +278,63 @@ pub fn merge_imports(imports) {
   do_merge_imports(imports, option.None, [])
 }
 
-/// Combine exposing clauses when `merge_imports` collapses duplicate module paths.
-fn merge_exposing(a: Option(String), b: Option(String)) -> Option(String) {
+fn compare_optional_string(a: Option(String), b: Option(String)) -> order.Order {
   case a, b {
-    option.None, option.None -> option.None
-    option.Some(x), option.None -> option.Some(x)
-    option.None, option.Some(y) -> option.Some(y)
-    option.Some(x), option.Some(y) -> option.Some(x <> ", " <> y)
+    option.None, option.None -> order.Eq
+    option.None, option.Some(_) -> order.Lt
+    option.Some(_), option.None -> order.Gt
+    option.Some(x), option.Some(y) -> string.compare(x, y)
   }
+}
+
+fn compare_exposed_item(a: ExposedItem, b: ExposedItem) -> order.Order {
+  case a, b {
+    ExposedType(..), ExposedValue(..) -> order.Lt
+    ExposedValue(..), ExposedType(..) -> order.Gt
+    ExposedType(n1, a1), ExposedType(n2, a2) ->
+      case string.compare(n1, n2) {
+        order.Eq -> compare_optional_string(a1, a2)
+        o -> o
+      }
+    ExposedValue(n1, a1), ExposedValue(n2, a2) ->
+      case string.compare(n1, n2) {
+        order.Eq -> compare_optional_string(a1, a2)
+        o -> o
+      }
+  }
+}
+
+fn render_exposed_item(item: ExposedItem) -> String {
+  case item {
+    ExposedType(name, alias) ->
+      case alias {
+        option.None -> "type " <> name
+        option.Some(a) -> "type " <> name <> " as " <> a
+      }
+    ExposedValue(name, alias) ->
+      case alias {
+        option.None -> name
+        option.Some(a) -> name <> " as " <> a
+      }
+  }
+}
+
+@internal
+pub fn exposing_to_string(items: List(ExposedItem)) -> String {
+  items
+  |> list.map(render_exposed_item)
+  |> string.join(", ")
+}
+
+/// Combine exposing lists when `merge_imports` collapses duplicate module paths
+/// (sorted and deduplicated).
+fn merge_exposing_lists(
+  a: List(ExposedItem),
+  b: List(ExposedItem),
+) -> List(ExposedItem) {
+  list.append(a, b)
+  |> list.sort(compare_exposed_item)
+  |> list.unique
 }
 
 fn do_merge_imports(
@@ -336,7 +352,7 @@ fn do_merge_imports(
             option.None, option.Some(a) -> option.Some(a)
             option.None, option.None -> option.None
           },
-          exposing: merge_exposing(last.exposing, import_.exposing),
+          exposing: merge_exposing_lists(last.exposing, import_.exposing),
           before_text: last.before_text <> import_.before_text,
           predefined: last.predefined || import_.predefined,
         )

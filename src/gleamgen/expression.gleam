@@ -1224,15 +1224,9 @@ fn render_call(func, args, context) {
   // (e.g. as a function body).
   let arg_context =
     render.Context(..context, include_brackets_current_level: True)
-  // We build `rendered_args` in reverse via prepending for efficiency:
-  // args [a, b] -> acc [b_doc, a_doc], then reverse before pretty_list.
-  let #(rendered_args, details) =
-    list.fold(args, #([], render.empty_details), fn(acc, arg) {
-      let rendered = render(arg, arg_context)
-      #([rendered.doc, ..acc.0], render.merge_details(rendered.details, acc.1))
-    })
+  let #(rendered_args, details) = render_expressions(args, arg_context)
   let caller = render(func, context)
-  doc.concat([caller.doc, render.pretty_list(list.reverse(rendered_args))])
+  doc.concat([caller.doc, render.pretty_list(rendered_args)])
   |> render.Render(details: render.merge_details(details, caller.details))
 }
 

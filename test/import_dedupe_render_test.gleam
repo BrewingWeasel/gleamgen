@@ -3,48 +3,48 @@ import gleam/string
 
 import gleam/option.{Some}
 
-import gleamgen/expression as gex
-import gleamgen/function as gfun
-import gleamgen/import_ as gim
-import gleamgen/module as gmod
-import gleamgen/module/definition as gdef
-import gleamgen/parameter as gparam
-import gleamgen/render as grender
-import gleamgen/types as gtypes
+import gleamgen/expression
+import gleamgen/function
+import gleamgen/import_
+import gleamgen/module
+import gleamgen/module/definition
+import gleamgen/parameter
+import gleamgen/render
+import gleamgen/types
 
 pub fn sort_like_module_emits_one_structure_import_test() {
-  let sm = gim.new(["cat_db", "structure"])
-  let field_t = gtypes.custom_type(Some("structure"), "CatField", [])
+  let sm = import_.new(["cat_db", "structure"])
+  let field_t = types.custom_type(Some("structure"), "CatField", [])
   let func =
-    gfun.new1(gparam.new("field", field_t), gtypes.string, fn(_f) {
-      gex.string("x")
+    function.new1(parameter.new("field", field_t), types.string, fn(_f) {
+      expression.string("x")
     })
   let details =
-    gdef.new("cat_field_sql")
-    |> gdef.with_publicity(True)
+    definition.new("cat_field_sql")
+    |> definition.with_publicity(True)
   let mod =
-    gmod.with_import(sm, fn(_) {
-      gmod.with_function(details, func, fn(_) { gmod.eof() })
+    module.with_import(sm, fn(_) {
+      module.with_function(details, func, fn(_) { module.eof() })
     })
   let s =
-    gmod.render(mod, grender.default_context())
-    |> grender.to_string()
+    module.render(mod, render.default_context())
+    |> render.to_string()
   let parts = string.split(s, "import cat_db/structure")
-  let assert True = list.length(parts) == 2
+  assert list.length(parts) == 2
 }
 
 pub fn function_only_module_does_not_emit_import_lines_test() {
-  let field_t = gtypes.custom_type(Some("structure"), "CatField", [])
+  let field_t = types.custom_type(Some("structure"), "CatField", [])
   let func =
-    gfun.new1(gparam.new("field", field_t), gtypes.string, fn(_f) {
-      gex.string("x")
+    function.new1(parameter.new("field", field_t), types.string, fn(_f) {
+      expression.string("x")
     })
   let details =
-    gdef.new("cat_field_sql")
-    |> gdef.with_publicity(True)
-  let mod = gmod.with_function(details, func, fn(_) { gmod.eof() })
+    definition.new("cat_field_sql")
+    |> definition.with_publicity(True)
+  let mod = module.with_function(details, func, fn(_) { module.eof() })
   let s =
-    gmod.render(mod, grender.default_context())
-    |> grender.to_string()
-  let assert False = string.contains(s, "import ")
+    module.render(mod, render.default_context())
+    |> render.to_string()
+  assert string.contains(s, "import ") == False
 }

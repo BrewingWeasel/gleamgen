@@ -628,26 +628,6 @@ pub fn eof() -> Module {
   Module([], [], option.None)
 }
 
-/// `merge_imports` only collapses adjacent same-path imports; drop later copies
-/// of the same module path (first wins; exposing/alias should match via merge).
-fn dedupe_imports_by_path(
-  imports: List(import_.ImportedModule),
-) -> List(import_.ImportedModule) {
-  list.reverse(
-    list.fold(imports, [], fn(acc, imp) {
-      let path = string.join(imp.name, "/")
-      case
-        list.any(acc, fn(existing: import_.ImportedModule) {
-          string.join(existing.name, "/") == path
-        })
-      {
-        True -> acc
-        False -> [imp, ..acc]
-      }
-    }),
-  )
-}
-
 pub fn render(module: Module, context: render.Context) -> render.Rendered {
   let #(definitions_at_top, definitions_at_bottom, definitions_after) =
     separate_definitions(module.definitions, [], [], dict.new())
@@ -680,13 +660,12 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
     |> list.filter(fn(m) {
       m.predefined
       // Explicit `.{…}` imports must appear even if nothing references the module prefix.
-      || option.is_some(m.exposing)
+      || !list.is_empty(m.exposing)
       || details.used_imports
       |> list.contains(import_.get_reference(m))
     })
     |> list.sort(import_.compare)
     |> import_.merge_imports
-    |> dedupe_imports_by_path
     |> list.map(fn(x) { x |> render_imported_module |> render.to_string() })
     |> list.map(doc.from_string)
     |> doc.join(with: doc.line)
@@ -707,13 +686,13 @@ pub fn render_imported_module(module: import_.ImportedModule) -> render.Rendered
     doc.from_string("import "),
     doc.from_string(string.join(module.name, "/")),
     case module.exposing {
-      option.Some(inner) ->
+      [] -> doc.empty
+      exposing ->
         doc.concat([
           doc.from_string(".{"),
-          doc.from_string(inner),
+          doc.from_string(import_.exposing_to_string(exposing)),
           doc.from_string("}"),
         ])
-      option.None -> doc.empty
     },
     case module.alias {
       option.Some(alias) ->

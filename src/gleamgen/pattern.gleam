@@ -1,6 +1,7 @@
 import glam/doc
 import gleam/int
 import gleam/list
+import gleam/option.{type Option}
 import gleamgen/expression.{type Expression}
 import gleamgen/expression/constructor
 import gleamgen/internal/render
@@ -819,7 +820,7 @@ pub fn can_match_on_multiple(pattern: Pattern(_, _)) -> Bool {
   }
 }
 
-/// Renders `[]`. Use before `list_spread` so the empty case matches first.
+/// Renders `[]`. List this branch before a catch-all (e.g. `variable`) so the empty case matches first.
 pub fn list_empty() -> Pattern(List(a), Nil) {
   Constructor(#("[]", []), output: Nil)
 }
@@ -827,11 +828,6 @@ pub fn list_empty() -> Pattern(List(a), Nil) {
 /// Renders `[first, ..]` and binds the head element to `first`.
 pub fn list_first_discard_rest(first: String) -> Pattern(List(a), Expression(a)) {
   Constructor(#("[" <> first <> ", ..]", []), output: expression.raw(first))
-}
-
-/// Renders `[..name]` and binds the whole list to `name`.
-pub fn list_spread(name: String) -> Pattern(List(a), Expression(List(a))) {
-  Constructor(#("[.." <> name <> "]", []), output: expression.raw(name))
 }
 
 /// Match `VariantName(p1, p2, …)` when the variant comes from another module.
@@ -849,12 +845,12 @@ pub fn foreign_variant(
 }
 
 /// `Some(inner)`.
-pub fn option_some(inner: Pattern(a, a_out)) -> Pattern(types.Dynamic, a_out) {
+pub fn option_some(inner: Pattern(a, a_out)) -> Pattern(Option(a), a_out) {
   Constructor(#("Some", [inner |> to_dynamic]), output: inner.output)
 }
 
 /// `None`.
-pub fn option_none() -> Pattern(types.Dynamic, Nil) {
+pub fn option_none() -> Pattern(Option(a), Nil) {
   Constructor(#("None", []), output: Nil)
 }
 // vim: foldmethod=marker foldlevel=0

@@ -1153,22 +1153,28 @@ pub fn render_statement(statement: Statement, context) -> render.Rendered {
 fn render_block(statements, context) {
   let corrected_statements = remove_incorrect_empty_lines(statements)
 
+  // A block that only contains one expression does not need `{ ... }`; same
+  // rule as for call arguments (e.g. `let y = x + 1` not `let y = { x + 1 }`).
+  case corrected_statements {
+    [ExpressionStatement(expr)] ->
+      render(
+        expr,
+        render.Context(..context, include_brackets_current_level: True),
+      )
+    _ -> render_block_multi_statement(corrected_statements, context)
+  }
+}
+
+fn render_block_multi_statement(statements, context) {
   let #(inner_statements, details) =
-    list.fold(
-      corrected_statements,
-      #([], render.empty_details),
-      fn(acc, statement) {
-        let rendered =
-          render_statement(
-            statement,
-            render.Context(..context, include_brackets_current_level: True),
-          )
-        #(
-          [rendered.doc, ..acc.0],
-          render.merge_details(rendered.details, acc.1),
+    list.fold(statements, #([], render.empty_details), fn(acc, statement) {
+      let rendered =
+        render_statement(
+          statement,
+          render.Context(..context, include_brackets_current_level: True),
         )
-      },
-    )
+      #([rendered.doc, ..acc.0], render.merge_details(rendered.details, acc.1))
+    })
 
   let inner =
     inner_statements
@@ -1213,7 +1219,12 @@ fn render_expressions(
 }
 
 fn render_call(func, args, context) {
-  let #(rendered_args, details) = render_expressions(args, context)
+  // Arguments use bracket semantics at the root so multi-statement blocks stay
+  // wrapped even when this call is rendered with `include_brackets_current_level: False`
+  // (e.g. as a function body).
+  let arg_context =
+    render.Context(..context, include_brackets_current_level: True)
+  let #(rendered_args, details) = render_expressions(args, arg_context)
   let caller = render(func, context)
   doc.concat([caller.doc, render.pretty_list(rendered_args)])
   |> render.Render(details: render.merge_details(details, caller.details))

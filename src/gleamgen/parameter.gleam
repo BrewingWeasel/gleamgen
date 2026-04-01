@@ -1,6 +1,7 @@
 import glam/doc
 import gleam/list
 import gleam/option
+import gleam/result
 import gleamgen/internal/render
 import gleamgen/render/report
 import gleamgen/types
@@ -61,7 +62,23 @@ pub fn render_parameters(
   include_labels include_labels: Bool,
   context context: render.Context,
 ) {
-  do_render_parameters(parameters, [], False, [], include_labels, context)
+  do_render_parameters(
+    parameters,
+    [],
+    False,
+    [],
+    render.empty_details,
+    include_labels,
+    context,
+  )
+}
+
+fn parameter_type_details(
+  param: Parameter(types.Dynamic),
+) -> render.RenderedDetails {
+  types.render_type(type_(param))
+  |> result.map(fn(r) { r.details })
+  |> result.unwrap(render.empty_details)
 }
 
 fn do_render_parameters(
@@ -69,6 +86,7 @@ fn do_render_parameters(
   acc: List(doc.Document),
   last_parameter_had_label: Bool,
   should_have_been_labeled_params: List(String),
+  type_details_acc: render.RenderedDetails,
   include_labels include_labels: Bool,
   context context: render.Context,
 ) -> render.Rendered {
@@ -76,7 +94,7 @@ fn do_render_parameters(
     [] -> {
       let doc = render.pretty_list(list.reverse(acc))
 
-      let details = case should_have_been_labeled_params {
+      let label_details = case should_have_been_labeled_params {
         [] -> render.empty_details
         not_labeled if context.config.auto_fix_parameters -> {
           render.RenderedDetails(
@@ -99,10 +117,14 @@ fn do_render_parameters(
         }
       }
 
+      let details = render.merge_details(type_details_acc, label_details)
+
       render.Render(doc, details)
     }
     [param, ..rest] -> {
       let has_label = option.is_some(param.label)
+      let next_type_details =
+        render.merge_details(type_details_acc, parameter_type_details(param))
       case has_label {
         True ->
           do_render_parameters(
@@ -110,6 +132,7 @@ fn do_render_parameters(
             [render(param, include_labels, context), ..acc],
             True,
             should_have_been_labeled_params,
+            next_type_details,
             include_labels,
             context,
           )
@@ -118,11 +141,17 @@ fn do_render_parameters(
             True -> with_label(param, param.name)
             False -> param
           }
+          let merged_details =
+            render.merge_details(
+              type_details_acc,
+              parameter_type_details(fixed_parameter),
+            )
           do_render_parameters(
             rest,
             [render(fixed_parameter, include_labels, context), ..acc],
             True,
             [param.name, ..should_have_been_labeled_params],
+            merged_details,
             include_labels,
             context,
           )
@@ -133,6 +162,7 @@ fn do_render_parameters(
             [render(param, include_labels, context), ..acc],
             last_parameter_had_label,
             should_have_been_labeled_params,
+            next_type_details,
             include_labels,
             context,
           )

@@ -1315,6 +1315,128 @@ pub fn do_result() -> Result(Int, String) {
   assert result == expected
 }
 
+/// Regression test for single-expression blocks in `let` values (`render_block`).
+///
+/// A block value that is only one expression omits redundant `{ ... }`
+/// (e.g. `let y = x + 1`, not `let y = { x + 1 }`).
+pub fn single_expression_block_in_let_value_test() {
+  let value =
+    block.new_dynamic([
+      statement.expression(expression.math_operator(
+        expression.raw("x"),
+        expression.Add,
+        expression.int(1),
+      )),
+    ])
+
+  let result =
+    block.new_dynamic([
+      statement.dynamic_let("y", value, False),
+      statement.expression(expression.raw("y")),
+    ])
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "{
+  let y = x + 1
+  y
+}"
+
+  assert result == expected
+}
+
+/// Regression test for rendering block arguments in call expressions.
+///
+/// Ensures calls like `result.or(...)` keep braces for block arguments with
+/// `let` statements, while still unwrapping single-expression blocks (via
+/// `render_block`).
+pub fn call_with_block_argument_test() {
+  let with_let =
+    expression.call_dynamic(expression.raw("result.or"), [
+      expression.ok(expression.int(3)) |> expression.to_dynamic(),
+      block.with_let_declaration("next", expression.int(4), fn(next) {
+        expression.ok(next)
+      })
+        |> expression.to_dynamic(),
+    ])
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected_with_let =
+    "result.or(Ok(3), {
+    let next = 4
+    Ok(next)
+  })"
+
+  assert with_let == expected_with_let
+
+  let direct_return =
+    expression.call_dynamic(expression.raw("result.or"), [
+      expression.ok(expression.int(3)) |> expression.to_dynamic(),
+      block.new_dynamic([statement.expression(expression.ok(expression.int(4)))]),
+    ])
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected_direct_return = "result.or(Ok(3), Ok(4))"
+
+  assert direct_return == expected_direct_return
+}
+
+/// Regression test for list pattern helpers with zero-argument constructors.
+///
+/// Ensures `pattern.list_empty()` renders as `[]` (not `[]()`), and that a
+/// variable pattern matches a non-empty list branch after the empty list arm.
+pub fn case_with_list_empty_and_spread_pattern_test() {
+  let result =
+    case_.new(expression.list([]))
+    |> case_.with_pattern(pattern.list_empty(), fn(_) {
+      expression.string("empty")
+    })
+    |> case_.with_pattern(pattern.variable("items"), fn(_) {
+      expression.string("not empty")
+    })
+    |> case_.build_expression()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "case [] {
+  [] -> \"empty\"
+  items -> \"not empty\"
+}"
+
+  assert result == expected
+}
+
+/// Regression test for option pattern helper rendering.
+///
+/// Ensures `pattern.option_some(...)` renders `Some(...)` and
+/// `pattern.option_none()` renders `None` (no zero-arg parentheses).
+pub fn case_with_option_pattern_helpers_test() {
+  let result =
+    case_.new(expression.raw("maybe_name"))
+    |> case_.with_pattern(
+      pattern.option_some(pattern.variable("name")),
+      fn(name) { expression.concat_string(name, expression.string("!")) },
+    )
+    |> case_.with_pattern(pattern.option_none(), fn(_) {
+      expression.string("anonymous")
+    })
+    |> case_.build_expression()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "case maybe_name {
+  Some(name) -> name <> \"!\"
+  None -> \"anonymous\"
+}"
+
+  assert result == expected
+}
+
 pub fn result_test() {
   let mod = {
     use result_module <- module.with_import(import_.new(["gleam", "result"]))
@@ -1427,10 +1549,9 @@ pub fn runner(thing: AwesomeString) -> String {
 
 pub fn module_import_test() {
   let mod = {
-    use io <- module.with_import(import_.new_with_alias(
-      ["gleam", "io"],
-      "only_o",
-    ))
+    use io <- module.with_import(
+      import_.new(["gleam", "io"]) |> import_.with_alias("only_o"),
+    )
     use int_mod <- module.with_import(import_.new(["gleam", "int"]))
 
     let io_print = import_.function1(io, io.println)
@@ -1470,12 +1591,149 @@ pub fn main() -> Nil {
   assert result == expected
 }
 
+/// Regression test for `import_.with_exposing`: rendered `import path.{items}` and kept in output
+/// when nothing references the module prefix (only unqualified imports from the exposing list).
+pub fn module_import_with_exposing_test() {
+  let mod = {
+    use _string <- module.with_import(
+      import_.new(["gleam", "string"])
+      |> import_.with_exposing([import_.exposed_value("length")]),
+    )
+
+    use _main <- module.with_function(
+      definition.new(name: "main")
+        |> definition.with_publicity(True),
+      function.new0(returns: types.nil, handler: fn() { expression.nil() }),
+    )
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "import gleam/string.{length}
+
+pub fn main() -> Nil {
+  Nil
+}"
+
+  assert result == expected
+}
+
+/// `import path.{items} as alias` — exposing must come before `as` in Gleam syntax.
+pub fn module_import_with_alias_and_exposing_test() {
+  let mod = {
+    use io <- module.with_import(
+      import_.new(["gleam", "io"])
+      |> import_.with_exposing([import_.exposed_value("println")])
+      |> import_.with_alias("only_o"),
+    )
+
+    let io_print = import_.function1(io, io.println)
+
+    use _main <- module.with_function(
+      definition.new(name: "main")
+        |> definition.with_publicity(True),
+      function.new0(returns: types.nil, handler: fn() {
+        expression.call1(io_print, expression.string("hi"))
+      }),
+    )
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "import gleam/io.{println} as only_o
+
+pub fn main() -> Nil {
+  only_o.println(\"hi\")
+}"
+
+  assert result == expected
+}
+
+/// Duplicate module paths with separate exposing lists merge into one import (sorted, deduped).
+pub fn module_merge_imports_exposing_test() {
+  let mod = {
+    use _ <- module.with_import(
+      import_.new(["gleam", "string"])
+      |> import_.with_exposing([import_.exposed_value("reverse")]),
+    )
+    use _ <- module.with_import(
+      import_.new(["gleam", "string"])
+      |> import_.with_exposing([import_.exposed_value("length")]),
+    )
+
+    use _main <- module.with_function(
+      definition.new(name: "main")
+        |> definition.with_publicity(True),
+      function.new0(returns: types.nil, handler: fn() { expression.nil() }),
+    )
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "import gleam/string.{length, reverse}
+
+pub fn main() -> Nil {
+  Nil
+}"
+
+  assert result == expected
+}
+
+/// Merging imports with overlapping exposing lists deduplicates entries.
+pub fn module_merge_imports_exposing_dedupes_test() {
+  let mod = {
+    use _ <- module.with_import(
+      import_.new(["gleam", "string"])
+        |> import_.with_exposing([import_.exposed_value("length")]),
+    )
+    use _ <- module.with_import(
+      import_.new(["gleam", "string"])
+        |> import_.with_exposing([import_.exposed_value("length")]),
+    )
+
+    use _main <- module.with_function(
+      definition.new(name: "main")
+        |> definition.with_publicity(True),
+      function.new0(returns: types.nil, handler: fn() { expression.nil() }),
+    )
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "import gleam/string.{length}
+
+pub fn main() -> Nil {
+  Nil
+}"
+
+  assert result == expected
+}
+
 pub fn module_unused_import_test() {
   let mod = {
-    use io <- module.with_import(import_.new_with_alias(
-      ["gleam", "io"],
-      "only_o",
-    ))
+    use io <- module.with_import(
+      import_.new(["gleam", "io"]) |> import_.with_alias("only_o"),
+    )
     use int_mod <- module.with_import(import_.new(["gleam", "int"]))
     use _ <- module.with_import(import_.new(["gleam", "string"]))
 
@@ -1522,10 +1780,9 @@ const use_string_mod_this_time = False
 
 pub fn module_sometimes_unused_import_test() {
   let mod = {
-    use io <- module.with_import(import_.new_with_alias(
-      ["gleam", "io"],
-      "only_o",
-    ))
+    use io <- module.with_import(
+      import_.new(["gleam", "io"]) |> import_.with_alias("only_o"),
+    )
     use int_mod <- module.with_import(import_.new(["gleam", "int"]))
     use string_mod <- module.with_import(import_.new(["gleam", "string"]))
 

@@ -659,6 +659,8 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
     module.imports
     |> list.filter(fn(m) {
       m.predefined
+      // Explicit `.{…}` imports must appear even if nothing references the module prefix.
+      || !list.is_empty(m.exposing)
       || details.used_imports
       |> list.contains(import_.get_reference(m))
     })
@@ -678,10 +680,20 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
 }
 
 pub fn render_imported_module(module: import_.ImportedModule) -> render.Rendered {
+  // Gleam syntax is `import path.{items} as alias`, not `import path as alias.{items}`.
   doc.concat([
     doc.from_string(module.before_text),
     doc.from_string("import "),
     doc.from_string(string.join(module.name, "/")),
+    case module.exposing {
+      [] -> doc.empty
+      exposing ->
+        doc.concat([
+          doc.from_string(".{"),
+          doc.from_string(import_.exposing_to_string(exposing)),
+          doc.from_string("}"),
+        ])
+    },
     case module.alias {
       option.Some(alias) ->
         doc.concat([

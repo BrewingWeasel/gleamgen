@@ -1,6 +1,7 @@
 import glam/doc
 import gleam/int
 import gleam/list
+import gleam/option.{type Option}
 import gleamgen/expression.{type Expression}
 import gleamgen/expression/constructor
 import gleamgen/internal/render
@@ -769,17 +770,24 @@ pub fn render(
       |> render.Render(details: original.details)
     }
     Constructor(#(name, patterns), ..) -> {
-      let #(details, rendered_patterns) =
-        patterns
-        |> list.map_fold(render.empty_details, fn(acc, m) {
-          let rendered = render(m, 1)
-          #(render.merge_details(acc, rendered.details), rendered.doc)
-        })
+      case patterns {
+        [] ->
+          doc.from_string(name)
+          |> render.Render(details: render.empty_details)
+        _ -> {
+          let #(details, rendered_patterns) =
+            patterns
+            |> list.map_fold(render.empty_details, fn(acc, m) {
+              let rendered = render(m, 1)
+              #(render.merge_details(acc, rendered.details), rendered.doc)
+            })
 
-      rendered_patterns
-      |> render.pretty_list()
-      |> doc.prepend(doc.from_string(name))
-      |> render.Render(details:)
+          rendered_patterns
+          |> render.pretty_list()
+          |> doc.prepend(doc.from_string(name))
+          |> render.Render(details:)
+        }
+      }
     }
     Tuple(patterns, ..) -> {
       let #(details, rendered_patterns) =
@@ -810,5 +818,39 @@ pub fn can_match_on_multiple(pattern: Pattern(_, _)) -> Bool {
     Variable(name: "_", ..) -> True
     _ -> False
   }
+}
+
+/// Renders `[]`. List this branch before a catch-all (e.g. `variable`) so the empty case matches first.
+pub fn list_empty() -> Pattern(List(a), Nil) {
+  Constructor(#("[]", []), output: Nil)
+}
+
+/// Renders `[first, ..]` and binds the head element to `first`.
+pub fn list_first_discard_rest(first: String) -> Pattern(List(a), Expression(a)) {
+  Constructor(#("[" <> first <> ", ..]", []), output: expression.raw(first))
+}
+
+/// Match `VariantName(p1, p2, …)` when the variant comes from another module.
+/// Pass `pattern.variable(\"field\") |> pattern.to_dynamic` for each field in order.
+/// The case handler receives each field’s pattern output, typically
+/// `expression.raw(\"field\")`, as a list in left-to-right order.
+pub fn foreign_variant(
+  variant_name: String,
+  field_patterns: List(Pattern(types.Dynamic, types.Dynamic)),
+) -> Pattern(types.Dynamic, List(Expression(types.Dynamic))) {
+  Constructor(
+    #(variant_name, list.map(field_patterns, to_dynamic)),
+    output: list.filter_map(field_patterns, get_pattern_output),
+  )
+}
+
+/// `Some(inner)`.
+pub fn option_some(inner: Pattern(a, a_out)) -> Pattern(Option(a), a_out) {
+  Constructor(#("Some", [inner |> to_dynamic]), output: inner.output)
+}
+
+/// `None`.
+pub fn option_none() -> Pattern(Option(a), Nil) {
+  Constructor(#("None", []), output: Nil)
 }
 // vim: foldmethod=marker foldlevel=0

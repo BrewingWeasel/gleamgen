@@ -12,7 +12,12 @@ pub type Context =
 
 pub const to_string = render.to_string
 
+/// Use the default configuration
+/// See also `context_from_config`
 pub const default_context = render.default_context
+
+/// Create a context from a custom configuration
+pub const context_from_config = render.context_from_config
 
 pub const merge_details = render.merge_details
 

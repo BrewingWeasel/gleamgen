@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+- add predefined imports (Jan Wirth)
+- add unqualified imports (Jan Wirth)
+- unwrap single expression blocks (Jan Wirth)
+- added BitArray type
+- added support for render configuration (ex: merging case patterns, rendering types in let declarations)
+- automatically handle functions with unlabeled parameters
+- added bit array support
+- added explicit parameter type (can now have labels, etc)
+- added support for creating gleamgen statements from glance statements
+- added support for modifying existing gleam files
+- simplified working with blocks
+- standardized naming (matcher -> pattern, unchecked -> dynamic, etc.)
+- added assert statements
+- deprecated import_.function{n}
+
 ## v0.3.6 - 2025-02-13
 
 - added support for automatically converting case expressions with tuples into case expressions with multiple subjects

@@ -114,6 +114,7 @@ pub fn raw_type(
 /// // but this does not:
 /// expression.call1(dict_new, expression.int(46))
 /// ```
+@deprecated("use import_.value_of_type and types.reference instead")
 pub fn function0(
   imported: ImportedModule,
   func: fn() -> ret,
@@ -134,6 +135,7 @@ pub fn function0(
 /// // but this does not:
 /// expression.call1(io_println, expression.int(46))
 /// ```
+@deprecated("use import_.value_of_type and types.reference instead")
 pub fn function1(
   imported: ImportedModule,
   func: fn(a) -> ret,
@@ -147,6 +149,7 @@ pub fn function1(
 
 /// Import an existing function from the module.
 /// See `function1` for more details.
+@deprecated("use import_.value_of_type and types.reference instead")
 pub fn function2(
   imported: ImportedModule,
   func: fn(a, b) -> ret,
@@ -157,6 +160,7 @@ pub fn function2(
 
 /// Import an existing function from the module.
 /// See `function1` for more details.
+@deprecated("use import_.value_of_type and types.reference instead")
 pub fn function3(
   imported: ImportedModule,
   func: fn(a, b, c) -> ret,
@@ -167,6 +171,7 @@ pub fn function3(
 
 /// Import an existing function from the module.
 /// See `function1` for more details.
+@deprecated("use import_.value_of_type and types.reference instead")
 pub fn function4(
   imported: ImportedModule,
   func: fn(a, b, c, d) -> ret,
@@ -177,6 +182,7 @@ pub fn function4(
 
 /// Import an existing function from the module.
 /// See `function1` for more details.
+@deprecated("use import_.value_of_type and types.reference instead")
 pub fn function5(
   imported: ImportedModule,
   func: fn(a, b, c, d, e) -> ret,
@@ -187,6 +193,7 @@ pub fn function5(
 
 /// Import an existing function from the module.
 /// See `function1` for more details.
+@deprecated("use import_.value_of_type and types.reference instead")
 pub fn function6(
   imported: ImportedModule,
   func: fn(a, b, c, d, e, f) -> ret,
@@ -197,6 +204,7 @@ pub fn function6(
 
 /// Import an existing function from the module.
 /// See `function1` for more details.
+@deprecated("use import_.value_of_type and types.reference instead")
 pub fn function7(
   imported: ImportedModule,
   func: fn(a, b, c, d, e, f, g) -> ret,
@@ -207,6 +215,7 @@ pub fn function7(
 
 /// Import an existing function from the module.
 /// See `function1` for more details.
+@deprecated("use import_.value_of_type and types.reference instead")
 pub fn function8(
   imported: ImportedModule,
   func: fn(a, b, c, d, e, f, g, h) -> ret,
@@ -217,6 +226,7 @@ pub fn function8(
 
 /// Import an existing function from the module.
 /// See `function1` for more details.
+@deprecated("use import_.value_of_type and types.reference instead")
 pub fn function9(
   imported: ImportedModule,
   func: fn(a, b, c, d, e, f, g, h, i) -> ret,

@@ -1,5 +1,4 @@
 import gleam/io
-import gleam/string
 
 const module_used = "Gleamgen"
 
@@ -8,6 +7,6 @@ fn greeter(greeting: String) -> String {
 }
 
 pub fn main() -> Nil {
-  let greeting = greeter(string.repeat("Hi", 5))
+  let greeting = greeter("Howdy")
   io.println(greeting)
 }

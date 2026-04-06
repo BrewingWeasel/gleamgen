@@ -4,6 +4,7 @@ import gleamgen/expression
 import gleamgen/function
 import gleamgen/import_
 import gleamgen/module
+import gleamgen/module/definition
 import gleamgen/render
 import gleamgen/types
 import simplifile
@@ -13,16 +14,12 @@ pub fn generate() -> String {
   let file_roots = files |> list.map(string.replace(_, ".gleam", ""))
 
   let mod = {
-    use imports <- module.with_imports_unchecked(
+    use imports <- module.with_dynamic_imports(
       file_roots
       |> list.map(fn(file) { import_.new(["examples", file]) }),
     )
     use _ <- module.with_function(
-      module.DefinitionDetails(
-        "get_all_examples",
-        is_public: True,
-        attributes: [],
-      ),
+      definition.new("get_all_examples") |> definition.with_publicity(True),
       function.new0(
         types.list(types.tuple2(types.function0(types.string), types.string)),
         fn() {
@@ -31,7 +28,11 @@ pub fn generate() -> String {
           |> list.map(fn(current_import) {
             let #(imported_example, file_name) = current_import
             expression.tuple2(
-              import_.function0(imported_example, generate),
+              import_.value_of_type(
+                imported_example,
+                "generate",
+                types.reference(generate),
+              ),
               expression.string(file_name),
             )
           })

@@ -1225,7 +1225,11 @@ pub fn basic_use_test() {
           )
           use ok_value <- block.with_use1(
             block.use_function1(
-              import_.function2(result_module, result.try),
+              import_.value_of_type(
+                result_module,
+                "try",
+                types.reference(result.try),
+              ),
               res,
             ),
             "ok_value",
@@ -1275,14 +1279,22 @@ pub fn two_use_test() {
 
           use ok_value <- block.with_use1(
             block.use_function1(
-              import_.function2(result_module, result.try),
+              import_.value_of_type(
+                result_module,
+                "try",
+                types.reference(result.try),
+              ),
               res,
             ),
             "ok_value",
           )
 
           use <- block.with_use0(block.use_function2(
-            import_.function3(bool_module, bool.guard),
+            import_.value_of_type(
+              bool_module,
+              "guard",
+              types.reference(bool.guard),
+            ),
             expression.equals(ok_value, expression.int(2)),
             expression.error(expression.string("not equal to 2")),
           ))
@@ -1452,7 +1464,11 @@ pub fn result_test() {
           use _ <- block.with_let_declaration(
             "v",
             expression.call2(
-              import_.function2(result_module, result.unwrap),
+              import_.value_of_type(
+                result_module,
+                "unwrap",
+                types.reference(result.unwrap),
+              ),
               expression.ok(expression.string("hi")),
               expression.string("hey"),
             ),
@@ -1470,7 +1486,11 @@ pub fn result_test() {
           })
           |> case_.with_pattern(pattern.ok(pattern.variable("str")), fn(str) {
             expression.call1(
-              import_.function1(string_module, string.length),
+              import_.value_of_type(
+                string_module,
+                "length",
+                types.reference(string.length),
+              ),
               str,
             )
             |> expression.error()
@@ -1554,7 +1574,8 @@ pub fn module_import_test() {
     )
     use int_mod <- module.with_import(import_.new(["gleam", "int"]))
 
-    let io_print = import_.function1(io, io.println)
+    let io_print =
+      import_.value_of_type(io, "println", types.reference(io.println))
     let int_string =
       import_.value_of_type(
         int_mod,
@@ -1632,7 +1653,8 @@ pub fn module_import_with_alias_and_exposing_test() {
       |> import_.with_alias("only_o"),
     )
 
-    let io_print = import_.function1(io, io.println)
+    let io_print =
+      import_.value_of_type(io, "println", types.reference(io.println))
 
     use _main <- module.with_function(
       definition.new(name: "main")
@@ -1699,11 +1721,11 @@ pub fn module_merge_imports_exposing_dedupes_test() {
   let mod = {
     use _ <- module.with_import(
       import_.new(["gleam", "string"])
-        |> import_.with_exposing([import_.exposed_value("length")]),
+      |> import_.with_exposing([import_.exposed_value("length")]),
     )
     use _ <- module.with_import(
       import_.new(["gleam", "string"])
-        |> import_.with_exposing([import_.exposed_value("length")]),
+      |> import_.with_exposing([import_.exposed_value("length")]),
     )
 
     use _main <- module.with_function(
@@ -1737,7 +1759,8 @@ pub fn module_unused_import_test() {
     use int_mod <- module.with_import(import_.new(["gleam", "int"]))
     use _ <- module.with_import(import_.new(["gleam", "string"]))
 
-    let io_print = import_.function1(io, io.println)
+    let io_print =
+      import_.value_of_type(io, "println", types.reference(io.println))
     let int_string =
       import_.value_of_type(
         int_mod,
@@ -1786,14 +1809,20 @@ pub fn module_sometimes_unused_import_test() {
     use int_mod <- module.with_import(import_.new(["gleam", "int"]))
     use string_mod <- module.with_import(import_.new(["gleam", "string"]))
 
-    let io_print = import_.function1(io, io.println)
+    let io_print =
+      import_.value_of_type(io, "println", types.reference(io.println))
     let int_string =
       import_.value_of_type(
         int_mod,
         "to_string",
         types.reference(int.to_string),
       )
-    let string_length = import_.function1(string_mod, string.length)
+    let string_length =
+      import_.value_of_type(
+        string_mod,
+        "length",
+        types.reference(string.length),
+      )
 
     let int_value = case use_string_mod_this_time {
       True -> expression.call1(string_length, expression.string("hi"))
@@ -2344,7 +2373,7 @@ pub fn case_unchecked_variant_test() {
           ),
           fn(details) {
             expression.call1(
-              import_.function1(int_module, int.sum),
+              import_.value_of_type(int_module, "sum", types.reference(int.sum)),
               expression.list(details)
                 |> expression.coerce_dynamic_unsafe(),
             )

@@ -22,32 +22,26 @@ import gleamgen/expression/block
 import gleamgen/function
 import gleamgen/import_
 import gleamgen/module
+import gleamgen/module/definition
+import gleamgen/parameter
 import gleamgen/render
 import gleamgen/types
 
-pub fn main() {
+pub fn generate() {
   let mod = {
     use imported_io <- module.with_import(import_.new(["gleam", "io"]))
     use imported_string <- module.with_import(import_.new(["gleam", "string"]))
 
     // module_used is of type Expression(String)
     use module_used <- module.with_constant(
-      module.DefinitionDetails(
-        name: "module_used",
-        is_public: False,
-        attributes: [],
-      ),
+      definition.new("module_used"),
       expression.string("Gleamgen"),
     )
 
     use greeter <- module.with_function(
-      module.DefinitionDetails(
-        name: "greeter",
-        is_public: False,
-        attributes: [],
-      ),
+      definition.new("greeter"),
       function.new1(
-        arg1: #("greeting", types.string),
+        param1: parameter.new("greeting", types.string),
         // we have said that greeter returns a string, so handler returning anything
         // else would be a type error
         returns: types.string,
@@ -68,28 +62,33 @@ pub fn main() {
         expression.call2(
           // If this is not the selected greeting, gleam/string will not be
           // imported in the final code
-          import_.function2(imported_string, string.repeat),
+          import_.value_of_type(
+            imported_string,
+            "repeat",
+            types.reference(string.repeat),
+          ),
           expression.string("Hi"),
           expression.int(5),
         ),
       ])
 
     use _main <- module.with_function(
-      module.DefinitionDetails(name: "main", is_public: True, attributes: []),
+      definition.new("main") |> definition.with_publicity(True),
       function.new0(types.nil, fn() {
-        {
-          use greeting <- block.with_let_declaration(
-            "greeting",
-            expression.call1(greeter, outer_greeting),
-          )
-          block.ending_block(expression.call1(
-            // reference the actual io.println function to get the name and
-            // the type signature
-            import_.function1(imported_io, io.println),
-            greeting,
-          ))
-        }
-        |> block.build()
+        use greeting <- block.with_let_declaration(
+          "greeting",
+          expression.call1(greeter, outer_greeting),
+        )
+        expression.call1(
+          // reference the actual io.println function to get the name and
+          // the type signature
+          import_.value_of_type(
+            imported_io,
+            "println",
+            types.reference(io.println),
+          ),
+          greeting,
+        )
       }),
     )
 
@@ -99,7 +98,6 @@ pub fn main() {
   mod
   |> module.render(render.default_context())
   |> render.to_string()
-  |> io.println()
 }
 ```
 

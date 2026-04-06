@@ -5,30 +5,8 @@ import gleamgen/pattern
 import gleamgen/render
 import gleamgen/types
 
-/// Blocks are used to group expressions together and are needed  to define local variables.
-/// 
-/// ```gleam 
-/// {
-///   use x <- block.with_let_declaration("x", expression.int(4))
-///   use y <- block.with_let_declaration(
-///     "y",
-///     expression.math_operator(x, expression.Add, expression.int(5)),
-///   )
-///   block.ending_block(y)
-/// }
-/// |> block.build()
-/// // type of Expression(Int)
-/// |> expression.render(render.default_context())
-///```
-///
-/// This will generate the following code:
-/// ```gleam
-/// {
-///   let x = 4
-///   let y = x + 5
-///   y
-/// }
-///```
+/// Create a block expression that returns a specific type (see also `new_dynamic`)
+/// Prefer building a block implicitly using the `with_` functions of this module
 pub fn new(
   statements: List(statement.Statement),
   return: types.GeneratedType(type_),
@@ -52,6 +30,27 @@ pub fn with_empty_line(handler: fn() -> Expression(ret)) {
   expression.add_to_or_create_block(expression.Linebreak, rest)
 }
 
+/// ```gleam
+/// {
+///   use x <- block.with_let_declaration("x", expression.int(4))
+///   use y <- block.with_let_declaration(
+///     "y",
+///     expression.math_operator(x, expression.Add, expression.int(5)),
+///   )
+///   y
+/// }
+/// |> expression.render(render.default_context())
+/// |> render.to_string()
+/// ```
+///
+/// outputs:
+/// ```gleam
+/// {
+///   let x = 4
+///   let y = x + 5
+///   y
+/// }
+/// ```
 pub fn with_let_declaration(
   variable: String,
   value: Expression(type_),

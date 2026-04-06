@@ -92,6 +92,7 @@ pub fn list(value: List(Expression(t))) -> Expression(List(t)) {
   )
 }
 
+/// Prepend value(s) to list using [value, ..original] syntax
 pub fn list_prepend(
   prepending: List(Expression(t)),
   original: Expression(List(t)),

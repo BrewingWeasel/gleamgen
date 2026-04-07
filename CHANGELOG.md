@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.4.0 - 2026-04-06
 
 - add predefined imports (Jan Wirth)
 - add unqualified imports (Jan Wirth)

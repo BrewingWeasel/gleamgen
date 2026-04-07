@@ -121,18 +121,13 @@ pub fn main() -> Nil {
 In general, there are two versions of every gleamgen function:
 
 - The version with phantom types to ensure type safety of the generated code
-- The untyped version (generally with the suffix `_unchecked`)
+- The "dynamic" version, which does not ensure type safety but is more flexible
 
 When possible, use the typed version to ensure the correctness of the generated code.
 
-However, in cases where you are dynamically generating the arguments or the
-types of functions, you will have to use the unchecked versions.
-
-You can easily integrate between the two with functions such as
-`expression.to_unchecked` or `expression.unsafe_from_unchecked`
+Note:
+This library has not reached version 1.0.0, so it is not stable.
+1.0.0 should be released soon.
 
 Further documentation can be found at <https://hexdocs.pm/gleamgen>.
 Also check out the examples folder (or the tests).
-
-Note: There are still a lot of basic functions that have yet to be implemented, and
-the way things like generics are handled are subject to change

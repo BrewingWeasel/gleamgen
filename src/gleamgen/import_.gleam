@@ -73,10 +73,31 @@ pub fn exposed_value_as(name: String, alias: String) -> ExposedItem {
 }
 
 @internal
-pub fn get_reference(imported: ImportedModule) -> String {
-  case imported.alias {
-    option.Some(alias) -> alias
-    option.None -> {
+pub fn get_reference(
+  imported: ImportedModule,
+  item_name: Option(String),
+) -> String {
+  let matches_exposed = fn(item_name, exposed_item) {
+    case exposed_item {
+      ExposedType(name, _) | ExposedValue(name, _) -> name == item_name
+    }
+  }
+  case imported.alias, item_name {
+    option.Some(alias), option.Some(item_name) -> {
+      case list.any(imported.exposing, matches_exposed(item_name, _)) {
+        True -> ""
+        False -> alias
+      }
+    }
+    option.Some(alias), option.None -> alias
+    option.None, option.Some(item_name) -> {
+      let assert Ok(name) = imported.name |> list.last
+      case list.any(imported.exposing, matches_exposed(item_name, _)) {
+        True -> ""
+        False -> name
+      }
+    }
+    option.None, option.None -> {
       let assert Ok(name) = imported.name |> list.last
       name
     }
@@ -84,7 +105,11 @@ pub fn get_reference(imported: ImportedModule) -> String {
 }
 
 pub fn raw_ident(imported: ImportedModule, name: String) -> Expression(any) {
-  expression.raw(get_reference(imported) <> "." <> name)
+  let text = case get_reference(imported, option.Some(name)) {
+    "" -> name
+    import_reference -> import_reference <> "." <> name
+  }
+  expression.raw(text)
 }
 
 pub fn value_of_type(
@@ -92,14 +117,21 @@ pub fn value_of_type(
   name: String,
   type_: types.GeneratedType(t),
 ) -> Expression(t) {
-  expression.raw_of_type(get_reference(imported) <> "." <> name, type_)
+  let text = case get_reference(imported, option.Some(name)) {
+    "" -> name
+    import_reference -> import_reference <> "." <> name
+  }
+  expression.raw_of_type(text, type_)
 }
 
 pub fn raw_type(
   imported: ImportedModule,
   name: String,
 ) -> custom.CustomType(t, generics) {
-  custom.CustomType(option.Some(get_reference(imported)), name)
+  custom.CustomType(
+    option.Some(get_reference(imported, option.Some(name))),
+    name,
+  )
 }
 
 /// Import an existing function from the module.
@@ -120,7 +152,7 @@ pub fn function0(
   func: fn() -> ret,
 ) -> Expression(fn() -> ret) {
   let name = function.get_function_name(func)
-  expression.raw(get_reference(imported) <> "." <> name)
+  raw_ident(imported, name)
 }
 
 /// Import an existing function from the module.
@@ -141,7 +173,7 @@ pub fn function1(
   func: fn(a) -> ret,
 ) -> Expression(fn(a) -> ret) {
   let name = function.get_function_name(func)
-  expression.raw(get_reference(imported) <> "." <> name)
+  raw_ident(imported, name)
 }
 
 // rest of the repetitive functionN functions
@@ -155,7 +187,7 @@ pub fn function2(
   func: fn(a, b) -> ret,
 ) -> Expression(fn(a, b) -> ret) {
   let name = function.get_function_name(func)
-  expression.raw(get_reference(imported) <> "." <> name)
+  raw_ident(imported, name)
 }
 
 /// Import an existing function from the module.
@@ -166,7 +198,7 @@ pub fn function3(
   func: fn(a, b, c) -> ret,
 ) -> Expression(fn(a, b, c) -> ret) {
   let name = function.get_function_name(func)
-  expression.raw(get_reference(imported) <> "." <> name)
+  raw_ident(imported, name)
 }
 
 /// Import an existing function from the module.
@@ -177,7 +209,7 @@ pub fn function4(
   func: fn(a, b, c, d) -> ret,
 ) -> Expression(fn(a, b, c, d) -> ret) {
   let name = function.get_function_name(func)
-  expression.raw(get_reference(imported) <> "." <> name)
+  raw_ident(imported, name)
 }
 
 /// Import an existing function from the module.
@@ -188,7 +220,7 @@ pub fn function5(
   func: fn(a, b, c, d, e) -> ret,
 ) -> Expression(fn(a, b, c, d, e) -> ret) {
   let name = function.get_function_name(func)
-  expression.raw(get_reference(imported) <> "." <> name)
+  raw_ident(imported, name)
 }
 
 /// Import an existing function from the module.
@@ -199,7 +231,7 @@ pub fn function6(
   func: fn(a, b, c, d, e, f) -> ret,
 ) -> Expression(fn(a, b, c, d, e, f) -> ret) {
   let name = function.get_function_name(func)
-  expression.raw(get_reference(imported) <> "." <> name)
+  raw_ident(imported, name)
 }
 
 /// Import an existing function from the module.
@@ -210,7 +242,7 @@ pub fn function7(
   func: fn(a, b, c, d, e, f, g) -> ret,
 ) -> Expression(fn(a, b, c, d, e, f, g) -> ret) {
   let name = function.get_function_name(func)
-  expression.raw(get_reference(imported) <> "." <> name)
+  raw_ident(imported, name)
 }
 
 /// Import an existing function from the module.
@@ -221,7 +253,7 @@ pub fn function8(
   func: fn(a, b, c, d, e, f, g, h) -> ret,
 ) -> Expression(fn(a, b, c, d, e, f, g, h) -> ret) {
   let name = function.get_function_name(func)
-  expression.raw(get_reference(imported) <> "." <> name)
+  raw_ident(imported, name)
 }
 
 /// Import an existing function from the module.
@@ -232,7 +264,7 @@ pub fn function9(
   func: fn(a, b, c, d, e, f, g, h, i) -> ret,
 ) -> Expression(fn(a, b, c, d, e, f, g, h, i) -> ret) {
   let name = function.get_function_name(func)
-  expression.raw(get_reference(imported) <> "." <> name)
+  raw_ident(imported, name)
 }
 
 // }}}

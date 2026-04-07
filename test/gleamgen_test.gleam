@@ -1612,6 +1612,53 @@ pub fn main() -> Nil {
   assert result == expected
 }
 
+pub fn module_import_unqualified_test() {
+  let mod = {
+    use io <- module.with_import(
+      import_.new(["gleam", "io"])
+      |> import_.with_alias("only_o")
+      |> import_.with_exposing([import_.ExposedValue("println", option.None)]),
+    )
+    use int_mod <- module.with_import(import_.new(["gleam", "int"]))
+
+    let io_print =
+      import_.value_of_type(io, "println", types.reference(io.println))
+    let int_string =
+      import_.value_of_type(
+        int_mod,
+        "to_string",
+        types.reference(int.to_string),
+      )
+
+    use _main <- module.with_function(
+      definition.new(name: "main")
+        |> definition.with_publicity(True),
+      function.new0(returns: types.nil, handler: fn() {
+        expression.call1(
+          io_print,
+          expression.call1(int_string, expression.int(23)),
+        )
+      }),
+    )
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "import gleam/int
+import gleam/io.{println} as only_o
+
+pub fn main() -> Nil {
+  println(int.to_string(23))
+}"
+
+  assert result == expected
+}
+
 /// Regression test for `import_.with_exposing`: rendered `import path.{items}` and kept in output
 /// when nothing references the module prefix (only unqualified imports from the exposing list).
 pub fn module_import_with_exposing_test() {
@@ -1649,7 +1696,7 @@ pub fn module_import_with_alias_and_exposing_test() {
   let mod = {
     use io <- module.with_import(
       import_.new(["gleam", "io"])
-      |> import_.with_exposing([import_.exposed_value("println")])
+      |> import_.with_exposing([import_.exposed_value("print")])
       |> import_.with_alias("only_o"),
     )
 
@@ -1672,7 +1719,7 @@ pub fn module_import_with_alias_and_exposing_test() {
     |> render.to_string()
 
   let expected =
-    "import gleam/io.{println} as only_o
+    "import gleam/io.{print} as only_o
 
 pub fn main() -> Nil {
   only_o.println(\"hi\")

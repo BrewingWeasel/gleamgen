@@ -662,7 +662,7 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
       // Explicit `.{…}` imports must appear even if nothing references the module prefix.
       || !list.is_empty(m.exposing)
       || details.used_imports
-      |> list.contains(import_.get_reference(m))
+      |> list.contains(import_.get_reference(m, option.None))
     })
     |> list.sort(import_.compare)
     |> import_.merge_imports

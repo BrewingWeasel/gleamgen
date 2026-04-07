@@ -1,4 +1,6 @@
 import glam/doc
+import gleam/bool
+import gleam/dict
 import gleam/float
 import gleam/int
 import gleam/list
@@ -6,6 +8,7 @@ import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import gleamgen/internal/render
+import gleamgen/parameter
 import gleamgen/render/config
 import gleamgen/types
 
@@ -34,12 +37,24 @@ type InternalExpression(type_) {
   Todo(Option(String))
   Panic(Option(String))
   Echo(expression: Expression(types.Dynamic), as_string: Option(String))
-  Assert(condition: Expression(Bool), as_string: Option(String))
-  MathOperator(Expression(Int), MathOperator, Expression(Int))
-  MathOperatorFloat(Expression(Float), MathOperator, Expression(Float))
-  Comparison(Expression(Int), Comparison, Expression(Int))
-  ComparisonFloat(Expression(Float), Comparison, Expression(Float))
-  ConcatString(Expression(String), Expression(String))
+  Assert(condition: Expression(types.Dynamic), as_string: Option(String))
+  MathOperator(
+    Expression(types.Dynamic),
+    MathOperator,
+    Expression(types.Dynamic),
+  )
+  MathOperatorFloat(
+    Expression(types.Dynamic),
+    MathOperator,
+    Expression(types.Dynamic),
+  )
+  Comparison(Expression(types.Dynamic), Comparison, Expression(types.Dynamic))
+  ComparisonFloat(
+    Expression(types.Dynamic),
+    Comparison,
+    Expression(types.Dynamic),
+  )
+  ConcatString(Expression(types.Dynamic), Expression(types.Dynamic))
   Call(Expression(types.Dynamic), List(Expression(types.Dynamic)))
   SingleConstructor(Expression(types.Dynamic))
   Block(List(Statement))
@@ -48,7 +63,11 @@ type InternalExpression(type_) {
     fn(render.Context) -> List(fn(Int) -> render.Rendered),
     Bool,
   )
-  AnonymousFunction(fn(render.Context) -> render.Rendered)
+  AnonymousFunction(
+    render: fn(render.Context) -> render.Rendered,
+    body: Expression(types.Dynamic),
+    parameters: List(parameter.Parameter(types.Dynamic)),
+  )
   Use(
     function: Expression(types.Dynamic),
     args: List(Expression(types.Dynamic)),
@@ -358,7 +377,7 @@ pub fn concat_string(
   expr1: Expression(String),
   expr2: Expression(String),
 ) -> Expression(String) {
-  Expression(ConcatString(expr1, expr2), types.string)
+  Expression(ConcatString(to_dynamic(expr1), to_dynamic(expr2)), types.string)
 }
 
 /// Create a todo expression with an optional as clause
@@ -388,7 +407,7 @@ pub fn assert_(
   condition: Expression(Bool),
   as_string: Option(String),
 ) -> Expression(Nil) {
-  Expression(Assert(condition, as_string), types.nil)
+  Expression(Assert(to_dynamic(condition), as_string), types.nil)
 }
 
 pub fn echo_(
@@ -439,7 +458,7 @@ pub fn math_operator(
   op: MathOperator,
   expr2: Expression(Int),
 ) -> Expression(Int) {
-  Expression(MathOperator(expr1, op, expr2), types.int)
+  Expression(MathOperator(to_dynamic(expr1), op, to_dynamic(expr2)), types.int)
 }
 
 /// Apply a math operator to two expressions with the type of Float
@@ -458,7 +477,10 @@ pub fn math_operator_float(
   op: MathOperator,
   expr2: Expression(Float),
 ) -> Expression(Int) {
-  Expression(MathOperatorFloat(expr1, op, expr2), types.int)
+  Expression(
+    MathOperatorFloat(to_dynamic(expr1), op, to_dynamic(expr2)),
+    types.int,
+  )
 }
 
 pub fn comparison(
@@ -466,7 +488,10 @@ pub fn comparison(
   operator: Comparison,
   expr2: Expression(Int),
 ) -> Expression(Bool) {
-  Expression(Comparison(expr1, operator, expr2), types.bool)
+  Expression(
+    Comparison(to_dynamic(expr1), operator, to_dynamic(expr2)),
+    types.bool,
+  )
 }
 
 pub fn comparison_float(
@@ -474,7 +499,10 @@ pub fn comparison_float(
   operator: Comparison,
   expr2: Expression(Float),
 ) -> Expression(Bool) {
-  Expression(ComparisonFloat(expr1, operator, expr2), types.bool)
+  Expression(
+    ComparisonFloat(to_dynamic(expr1), operator, to_dynamic(expr2)),
+    types.bool,
+  )
 }
 
 /// Call a function or constructor with no arguments
@@ -794,9 +822,14 @@ pub fn new_case(
 @internal
 pub fn new_anonymous_function(
   function: fn(render.Context) -> render.Rendered,
+  function_body: Expression(types.Dynamic),
+  function_parameters: List(parameter.Parameter(types.Dynamic)),
   return: types.GeneratedType(type_),
 ) -> Expression(type_) {
-  Expression(internal: AnonymousFunction(function), type_: return)
+  Expression(
+    internal: AnonymousFunction(function, function_body, function_parameters),
+    type_: return,
+  )
 }
 
 /// Get the internal type of an expression
@@ -951,7 +984,7 @@ pub fn render(
       render_operator(expr1, expr2, doc.from_string("!="), context)
     Case(to_match_on, patterns, all_can_match_on_multiple) ->
       render_case(to_match_on, patterns, all_can_match_on_multiple, context)
-    AnonymousFunction(renderer) -> renderer(context)
+    AnonymousFunction(renderer, ..) -> renderer(context)
     Use(func, args, callback_args) ->
       render_use(func, args, callback_args, context)
     WithConfig(expr, config) ->
@@ -972,7 +1005,10 @@ fn create_echo(
   |> render.Render(details: rendered_expr.details)
 }
 
-fn create_assert(condition: Expression(Bool), context) -> render.Rendered {
+fn create_assert(
+  condition: Expression(types.Dynamic),
+  context,
+) -> render.Rendered {
   let rendered_condition = render(condition, context)
   doc.concat([
     doc.from_string("assert"),
@@ -1226,9 +1262,311 @@ fn render_call(func, args, context) {
   let arg_context =
     render.Context(..context, include_brackets_current_level: True)
   let #(rendered_args, details) = render_expressions(args, arg_context)
-  let caller = render(func, context)
-  doc.concat([caller.doc, render.pretty_list(rendered_args)])
-  |> render.Render(details: render.merge_details(details, caller.details))
+  case inline_anonymous_function_args(func, rendered_args, details, context) {
+    Ok(inlined) -> inlined
+    Error(Nil) -> {
+      let caller = render(func, context)
+      doc.concat([caller.doc, render.pretty_list(rendered_args)])
+      |> render.Render(details: render.merge_details(details, caller.details))
+    }
+  }
+}
+
+fn inline_anonymous_function_args(
+  function_expression: Expression(a),
+  rendered_args,
+  details,
+  context,
+) {
+  case function_expression.internal {
+    AnonymousFunction(body:, parameters:, ..) -> {
+      use <- bool.guard(
+        list.length(parameters) != list.length(rendered_args),
+        Error(Nil),
+      )
+
+      let rendered_parameters_by_name =
+        parameters
+        |> list.map(fn(parameter) { parameter.name(parameter) })
+        |> list.zip(rendered_args)
+        |> dict.from_list
+
+      use inlined_body <- result.try(
+        recursively_update_expression(body, fn(expr, run_update) {
+          inline_with(expr, run_update, rendered_parameters_by_name)
+        }),
+      )
+      let rendered_inlined_body = render(inlined_body, context)
+      Ok(render.Render(
+        rendered_inlined_body.doc,
+        details: render.merge_details(details, rendered_inlined_body.details),
+      ))
+    }
+    _ -> Error(Nil)
+  }
+}
+
+fn inline_with(
+  expression: Expression(types.Dynamic),
+  run_update: fn(Expression(types.Dynamic)) ->
+    Result(Expression(types.Dynamic), Nil),
+  rendered_parameters_by_name: dict.Dict(String, doc.Document),
+) -> Result(Expression(types.Dynamic), Nil) {
+  case expression.internal {
+    Ident(name) -> {
+      case dict.get(rendered_parameters_by_name, name) {
+        Ok(rendered_arg) ->
+          Ok(Expression(..expression, internal: RawDoc(rendered_arg)))
+        Error(Nil) ->
+          case is_minimal_ident(name) {
+            True -> Ok(expression)
+            False -> Error(Nil)
+          }
+      }
+    }
+    _ -> run_update(expression)
+  }
+}
+
+fn is_minimal_ident(ident: String) -> Bool {
+  ident
+  |> string.to_graphemes()
+  |> list.all(fn(c) {
+    c == "_"
+    || c == "."
+    || c == "0"
+    || c == "1"
+    || c == "2"
+    || c == "3"
+    || c == "4"
+    || c == "5"
+    || c == "6"
+    || c == "7"
+    || c == "8"
+    || c == "9"
+    || c == "a"
+    || c == "b"
+    || c == "c"
+    || c == "d"
+    || c == "e"
+    || c == "f"
+    || c == "g"
+    || c == "h"
+    || c == "i"
+    || c == "j"
+    || c == "k"
+    || c == "l"
+    || c == "m"
+    || c == "n"
+    || c == "o"
+    || c == "p"
+    || c == "q"
+    || c == "r"
+    || c == "s"
+    || c == "t"
+    || c == "u"
+    || c == "v"
+    || c == "w"
+    || c == "x"
+    || c == "y"
+    || c == "z"
+    || c == "A"
+    || c == "B"
+    || c == "C"
+    || c == "D"
+    || c == "E"
+    || c == "F"
+    || c == "G"
+    || c == "H"
+    || c == "I"
+    || c == "J"
+    || c == "K"
+    || c == "L"
+    || c == "M"
+    || c == "N"
+    || c == "O"
+    || c == "P"
+    || c == "Q"
+    || c == "R"
+    || c == "S"
+    || c == "T"
+    || c == "U"
+    || c == "V"
+    || c == "W"
+    || c == "X"
+    || c == "Y"
+    || c == "Z"
+  })
+}
+
+fn recursively_update_expression(
+  expression: Expression(types.Dynamic),
+  run_update: fn(
+    Expression(types.Dynamic),
+    fn(Expression(types.Dynamic)) -> Result(Expression(types.Dynamic), Nil),
+  ) ->
+    Result(Expression(types.Dynamic), Nil),
+) {
+  let default_update = fn(expr: Expression(types.Dynamic)) {
+    let updated_internal = case expr.internal {
+      Call(func, args) -> {
+        use updated_func <- result.try(recursively_update_expression(
+          func,
+          run_update,
+        ))
+        use updated_args <- result.try(
+          list.try_map(args, recursively_update_expression(_, run_update)),
+        )
+        Ok(Call(updated_func, updated_args))
+      }
+
+      // TODO
+      Case(..) -> Error(Nil)
+
+      // We can't know what these actually contain
+      RawDoc(_) | Ident(_) -> Error(Nil)
+
+      // These could change scope
+      Block(..) | AnonymousFunction(..) | Use(..) -> Error(Nil)
+      WithConfig(expr, config) -> {
+        use updated_expr <- result.try(recursively_update_expression(
+          expr,
+          run_update,
+        ))
+        Ok(WithConfig(updated_expr, config))
+      }
+      SingleConstructor(constructor) -> {
+        use updated_constructor <- result.try(recursively_update_expression(
+          constructor,
+          run_update,
+        ))
+        Ok(SingleConstructor(updated_constructor))
+      }
+      ListLiteral(elems, initial) -> {
+        use updated_elems <- result.try(
+          list.try_map(elems, recursively_update_expression(_, run_update)),
+        )
+        case initial {
+          Some(initial) -> {
+            use updated_initial <- result.try(recursively_update_expression(
+              initial,
+              run_update,
+            ))
+            Ok(ListLiteral(updated_elems, Some(updated_initial)))
+          }
+          None -> Ok(ListLiteral(updated_elems, None))
+        }
+      }
+      TupleLiteral(elems) -> {
+        use updated_elems <- result.try(
+          list.try_map(elems, recursively_update_expression(_, run_update)),
+        )
+        Ok(TupleLiteral(updated_elems))
+      }
+      Equals(expr1, expr2) -> {
+        use updated_expr1 <- result.try(recursively_update_expression(
+          expr1,
+          run_update,
+        ))
+        use updated_expr2 <- result.try(recursively_update_expression(
+          expr2,
+          run_update,
+        ))
+        Ok(Equals(updated_expr1, updated_expr2))
+      }
+      NotEquals(expr1, expr2) -> {
+        use updated_expr1 <- result.try(recursively_update_expression(
+          expr1,
+          run_update,
+        ))
+        use updated_expr2 <- result.try(recursively_update_expression(
+          expr2,
+          run_update,
+        ))
+        Ok(NotEquals(updated_expr1, updated_expr2))
+      }
+      ConcatString(expr1, expr2) -> {
+        use updated_expr1 <- result.try(recursively_update_expression(
+          expr1,
+          run_update,
+        ))
+        use updated_expr2 <- result.try(recursively_update_expression(
+          expr2,
+          run_update,
+        ))
+        Ok(ConcatString(updated_expr1, updated_expr2))
+      }
+      MathOperator(expr1, op, expr2) -> {
+        use updated_expr1 <- result.try(recursively_update_expression(
+          expr1,
+          run_update,
+        ))
+        use updated_expr2 <- result.try(recursively_update_expression(
+          expr2,
+          run_update,
+        ))
+        Ok(MathOperator(updated_expr1, op, updated_expr2))
+      }
+      MathOperatorFloat(expr1, op, expr2) -> {
+        use updated_expr1 <- result.try(recursively_update_expression(
+          expr1,
+          run_update,
+        ))
+        use updated_expr2 <- result.try(recursively_update_expression(
+          expr2,
+          run_update,
+        ))
+        Ok(MathOperatorFloat(updated_expr1, op, updated_expr2))
+      }
+      Comparison(expr1, operator, expr2) -> {
+        use updated_expr1 <- result.try(recursively_update_expression(
+          expr1,
+          run_update,
+        ))
+        use updated_expr2 <- result.try(recursively_update_expression(
+          expr2,
+          run_update,
+        ))
+        Ok(Comparison(updated_expr1, operator, updated_expr2))
+      }
+      ComparisonFloat(expr1, operator, expr2) -> {
+        use updated_expr1 <- result.try(recursively_update_expression(
+          expr1,
+          run_update,
+        ))
+        use updated_expr2 <- result.try(recursively_update_expression(
+          expr2,
+          run_update,
+        ))
+        Ok(ComparisonFloat(updated_expr1, operator, updated_expr2))
+      }
+      Echo(expression, as_string) -> {
+        use updated_expression <- result.try(recursively_update_expression(
+          expression,
+          run_update,
+        ))
+        Ok(Echo(updated_expression, as_string))
+      }
+      Assert(condition, as_string) -> {
+        use updated_condition <- result.try(recursively_update_expression(
+          condition,
+          run_update,
+        ))
+        Ok(Assert(updated_condition, as_string))
+      }
+
+      IntLiteral(..)
+      | StrLiteral(..)
+      | BoolLiteral(..)
+      | FloatLiteral(..)
+      | Panic(..)
+      | Todo(..)
+      | NilLiteral -> Ok(expr.internal)
+    }
+    use internal <- result.try(updated_internal)
+    Ok(Expression(internal:, type_: expr.type_))
+  }
+  run_update(expression, default_update)
 }
 
 fn render_constructor(func, context) {

@@ -829,6 +829,75 @@ pub fn simple_anonymous_function_test() {
   assert result == expected
 }
 
+pub fn inline_simple_anonymous_function_test() {
+  let result =
+    {
+      let anonymous_function =
+        function.anonymous(
+          function.new2(
+            parameter.new("x", types.int),
+            parameter.new("y", types.int),
+            types.int,
+            handler: fn(x, y) { expression.math_operator(x, expression.Add, y) },
+          ),
+        )
+      expression.call2(anonymous_function, expression.int(2), expression.int(3))
+    }
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "2 + 3"
+
+  assert result == expected
+}
+
+pub fn inline_zero_argument_function_test() {
+  let result =
+    {
+      let anonymous_function =
+        function.anonymous(
+          function.new0(types.int, handler: fn() {
+            expression.math_operator(
+              expression.int(5),
+              expression.Add,
+              expression.int(3),
+            )
+          }),
+        )
+      expression.call0(anonymous_function)
+    }
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "5 + 3"
+
+  assert result == expected
+}
+
+pub fn do_not_inline_unclear_functions_test() {
+  let result =
+    {
+      let anonymous_function =
+        function.anonymous(
+          function.new1(
+            types.int,
+            param1: parameter.new("_example", types.int),
+            handler: fn(_example) {
+              expression.raw("echo \"who knows what's going on in here\"")
+            },
+          ),
+        )
+      expression.call1(anonymous_function, expression.int(0))
+    }
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "fn(_example: Int) -> Int { echo \"who knows what's going on in here\" }(0)"
+
+  assert result == expected
+}
+
 pub fn simple_module_test() {
   let mod = {
     use _based_number <- module.with_constant(
@@ -1061,8 +1130,12 @@ pub fn anonymous_functions_ignore_labels_test() {
       definition.new(name: "sum_of_2_and_3")
         |> definition.with_publicity(True),
       function.new0(types.int, fn() {
-        expression.call2(
+        use add_function_expr <- block.with_let_declaration(
+          "add_function",
           function.anonymous(add_function),
+        )
+        expression.call2(
+          add_function_expr,
           expression.int(2),
           expression.int(3),
         )
@@ -1083,7 +1156,8 @@ pub fn anonymous_functions_ignore_labels_test() {
 }
 
 pub fn sum_of_2_and_3() -> Int {
-  fn(num1: Int, num2: Int) -> Int { num1 + num2 }(2, 3)
+  let add_function = fn(num1: Int, num2: Int) -> Int { num1 + num2 }
+  add_function(2, 3)
 }"
 
   assert result == expected

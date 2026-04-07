@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- inline anonymous functions that are called directly after definition
+
 ## v0.4.0 - 2026-04-06
 
 - add predefined imports (Jan Wirth)

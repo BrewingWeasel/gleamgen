@@ -32,7 +32,7 @@ pub fn new_raw(
 pub fn new0(
   returns returns: types.GeneratedType(ret),
   handler handler: fn() -> expression.Expression(ret),
-) -> Function(fn(arg1) -> ret, ret) {
+) -> Function(fn() -> ret, ret) {
   let body = handler()
   Function(parameters: [], returns:, body:)
 }
@@ -394,7 +394,12 @@ pub fn anonymous(function: Function(type_, ret)) -> expression.Expression(type_)
 
   let renderer = fn(context) { render(function, context, option.None) }
 
-  expression.new_anonymous_function(renderer, type_)
+  expression.new_anonymous_function(
+    renderer,
+    expression.to_dynamic(function.body),
+    function.parameters,
+    type_,
+  )
 }
 
 pub fn render(

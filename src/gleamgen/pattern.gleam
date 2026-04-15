@@ -2,8 +2,11 @@ import glam/doc
 import gleam/int
 import gleam/list
 import gleam/option.{type Option}
+import gleam/result
 import gleamgen/expression.{type Expression}
 import gleamgen/expression/constructor
+import gleamgen/import_
+import gleamgen/internal/import_reference
 import gleamgen/internal/render
 import gleamgen/types
 import gleamgen/types/custom
@@ -21,6 +24,7 @@ pub opaque type Pattern(input, match_output) {
   Constructor(
     constructor: #(String, List(Pattern(types.Dynamic, types.Dynamic))),
     output: match_output,
+    module: Option(import_reference.ImportReference),
   )
   Or(
     options: #(Pattern(input, match_output), Pattern(input, match_output)),
@@ -86,7 +90,11 @@ pub fn concat_string(
 }
 
 pub fn ok(ok_pattern: Pattern(a, a_output)) -> Pattern(Result(a, err), a_output) {
-  Constructor(#("Ok", [ok_pattern |> to_dynamic]), output: ok_pattern.output)
+  Constructor(
+    #("Ok", [ok_pattern |> to_dynamic]),
+    output: ok_pattern.output,
+    module: option.None,
+  )
 }
 
 pub fn error(
@@ -95,6 +103,7 @@ pub fn error(
   Constructor(
     #("Error", [err_pattern |> to_dynamic]),
     output: err_pattern.output,
+    module: option.None,
   )
 }
 
@@ -135,7 +144,11 @@ pub fn from_constructor_dynamic(
   constructors: List(Pattern(types.Dynamic, types.Dynamic)),
 ) -> Pattern(construct, List(Expression(types.Dynamic))) {
   Constructor(
-    #(constructor.name(constructor), list.map(constructors, to_dynamic)),
+    module: option.None,
+    constructor: #(
+      constructor.name(constructor),
+      list.map(constructors, to_dynamic),
+    ),
     output: list.filter_map(constructors, get_pattern_output),
   )
 }
@@ -149,7 +162,11 @@ fn get_pattern_output(
 pub fn from_constructor0(
   constructor: constructor.Constructor(construct_to, #(), generics),
 ) -> Pattern(construct_to, Nil) {
-  Constructor(#(constructor.name(constructor), []), output: Nil)
+  Constructor(
+    module: option.None,
+    constructor: #(constructor.name(constructor), []),
+    output: Nil,
+  )
 }
 
 pub fn from_constructor1(
@@ -157,7 +174,8 @@ pub fn from_constructor1(
   first: Pattern(a, a_output),
 ) -> Pattern(custom.CustomType(construct_to, generics), a_output) {
   Constructor(
-    #(constructor.name(constructor), [first |> to_dynamic]),
+    module: option.None,
+    constructor: #(constructor.name(constructor), [first |> to_dynamic]),
     output: first.output,
   )
 }
@@ -171,7 +189,8 @@ pub fn from_constructor2(
   second: Pattern(b, b_output),
 ) -> Pattern(custom.CustomType(construct_to, generics), #(a_output, b_output)) {
   Constructor(
-    #(constructor.name(constructor), [
+    module: option.None,
+    constructor: #(constructor.name(constructor), [
       first |> to_dynamic,
       second |> to_dynamic,
     ]),
@@ -190,7 +209,8 @@ pub fn from_constructor3(
   third: Pattern(c, c_output),
 ) -> Pattern(construct_to, #(a_output, b_output, c_output)) {
   Constructor(
-    #(constructor.name(constructor), [
+    module: option.None,
+    constructor: #(constructor.name(constructor), [
       first |> to_dynamic,
       second |> to_dynamic,
       third |> to_dynamic,
@@ -211,7 +231,8 @@ pub fn from_constructor4(
   fourth: Pattern(d, d_output),
 ) -> Pattern(construct_to, #(a_output, b_output, c_output, d_output)) {
   Constructor(
-    #(constructor.name(constructor), [
+    module: option.None,
+    constructor: #(constructor.name(constructor), [
       first |> to_dynamic,
       second |> to_dynamic,
       third |> to_dynamic,
@@ -234,7 +255,8 @@ pub fn from_constructor5(
   fifth: Pattern(e, e_output),
 ) -> Pattern(construct_to, #(a_output, b_output, c_output, d_output, e_output)) {
   Constructor(
-    #(constructor.name(constructor), [
+    module: option.None,
+    constructor: #(constructor.name(constructor), [
       first |> to_dynamic,
       second |> to_dynamic,
       third |> to_dynamic,
@@ -268,7 +290,8 @@ pub fn from_constructor6(
   #(a_output, b_output, c_output, d_output, e_output, f_output),
 ) {
   Constructor(
-    #(constructor.name(constructor), [
+    module: option.None,
+    constructor: #(constructor.name(constructor), [
       first |> to_dynamic,
       second |> to_dynamic,
       third |> to_dynamic,
@@ -305,7 +328,8 @@ pub fn from_constructor7(
   #(a_output, b_output, c_output, d_output, e_output, f_output, g_output),
 ) {
   Constructor(
-    #(constructor.name(constructor), [
+    module: option.None,
+    constructor: #(constructor.name(constructor), [
       first |> to_dynamic,
       second |> to_dynamic,
       third |> to_dynamic,
@@ -354,7 +378,8 @@ pub fn from_constructor8(
   ),
 ) {
   Constructor(
-    #(constructor.name(constructor), [
+    module: option.None,
+    constructor: #(constructor.name(constructor), [
       first |> to_dynamic,
       second |> to_dynamic,
       third |> to_dynamic,
@@ -407,7 +432,8 @@ pub fn from_constructor9(
   ),
 ) {
   Constructor(
-    #(constructor.name(constructor), [
+    module: option.None,
+    constructor: #(constructor.name(constructor), [
       first |> to_dynamic,
       second |> to_dynamic,
       third |> to_dynamic,
@@ -710,6 +736,7 @@ pub fn to_dynamic(
 
 pub fn render(
   pattern: Pattern(_, _),
+  context: render.Context,
   number_of_subjects: Int,
 ) -> render.Rendered {
   case pattern {
@@ -744,8 +771,8 @@ pub fn render(
     BoolLiteral(False, ..) ->
       doc.from_string("False") |> render.Render(details: render.empty_details)
     Or(#(first, second), ..) -> {
-      let rendered_first = render(first, 1)
-      let rendered_second = render(second, 1)
+      let rendered_first = render(first, context, 1)
+      let rendered_second = render(second, context, 1)
       doc.concat([
         rendered_first.doc,
         doc.space,
@@ -759,7 +786,7 @@ pub fn render(
       ))
     }
     As(#(original, name), ..) -> {
-      let original = render(original, 1)
+      let original = render(original, context, 1)
       doc.concat([
         original.doc,
         doc.space,
@@ -769,23 +796,59 @@ pub fn render(
       ])
       |> render.Render(details: original.details)
     }
-    Constructor(#(name, patterns), ..) -> {
+    Constructor(module:, constructor: #(name, patterns), ..) -> {
+      let #(module_doc, constructor_doc, module_details) = case module {
+        option.None -> #(doc.empty, doc.from_string(name), render.empty_details)
+        option.Some(module) -> {
+          let module_to_use = case module.implied {
+            True -> {
+              // Search for existing imports of the same module to standardize aliases, unqualified imports, etc. 
+              context.imports
+              |> list.reverse()
+              |> list.find(fn(reference) { reference.module == module.module })
+              |> result.unwrap(module)
+            }
+            False -> module
+          }
+          let #(module_name, constructor_name) =
+            import_.get_reference_from_import_reference(module_to_use, name)
+
+          let module_doc = case module_name {
+            "" -> doc.empty
+            module_name -> doc.from_string(module_name <> ".")
+          }
+
+          #(
+            module_doc,
+            doc.from_string(constructor_name),
+            render.RenderedDetails(
+              ..render.empty_details,
+              required_implied_imports: [module.module],
+            ),
+          )
+        }
+      }
       case patterns {
         [] ->
-          doc.from_string(name)
-          |> render.Render(details: render.empty_details)
+          module_doc
+          |> doc.append(doc.from_string(name))
+          |> render.Render(details: module_details)
         _ -> {
           let #(details, rendered_patterns) =
             patterns
             |> list.map_fold(render.empty_details, fn(acc, m) {
-              let rendered = render(m, 1)
+              let rendered = render(m, context, 1)
               #(render.merge_details(acc, rendered.details), rendered.doc)
             })
 
           rendered_patterns
           |> render.pretty_list()
-          |> doc.prepend(doc.from_string(name))
-          |> render.Render(details:)
+          |> doc.prepend(constructor_doc)
+          |> doc.prepend(module_doc)
+          |> render.Render(details: render.merge_details(
+            details,
+            module_details,
+          ))
         }
       }
     }
@@ -793,7 +856,7 @@ pub fn render(
       let #(details, rendered_patterns) =
         patterns
         |> list.map_fold(render.empty_details, fn(acc, m) {
-          let rendered = render(m, 1)
+          let rendered = render(m, context, 1)
           #(render.merge_details(acc, rendered.details), rendered.doc)
         })
 
@@ -822,35 +885,33 @@ pub fn can_match_on_multiple(pattern: Pattern(_, _)) -> Bool {
 
 /// Renders `[]`. List this branch before a catch-all (e.g. `variable`) so the empty case matches first.
 pub fn list_empty() -> Pattern(List(a), Nil) {
-  Constructor(#("[]", []), output: Nil)
+  Constructor(module: option.None, constructor: #("[]", []), output: Nil)
 }
 
 /// Renders `[first, ..]` and binds the head element to `first`.
 pub fn list_first_discard_rest(first: String) -> Pattern(List(a), Expression(a)) {
-  Constructor(#("[" <> first <> ", ..]", []), output: expression.raw(first))
-}
-
-/// Match `VariantName(p1, p2, …)` when the variant comes from another module.
-/// Pass `pattern.variable(\"field\") |> pattern.to_dynamic` for each field in order.
-/// The case handler receives each field’s pattern output, typically
-/// `expression.raw(\"field\")`, as a list in left-to-right order.
-pub fn foreign_variant(
-  variant_name: String,
-  field_patterns: List(Pattern(types.Dynamic, types.Dynamic)),
-) -> Pattern(types.Dynamic, List(Expression(types.Dynamic))) {
   Constructor(
-    #(variant_name, list.map(field_patterns, to_dynamic)),
-    output: list.filter_map(field_patterns, get_pattern_output),
+    module: option.None,
+    constructor: #("[" <> first <> ", ..]", []),
+    output: expression.raw(first),
   )
 }
 
 /// `Some(inner)`.
 pub fn option_some(inner: Pattern(a, a_out)) -> Pattern(Option(a), a_out) {
-  Constructor(#("Some", [inner |> to_dynamic]), output: inner.output)
+  Constructor(
+    module: option.Some(import_.new_implied_reference(["gleam", "option"])),
+    constructor: #("Some", [inner |> to_dynamic]),
+    output: inner.output,
+  )
 }
 
 /// `None`.
 pub fn option_none() -> Pattern(Option(a), Nil) {
-  Constructor(#("None", []), output: Nil)
+  Constructor(
+    module: option.Some(import_.new_implied_reference(["gleam", "option"])),
+    constructor: #("None", []),
+    output: Nil,
+  )
 }
 // vim: foldmethod=marker foldlevel=0

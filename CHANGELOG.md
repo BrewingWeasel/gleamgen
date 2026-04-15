@@ -3,6 +3,7 @@
 ## Unreleased
 
 - inline anonymous functions that are called directly after definition
+- automatically import gleam/option module when using option helpers
 
 ## v0.4.0 - 2026-04-06
 

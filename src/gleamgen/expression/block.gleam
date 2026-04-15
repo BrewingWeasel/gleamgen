@@ -1,8 +1,9 @@
+import glam/doc
 import gleam/list
 import gleamgen/expression.{type Expression}
 import gleamgen/expression/statement
+import gleamgen/internal/render
 import gleamgen/pattern
-import gleamgen/render
 import gleamgen/types
 
 /// Create a block expression that returns a specific type (see also `new_dynamic`)
@@ -58,7 +59,13 @@ pub fn with_let_declaration(
 ) -> Expression(ret) {
   let rest = handler(expression.raw(variable))
   expression.add_to_or_create_block(
-    expression.LetDeclaration(variable, value |> expression.to_dynamic(), False),
+    expression.LetDeclaration(
+      fn(_context) {
+        render.Render(doc.from_string(variable), render.empty_details)
+      },
+      value |> expression.to_dynamic(),
+      False,
+    ),
     rest,
   )
 }
@@ -72,10 +79,11 @@ pub fn with_matching_let_declaration(
   let rest = handler(pattern.get_output(pattern))
   expression.add_to_or_create_block(
     expression.LetDeclaration(
-      pattern
+      fn(context) {
+        pattern
         |> pattern.to_dynamic()
-        |> pattern.render(1)
-        |> render.to_string(),
+        |> pattern.render(context, 1)
+      },
       value |> expression.to_dynamic(),
       assert_,
     ),

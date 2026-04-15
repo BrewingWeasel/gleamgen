@@ -1,10 +1,12 @@
 import glance
+import gleam/dict
 import gleam/list
 import gleam/option.{type Option}
 import gleam/order
 import gleam/string
 import gleamgen/expression.{type Expression}
 import gleamgen/function
+import gleamgen/internal/import_reference.{type ImportReference}
 import gleamgen/types
 import gleamgen/types/custom
 
@@ -23,6 +25,30 @@ pub type ImportedModule {
     exposing: List(ExposedItem),
     before_text: String,
     predefined: Bool,
+  )
+}
+
+@internal
+pub fn import_to_reference(module: ImportedModule) -> ImportReference {
+  import_reference.ImportReference(
+    module: module.name,
+    alias: module.alias,
+    implied: False,
+    unqualified_values: module.exposing
+      |> list.map(fn(exposed) {
+        #(exposed.name, option.unwrap(exposed.alias, exposed.name))
+      })
+      |> dict.from_list(),
+  )
+}
+
+@internal
+pub fn new_implied_reference(name: List(String)) -> ImportReference {
+  import_reference.ImportReference(
+    module: name,
+    alias: option.None,
+    implied: True,
+    unqualified_values: dict.new(),
   )
 }
 
@@ -100,6 +126,29 @@ pub fn get_reference(
     option.None, option.None -> {
       let assert Ok(name) = imported.name |> list.last
       name
+    }
+  }
+}
+
+// TODO: merge
+@internal
+pub fn get_reference_from_import_reference(
+  imported: ImportReference,
+  item_name: String,
+) -> #(String, String) {
+  case imported.alias {
+    option.Some(alias) -> {
+      case dict.get(imported.unqualified_values, item_name) {
+        Ok(alias_name) -> #("", alias_name)
+        Error(_) -> #(alias, item_name)
+      }
+    }
+    option.None -> {
+      let assert Ok(name) = imported.module |> list.last
+      case dict.get(imported.unqualified_values, item_name) {
+        Ok(alias_name) -> #("", alias_name)
+        Error(Nil) -> #(name, item_name)
+      }
     }
   }
 }

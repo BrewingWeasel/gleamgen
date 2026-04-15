@@ -866,7 +866,11 @@ pub fn coerce_dynamic_unsafe(type_: Expression(t1)) -> Expression(t2)
 
 @internal
 pub type Statement {
-  LetDeclaration(name: String, value: Expression(types.Dynamic), assert_: Bool)
+  LetDeclaration(
+    pattern: fn(render.Context) -> render.Rendered,
+    value: Expression(types.Dynamic),
+    assert_: Bool,
+  )
   ExpressionStatement(Expression(types.Dynamic))
   Comment(List(String))
   Linebreak
@@ -1138,12 +1142,16 @@ fn render_list(values, initial_list, context) {
 
 pub fn render_statement(statement: Statement, context) -> render.Rendered {
   case statement {
-    LetDeclaration(variable, value, assert_) -> {
+    LetDeclaration(pattern_renderer, value, assert_) -> {
       let rendered_value = render(value, context)
       let let_def = case assert_ {
         True -> "let assert "
         False -> "let "
       }
+
+      let rendered_pattern = pattern_renderer(context)
+      let details =
+        render.merge_details(rendered_value.details, rendered_pattern.details)
 
       let #(type_annotation, details) = case types.render_type(value.type_) {
         Ok(rendered_type) if context.config.annotate_type_in_let_declarations -> #(
@@ -1152,14 +1160,14 @@ pub fn render_statement(statement: Statement, context) -> render.Rendered {
             doc.space,
             rendered_type.doc,
           ]),
-          render.merge_details(rendered_value.details, rendered_type.details),
+          render.merge_details(details, rendered_type.details),
         )
-        _ -> #(doc.empty, rendered_value.details)
+        _ -> #(doc.empty, details)
       }
 
       doc.concat([
         doc.from_string(let_def),
-        doc.from_string(variable),
+        rendered_pattern.doc,
         type_annotation,
         doc.space,
         doc.from_string("="),
@@ -1180,7 +1188,11 @@ pub fn render_statement(statement: Statement, context) -> render.Rendered {
     )) -> {
       render_block(
         statements,
-        render.Context(include_brackets_current_level: False, config:),
+        render.Context(
+          ..context,
+          include_brackets_current_level: False,
+          config:,
+        ),
       )
     }
     ExpressionStatement(expr) -> render(expr, context)

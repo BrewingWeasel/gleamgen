@@ -121,7 +121,8 @@ pub fn build_expression(
             }
             _ -> pattern
           }
-          let rendered_match = pattern.render(pattern, number_of_subjects)
+          let rendered_match =
+            pattern.render(pattern, context, number_of_subjects)
           let rendered_response = expression.render(output, context)
 
           rendered_match.doc

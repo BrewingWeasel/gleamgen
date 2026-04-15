@@ -645,6 +645,9 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
     |> list.flatten
     |> list.reverse()
 
+  let import_references = list.map(module.imports, import_.import_to_reference)
+  let context = render.Context(..context, imports: import_references)
+
   let #(details, rendered_defs) =
     render_all_definitions(
       all_definitions,
@@ -655,26 +658,35 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
       [],
     )
 
+  let implied_imports =
+    details.required_implied_imports
+    |> list.map(fn(module) {
+      import_.new(module) |> import_.with_predefined(True)
+    })
+
   let rendered_imports =
     module.imports
+    |> list.append(implied_imports)
+    |> list.sort(import_.compare)
+    |> import_.merge_imports
     |> list.filter(fn(m) {
       m.predefined
       // Explicit `.{…}` imports must appear even if nothing references the module prefix.
       || !list.is_empty(m.exposing)
-      || details.used_imports
-      |> list.contains(import_.get_reference(m, option.None))
+      || list.contains(
+        details.used_imports,
+        import_.get_reference(m, option.None),
+      )
     })
-    |> list.sort(import_.compare)
-    |> import_.merge_imports
     |> list.map(fn(x) { x |> render_imported_module |> render.to_string() })
     |> list.map(doc.from_string)
-    |> doc.join(with: doc.line)
-    |> doc.append(case list.is_empty(module.imports) {
-      True -> doc.empty
-      False -> doc.concat([doc.line, doc.line])
-    })
 
   rendered_imports
+  |> doc.join(with: doc.line)
+  |> doc.append(case list.is_empty(rendered_imports) {
+    True -> doc.empty
+    False -> doc.concat([doc.line, doc.line])
+  })
   |> doc.append(doc.concat_join(rendered_defs, [doc.line, doc.line]))
   |> render.Render(details:)
 }

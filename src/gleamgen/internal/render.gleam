@@ -1,6 +1,7 @@
 import glam/doc
 import gleam/list
 import gleam/string
+import gleamgen/internal/import_reference
 import gleamgen/render/config
 import gleamgen/render/report
 
@@ -9,10 +10,18 @@ pub type Rendered {
 }
 
 pub type RenderedDetails {
-  RenderedDetails(used_imports: List(String), report: report.Report)
+  RenderedDetails(
+    used_imports: List(String),
+    required_implied_imports: List(List(String)),
+    report: report.Report,
+  )
 }
 
-pub const empty_details = RenderedDetails([], report.empty)
+pub const empty_details = RenderedDetails(
+  used_imports: [],
+  required_implied_imports: [],
+  report: report.empty,
+)
 
 pub fn merge_details(
   first: RenderedDetails,
@@ -20,6 +29,10 @@ pub fn merge_details(
 ) -> RenderedDetails {
   RenderedDetails(
     used_imports: list.append(first.used_imports, second.used_imports),
+    required_implied_imports: list.append(
+      first.required_implied_imports,
+      second.required_implied_imports,
+    ),
     report: report.Report(
       warnings: list.append(first.report.warnings, second.report.warnings),
       errors: list.append(first.report.errors, second.report.errors),
@@ -32,15 +45,23 @@ pub fn merge_details_many(details: List(RenderedDetails)) -> RenderedDetails {
 }
 
 pub type Context {
-  Context(config: config.Config, include_brackets_current_level: Bool)
+  Context(
+    config: config.Config,
+    imports: List(import_reference.ImportReference),
+    include_brackets_current_level: Bool,
+  )
 }
 
 pub fn default_context() -> Context {
-  Context(config.default_config, True)
+  Context(
+    config: config.default_config,
+    imports: [],
+    include_brackets_current_level: True,
+  )
 }
 
 pub fn context_from_config(config: config.Config) -> Context {
-  Context(config, True)
+  Context(config:, imports: [], include_brackets_current_level: True)
 }
 
 pub fn to_string(to_render: Rendered) -> String {

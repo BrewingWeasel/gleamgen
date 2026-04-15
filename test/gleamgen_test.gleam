@@ -1516,8 +1516,134 @@ pub fn case_with_option_pattern_helpers_test() {
 
   let expected =
     "case maybe_name {
-  Some(name) -> name <> \"!\"
-  None -> \"anonymous\"
+  option.Some(name) -> name <> \"!\"
+  option.None -> \"anonymous\"
+}"
+
+  assert result == expected
+}
+
+pub fn option_helper_without_existing_import_test() {
+  let mod = {
+    use _ <- module.with_function(
+      definition.new(name: "describe_name")
+        |> definition.with_publicity(True),
+      function.new0(types.string, fn() {
+        case_.new(expression.raw("maybe_name"))
+        |> case_.with_pattern(
+          pattern.option_some(pattern.variable("name")),
+          fn(name) { expression.concat_string(name, expression.string("!")) },
+        )
+        |> case_.with_pattern(pattern.option_none(), fn(_) {
+          expression.string("anonymous")
+        })
+        |> case_.build_expression()
+      }),
+    )
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "import gleam/option
+
+pub fn describe_name() -> String {
+  case maybe_name {
+    option.Some(name) -> name <> \"!\"
+    option.None -> \"anonymous\"
+  }
+}"
+
+  assert result == expected
+}
+
+pub fn option_helper_combine_with_existing_import_test() {
+  let mod = {
+    use _option_module <- module.with_import(
+      import_.new(["gleam", "option"]) |> import_.with_alias("opt"),
+    )
+
+    use _ <- module.with_function(
+      definition.new(name: "describe_name")
+        |> definition.with_publicity(True),
+      function.new0(types.string, fn() {
+        case_.new(expression.raw("maybe_name"))
+        |> case_.with_pattern(
+          pattern.option_some(pattern.variable("name")),
+          fn(name) { expression.concat_string(name, expression.string("!")) },
+        )
+        |> case_.with_pattern(pattern.option_none(), fn(_) {
+          expression.string("anonymous")
+        })
+        |> case_.build_expression()
+      }),
+    )
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "import gleam/option as opt
+
+pub fn describe_name() -> String {
+  case maybe_name {
+    opt.Some(name) -> name <> \"!\"
+    opt.None -> \"anonymous\"
+  }
+}"
+
+  assert result == expected
+}
+
+pub fn option_helper_combine_with_unqualified_import_test() {
+  let mod = {
+    use _option_module <- module.with_import(
+      import_.new(["gleam", "option"])
+      |> import_.with_exposing([
+        import_.ExposedValue("Some", alias: option.None),
+        import_.ExposedValue("None", alias: option.None),
+      ]),
+    )
+
+    use _ <- module.with_function(
+      definition.new(name: "describe_name")
+        |> definition.with_publicity(True),
+      function.new0(types.string, fn() {
+        case_.new(expression.raw("maybe_name"))
+        |> case_.with_pattern(
+          pattern.option_some(pattern.variable("name")),
+          fn(name) { expression.concat_string(name, expression.string("!")) },
+        )
+        |> case_.with_pattern(pattern.option_none(), fn(_) {
+          expression.string("anonymous")
+        })
+        |> case_.build_expression()
+      }),
+    )
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "import gleam/option.{None, Some}
+
+pub fn describe_name() -> String {
+  case maybe_name {
+    Some(name) -> name <> \"!\"
+    None -> \"anonymous\"
+  }
 }"
 
   assert result == expected

@@ -1,5 +1,7 @@
+import glam/doc
 import glance
 import gleamgen/expression
+import gleamgen/internal/render
 import gleamgen/source
 import gleamgen/types
 
@@ -27,7 +29,13 @@ pub fn dynamic_let(
   value: expression.Expression(types.Dynamic),
   assert_: Bool,
 ) -> Statement {
-  expression.LetDeclaration(name:, value:, assert_:)
+  expression.LetDeclaration(
+    pattern: fn(_context) {
+      doc.from_string(name) |> render.Render(render.empty_details)
+    },
+    value:,
+    assert_:,
+  )
 }
 
 pub fn from_source_map(

@@ -199,7 +199,13 @@ pub fn convert_import(
   before_import: String,
 ) -> ImportedModule {
   // TODO: unqualified values and types
-  let glance.Import(module:, alias:, ..) = definition.definition
+  let glance.Import(
+    module:,
+    alias:,
+    unqualified_values:,
+    unqualified_types:,
+    ..,
+  ) = definition.definition
   let name = string.split(module, "/")
   let alias =
     option.map(alias, fn(a) {
@@ -208,11 +214,20 @@ pub fn convert_import(
         glance.Discarded(n) -> n
       }
     })
+  let exposing =
+    list.flatten([
+      list.map(unqualified_values, fn(name) {
+        ExposedValue(name.name, name.alias)
+      }),
+      list.map(unqualified_types, fn(name) {
+        ExposedType(name.name, name.alias)
+      }),
+    ])
 
   ImportedModule(
     name:,
     alias: alias,
-    exposing: [],
+    exposing:,
     before_text: before_import,
     predefined: True,
   )

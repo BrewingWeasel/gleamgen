@@ -59,7 +59,75 @@ pub fn main() -> Nil {
   assert result == expected
 }
 
+const sample_module_unqualified = "import gleam/int
+import gleam/io.{println}
+
+/// Prints an integer
+pub fn println_int(int: Int) {
+  println(int.to_string(int))
+}
+"
+
 pub fn extend_module_other_imports_test() {
+  let assert Ok(source_map) =
+    source.module_from_string(sample_module_unqualified)
+  let mod = {
+    let mod = module.from_source_map(source_map)
+    use string_mod <- module.with_import(import_.new(["gleam", "string"]))
+    use io_mod <- module.with_import(
+      import_.new(["gleam", "io"])
+      |> import_.with_exposing([import_.ExposedValue("print", option.None)]),
+    )
+
+    let io_println =
+      import_.value_of_type(io_mod, "print", types.reference(io.print))
+
+    let string_repeat =
+      import_.value_of_type(
+        string_mod,
+        "repeat",
+        types.reference(string.repeat),
+      )
+
+    use _ <- module.with_function(
+      definition.new("main")
+        |> definition.with_publicity(True),
+      function.new0(types.nil, fn() {
+        expression.call1(
+          io_println,
+          expression.call2(
+            string_repeat,
+            expression.string("hi"),
+            expression.int(3),
+          ),
+        )
+      }),
+    )
+
+    mod
+  }
+
+  let result =
+    mod |> module.render(render.default_context()) |> render.to_string()
+
+  let expected =
+    "import gleam/int
+import gleam/io.{print, println}
+import gleam/string
+
+/// Prints an integer
+pub fn println_int(int: Int) {
+  println(int.to_string(int))
+}
+
+pub fn main() -> Nil {
+  print(string.repeat(\"hi\", 3))
+}"
+
+  assert result == expected
+}
+
+pub fn extend_module_added_unqualified_imports_test() {
   let assert Ok(source_map) = source.module_from_string(sample_module)
   let mod = {
     let mod = module.from_source_map(source_map)

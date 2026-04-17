@@ -11,6 +11,7 @@ import gleamgen/expression.{type Expression}
 import gleamgen/expression/constructor
 import gleamgen/function
 import gleamgen/import_
+import gleamgen/internal/import_reference
 import gleamgen/internal/render
 import gleamgen/module/definition
 import gleamgen/source
@@ -183,9 +184,9 @@ pub fn with_constant(
 
 pub fn with_import(
   module: import_.ImportedModule,
-  handler: fn(import_.ImportedModule) -> Module,
+  handler: fn(import_.ImportReference) -> Module,
 ) -> Module {
-  let rest = handler(module)
+  let rest = handler(import_.import_to_reference(module))
   Module(..rest, imports: [module, ..rest.imports])
 }
 
@@ -675,7 +676,9 @@ pub fn render(module: Module, context: render.Context) -> render.Rendered {
       || !list.is_empty(m.exposing)
       || list.contains(
         details.used_imports,
-        import_.get_reference(m, option.None),
+        import_reference.get_module_representation(import_.import_to_reference(
+          m,
+        )),
       )
     })
     |> list.map(fn(x) { x |> render_imported_module |> render.to_string() })

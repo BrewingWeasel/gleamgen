@@ -7,6 +7,7 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
+import gleamgen/internal/import_reference
 import gleamgen/internal/render
 import gleamgen/parameter
 import gleamgen/render/config
@@ -33,6 +34,7 @@ type InternalExpression(type_) {
   NotEquals(Expression(types.Dynamic), Expression(types.Dynamic))
   TupleLiteral(List(Expression(types.Dynamic)))
   Ident(String)
+  ImportedIdent(import_reference.ImportReference, String)
   RawDoc(doc.Document)
   Todo(Option(String))
   Panic(Option(String))
@@ -358,12 +360,29 @@ pub fn raw_doc(value: doc.Document) -> Expression(a) {
   Expression(RawDoc(value), types.dynamic())
 }
 
+@internal
+pub fn imported_ident(
+  import_reference: import_reference.ImportReference,
+  value: String,
+) -> Expression(a) {
+  Expression(ImportedIdent(import_reference, value), types.dynamic())
+}
+
 /// Provide a string to inject without any checking of the specified type
 pub fn raw_of_type(
   value: String,
   type_: types.GeneratedType(t),
 ) -> Expression(t) {
   Expression(Ident(value), type_)
+}
+
+@internal
+pub fn imported_ident_of_type(
+  import_reference: import_reference.ImportReference,
+  value: String,
+  type_: types.GeneratedType(t),
+) -> Expression(t) {
+  Expression(ImportedIdent(import_reference, value), type_)
 }
 
 /// Use the <> operator to concatenate two strings
@@ -909,11 +928,31 @@ pub fn render(
       render_list(values, initial_list, context)
     TupleLiteral(values) -> render_tuple(values, context)
     Ident(value) -> {
-      let used_imports = case string.split_once(value, ".") {
-        Ok(#(module, _)) -> [module]
-        Error(Nil) -> []
+      let used_imports = case
+        string.split_once(value, "."),
+        is_minimal_ident(value)
+      {
+        Ok(#(module, _)), True -> [module]
+        _, _ -> []
       }
       doc.from_string(value)
+      |> render.Render(
+        details: render.RenderedDetails(..render.empty_details, used_imports:),
+      )
+    }
+    ImportedIdent(reference, value) -> {
+      let used_imports = [
+        import_reference.get_module_representation(reference),
+      ]
+      let #(module_text, value_text) =
+        import_reference.get_reference(reference, value)
+
+      let representation = case module_text {
+        Some(module) -> doc.from_string(module <> "." <> value_text)
+        None -> doc.from_string(value_text)
+      }
+
+      representation
       |> render.Render(
         details: render.RenderedDetails(..render.empty_details, used_imports:),
       )
@@ -1573,6 +1612,7 @@ fn recursively_update_expression(
       | FloatLiteral(..)
       | Panic(..)
       | Todo(..)
+      | ImportedIdent(..)
       | NilLiteral -> Ok(expr.internal)
     }
     use internal <- result.try(updated_internal)

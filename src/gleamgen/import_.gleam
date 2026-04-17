@@ -5,7 +5,7 @@ import gleam/option.{type Option}
 import gleam/order
 import gleam/string
 import gleamgen/expression.{type Expression}
-import gleamgen/internal/import_reference.{type ImportReference}
+import gleamgen/internal/import_reference
 import gleamgen/types
 import gleamgen/types/custom
 
@@ -26,6 +26,9 @@ pub type ImportedModule {
     predefined: Bool,
   )
 }
+
+pub type ImportReference =
+  import_reference.ImportReference
 
 @internal
 pub fn import_to_reference(module: ImportedModule) -> ImportReference {
@@ -97,89 +100,24 @@ pub fn exposed_value_as(name: String, alias: String) -> ExposedItem {
   ExposedValue(name, option.Some(alias))
 }
 
-@internal
-pub fn get_reference(
-  imported: ImportedModule,
-  item_name: Option(String),
-) -> String {
-  let matches_exposed = fn(item_name, exposed_item) {
-    case exposed_item {
-      ExposedType(name, _) | ExposedValue(name, _) -> name == item_name
-    }
-  }
-  case imported.alias, item_name {
-    option.Some(alias), option.Some(item_name) -> {
-      case list.any(imported.exposing, matches_exposed(item_name, _)) {
-        True -> ""
-        False -> alias
-      }
-    }
-    option.Some(alias), option.None -> alias
-    option.None, option.Some(item_name) -> {
-      let assert Ok(name) = imported.name |> list.last
-      case list.any(imported.exposing, matches_exposed(item_name, _)) {
-        True -> ""
-        False -> name
-      }
-    }
-    option.None, option.None -> {
-      let assert Ok(name) = imported.name |> list.last
-      name
-    }
-  }
-}
-
-// TODO: merge
-@internal
-pub fn get_reference_from_import_reference(
-  imported: ImportReference,
-  item_name: String,
-) -> #(String, String) {
-  case imported.alias {
-    option.Some(alias) -> {
-      case dict.get(imported.unqualified_values, item_name) {
-        Ok(alias_name) -> #("", alias_name)
-        Error(_) -> #(alias, item_name)
-      }
-    }
-    option.None -> {
-      let assert Ok(name) = imported.module |> list.last
-      case dict.get(imported.unqualified_values, item_name) {
-        Ok(alias_name) -> #("", alias_name)
-        Error(Nil) -> #(name, item_name)
-      }
-    }
-  }
-}
-
-pub fn raw_ident(imported: ImportedModule, name: String) -> Expression(any) {
-  let text = case get_reference(imported, option.Some(name)) {
-    "" -> name
-    import_reference -> import_reference <> "." <> name
-  }
-  expression.raw(text)
+pub fn raw_ident(imported: ImportReference, name: String) -> Expression(any) {
+  expression.imported_ident(imported, name)
 }
 
 pub fn value_of_type(
-  imported: ImportedModule,
+  imported: ImportReference,
   name: String,
   type_: types.GeneratedType(t),
 ) -> Expression(t) {
-  let text = case get_reference(imported, option.Some(name)) {
-    "" -> name
-    import_reference -> import_reference <> "." <> name
-  }
-  expression.raw_of_type(text, type_)
+  expression.imported_ident_of_type(imported, name, type_)
 }
 
 pub fn raw_type(
-  imported: ImportedModule,
+  imported: ImportReference,
   name: String,
 ) -> custom.CustomType(t, generics) {
-  custom.CustomType(
-    option.Some(get_reference(imported, option.Some(name))),
-    name,
-  )
+  let #(module, name) = import_reference.get_reference(imported, name)
+  custom.CustomType(module, name)
 }
 
 // @internal

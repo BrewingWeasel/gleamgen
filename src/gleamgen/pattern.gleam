@@ -811,11 +811,11 @@ pub fn render(
             False -> module
           }
           let #(module_name, constructor_name) =
-            import_.get_reference_from_import_reference(module_to_use, name)
+            import_reference.get_reference(module_to_use, name)
 
           let module_doc = case module_name {
-            "" -> doc.empty
-            module_name -> doc.from_string(module_name <> ".")
+            option.None -> doc.empty
+            option.Some(module_name) -> doc.from_string(module_name <> ".")
           }
 
           #(

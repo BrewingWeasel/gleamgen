@@ -15,7 +15,7 @@ pub type Function(type_, ret) {
   )
 }
 
-pub fn new_raw(
+pub fn new_dynamic(
   parameters parameters: List(Parameter(Dynamic)),
   returns returns: type_.GeneratedType(ret),
   handler handler: fn(List(expression.Expression(Dynamic))) ->

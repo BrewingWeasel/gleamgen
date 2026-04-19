@@ -14,6 +14,7 @@ import gleamgen/import_
 import gleamgen/internal/import_reference
 import gleamgen/internal/render
 import gleamgen/module/definition
+import gleamgen/render as public_render
 import gleamgen/source
 import gleamgen/type_.{type Dynamic}
 import gleamgen/type_/custom
@@ -629,7 +630,10 @@ pub fn eof() -> Module {
   Module([], [], option.None)
 }
 
-pub fn render(module: Module, context: render.Context) -> render.Rendered {
+pub fn render(
+  module: Module,
+  context: public_render.Context,
+) -> public_render.Rendered {
   let #(definitions_at_top, definitions_at_bottom, definitions_after) =
     separate_definitions(module.definitions, [], [], dict.new())
 

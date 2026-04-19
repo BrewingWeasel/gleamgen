@@ -50,6 +50,7 @@ import gleam/string
 import gleamgen/internal/import_reference
 import gleamgen/internal/render
 import gleamgen/parameter
+import gleamgen/render as public_render
 import gleamgen/render/config
 import gleamgen/type_
 
@@ -1085,8 +1086,8 @@ pub type Statement {
 
 pub fn render(
   expression: Expression(t),
-  context: render.Context,
-) -> render.Rendered {
+  context: public_render.Context,
+) -> public_render.Rendered {
   case expression.internal {
     IntLiteral(value) ->
       value
@@ -1360,7 +1361,11 @@ fn render_list(values, initial_list, context) {
   |> render.Render(details: details)
 }
 
-pub fn render_statement(statement: Statement, context) -> render.Rendered {
+@internal
+pub fn render_statement(
+  statement: Statement,
+  context: public_render.Context,
+) -> public_render.Rendered {
   case statement {
     LetDeclaration(pattern_renderer, value, assert_) -> {
       let rendered_value = render(value, context)

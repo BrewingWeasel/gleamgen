@@ -44,3 +44,5 @@ pub fn from_source_map(
   let doc = source.get_source_map_doc(source_map)
   expression.ExpressionStatement(expression.raw_doc(doc))
 }
+
+pub const render = expression.render_statement

@@ -84,6 +84,32 @@ pub fn empty_string_test() {
   assert result == expected
 }
 
+pub fn simple_or_test() {
+  let result =
+    expression.int(3)
+    |> expression.equals(expression.int(4))
+    |> expression.or(expression.bool(True))
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "3 == 4 || True"
+
+  assert result == expected
+}
+
+pub fn simple_and_test() {
+  let result =
+    expression.int(3)
+    |> expression.equals(expression.int(4))
+    |> expression.and(expression.bool(False))
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "3 == 4 && False"
+
+  assert result == expected
+}
+
 pub fn simple_tuple_test() {
   let result =
     expression.tuple3(

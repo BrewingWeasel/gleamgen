@@ -90,6 +90,11 @@ type InternalExpression(type_) {
     MathOperator,
     Expression(type_.Dynamic),
   )
+  BoolOperator(
+    Expression(type_.Dynamic),
+    BoolOperator,
+    Expression(type_.Dynamic),
+  )
   Comparison(Expression(type_.Dynamic), Comparison, Expression(type_.Dynamic))
   ComparisonFloat(
     Expression(type_.Dynamic),
@@ -594,6 +599,34 @@ pub fn option_none() -> Expression(option.Option(t)) {
     )),
     type_: type_.option(type_.dynamic()),
   )
+}
+
+type BoolOperator {
+  And
+  Or
+}
+
+/// Apply the and operator to two expressions with the type of Bool.
+///
+/// ```gleam
+/// expression.and(expression.raw("has_cheese"), expression.raw("wants_cheese"))
+/// // Expression(Bool) -> "has_cheese && wants_cheese"
+/// ```
+pub fn and(expr1: Expression(Bool), expr2: Expression(Bool)) -> Expression(Bool) {
+  Expression(
+    BoolOperator(to_dynamic(expr1), And, to_dynamic(expr2)),
+    type_.bool,
+  )
+}
+
+/// Apply the or operator to two expressions with the type of Bool.
+///
+/// ```gleam
+/// expression.or(expression.raw("wants_cake"), expression.raw("wants_cheese"))
+/// // Expression(Bool) -> "wants_cake || wants_cheese"
+/// ```
+pub fn or(expr1: Expression(Bool), expr2: Expression(Bool)) -> Expression(Bool) {
+  Expression(BoolOperator(to_dynamic(expr1), Or, to_dynamic(expr2)), type_.bool)
 }
 
 /// See [`math_operator`](#math_operator) and [`math_operator_flaot`](#math_operator_float)`
@@ -1120,6 +1153,10 @@ pub fn render(
     }
     ConcatString(expr1, expr2) ->
       render_operator(expr1, expr2, doc.from_string("<>"), context)
+    BoolOperator(expr1, And, expr2) ->
+      render_operator(expr1, expr2, doc.from_string("&&"), context)
+    BoolOperator(expr1, Or, expr2) ->
+      render_operator(expr1, expr2, doc.from_string("||"), context)
     MathOperator(expr1, op, expr2) ->
       render_operator(
         expr1,
@@ -1725,6 +1762,17 @@ fn recursively_update_expression(
           run_update,
         ))
         Ok(Comparison(updated_expr1, operator, updated_expr2))
+      }
+      BoolOperator(expr1, operator, expr2) -> {
+        use updated_expr1 <- result.try(recursively_update_expression(
+          expr1,
+          run_update,
+        ))
+        use updated_expr2 <- result.try(recursively_update_expression(
+          expr2,
+          run_update,
+        ))
+        Ok(BoolOperator(updated_expr1, operator, updated_expr2))
       }
       ComparisonFloat(expr1, operator, expr2) -> {
         use updated_expr1 <- result.try(recursively_update_expression(

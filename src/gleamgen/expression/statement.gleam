@@ -3,7 +3,7 @@ import glance
 import gleamgen/expression
 import gleamgen/internal/render
 import gleamgen/source
-import gleamgen/types
+import gleamgen/type_
 
 pub type Statement =
   expression.Statement
@@ -13,8 +13,8 @@ pub fn expression(expr: expression.Expression(a)) -> Statement {
 }
 
 pub fn dynamic_use(
-  function: expression.Expression(types.Dynamic),
-  arguments: List(expression.Expression(types.Dynamic)),
+  function: expression.Expression(type_.Dynamic),
+  arguments: List(expression.Expression(type_.Dynamic)),
   callback_arguments: List(String),
 ) -> Statement {
   expression.ExpressionStatement(expression.new_use(
@@ -26,7 +26,7 @@ pub fn dynamic_use(
 
 pub fn dynamic_let(
   name: String,
-  value: expression.Expression(types.Dynamic),
+  value: expression.Expression(type_.Dynamic),
   assert_: Bool,
 ) -> Statement {
   expression.LetDeclaration(

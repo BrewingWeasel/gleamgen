@@ -6,8 +6,8 @@ import gleam/order
 import gleam/string
 import gleamgen/expression.{type Expression}
 import gleamgen/internal/import_reference
-import gleamgen/types
-import gleamgen/types/custom
+import gleamgen/type_
+import gleamgen/type_/custom
 
 /// One entry in an `import path.{ … }` exposing list.
 pub type ExposedItem {
@@ -97,7 +97,7 @@ pub fn raw_ident(imported: ImportReference, name: String) -> Expression(any) {
 pub fn value_of_type(
   imported: ImportReference,
   name: String,
-  type_: types.GeneratedType(t),
+  type_: type_.GeneratedType(t),
 ) -> Expression(t) {
   expression.imported_ident_of_type(imported, name, type_)
 }

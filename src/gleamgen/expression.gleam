@@ -11,12 +11,12 @@ import gleamgen/internal/import_reference
 import gleamgen/internal/render
 import gleamgen/parameter
 import gleamgen/render/config
-import gleamgen/types
+import gleamgen/type_
 
 pub opaque type Expression(type_) {
   Expression(
     internal: InternalExpression(type_),
-    type_: types.GeneratedType(type_),
+    type_: type_.GeneratedType(type_),
   )
 }
 
@@ -27,55 +27,55 @@ type InternalExpression(type_) {
   BoolLiteral(Bool)
   NilLiteral
   ListLiteral(
-    prepending: List(Expression(types.Dynamic)),
-    initial: Option(Expression(types.Dynamic)),
+    prepending: List(Expression(type_.Dynamic)),
+    initial: Option(Expression(type_.Dynamic)),
   )
-  Equals(Expression(types.Dynamic), Expression(types.Dynamic))
-  NotEquals(Expression(types.Dynamic), Expression(types.Dynamic))
-  TupleLiteral(List(Expression(types.Dynamic)))
+  Equals(Expression(type_.Dynamic), Expression(type_.Dynamic))
+  NotEquals(Expression(type_.Dynamic), Expression(type_.Dynamic))
+  TupleLiteral(List(Expression(type_.Dynamic)))
   Ident(String)
   ImportedIdent(import_reference.ImportReference, String)
   RawDoc(doc.Document)
   Todo(Option(String))
   Panic(Option(String))
-  Echo(expression: Expression(types.Dynamic), as_string: Option(String))
-  Assert(condition: Expression(types.Dynamic), as_string: Option(String))
+  Echo(expression: Expression(type_.Dynamic), as_string: Option(String))
+  Assert(condition: Expression(type_.Dynamic), as_string: Option(String))
   MathOperator(
-    Expression(types.Dynamic),
+    Expression(type_.Dynamic),
     MathOperator,
-    Expression(types.Dynamic),
+    Expression(type_.Dynamic),
   )
   MathOperatorFloat(
-    Expression(types.Dynamic),
+    Expression(type_.Dynamic),
     MathOperator,
-    Expression(types.Dynamic),
+    Expression(type_.Dynamic),
   )
-  Comparison(Expression(types.Dynamic), Comparison, Expression(types.Dynamic))
+  Comparison(Expression(type_.Dynamic), Comparison, Expression(type_.Dynamic))
   ComparisonFloat(
-    Expression(types.Dynamic),
+    Expression(type_.Dynamic),
     Comparison,
-    Expression(types.Dynamic),
+    Expression(type_.Dynamic),
   )
-  ConcatString(Expression(types.Dynamic), Expression(types.Dynamic))
-  Call(Expression(types.Dynamic), List(Expression(types.Dynamic)))
-  SingleConstructor(Expression(types.Dynamic))
+  ConcatString(Expression(type_.Dynamic), Expression(type_.Dynamic))
+  Call(Expression(type_.Dynamic), List(Expression(type_.Dynamic)))
+  SingleConstructor(Expression(type_.Dynamic))
   Block(List(Statement))
   Case(
-    Expression(types.Dynamic),
+    Expression(type_.Dynamic),
     fn(render.Context) -> List(fn(Int) -> render.Rendered),
     Bool,
   )
   AnonymousFunction(
     render: fn(render.Context) -> render.Rendered,
-    body: Expression(types.Dynamic),
-    parameters: List(parameter.Parameter(types.Dynamic)),
+    body: Expression(type_.Dynamic),
+    parameters: List(parameter.Parameter(type_.Dynamic)),
   )
   Use(
-    function: Expression(types.Dynamic),
-    args: List(Expression(types.Dynamic)),
+    function: Expression(type_.Dynamic),
+    args: List(Expression(type_.Dynamic)),
     callback_args: List(String),
   )
-  WithConfig(Expression(types.Dynamic), config.Config)
+  WithConfig(Expression(type_.Dynamic), config.Config)
 }
 
 // ----------------------------------------------------------------------------
@@ -83,23 +83,23 @@ type InternalExpression(type_) {
 // ----------------------------------------------------------------------------
 
 pub fn int(value: Int) -> Expression(Int) {
-  Expression(IntLiteral(value), types.int)
+  Expression(IntLiteral(value), type_.int)
 }
 
 pub fn float(value: Float) -> Expression(Float) {
-  Expression(FloatLiteral(value), types.float)
+  Expression(FloatLiteral(value), type_.float)
 }
 
 pub fn string(value: String) -> Expression(String) {
-  Expression(StrLiteral(value), types.string)
+  Expression(StrLiteral(value), type_.string)
 }
 
 pub fn bool(value: Bool) -> Expression(Bool) {
-  Expression(BoolLiteral(value), types.bool)
+  Expression(BoolLiteral(value), type_.bool)
 }
 
 pub fn nil() -> Expression(Nil) {
-  Expression(NilLiteral, types.nil)
+  Expression(NilLiteral, type_.nil)
 }
 
 pub fn list(value: List(Expression(t))) -> Expression(List(t)) {
@@ -108,8 +108,8 @@ pub fn list(value: List(Expression(t))) -> Expression(List(t)) {
     value
       |> list.first()
       |> result.map(type_)
-      |> result.lazy_unwrap(fn() { types.dynamic() })
-      |> types.list(),
+      |> result.lazy_unwrap(fn() { type_.dynamic() })
+      |> type_.list(),
   )
 }
 
@@ -126,17 +126,17 @@ pub fn list_prepend(
     prepending
       |> list.first()
       |> result.map(type_)
-      |> result.map(types.list)
+      |> result.map(type_.list)
       |> result.unwrap(original.type_),
   )
 }
 
 pub fn tuple1(arg1: Expression(a)) -> Expression(#(a)) {
-  Expression(TupleLiteral([arg1 |> to_dynamic()]), types.tuple1(type_(arg1)))
+  Expression(TupleLiteral([arg1 |> to_dynamic()]), type_.tuple1(type_(arg1)))
 }
 
 pub fn equals(first: Expression(a), second: Expression(a)) -> Expression(Bool) {
-  Expression(Equals(first |> to_dynamic(), second |> to_dynamic()), types.bool)
+  Expression(Equals(first |> to_dynamic(), second |> to_dynamic()), type_.bool)
 }
 
 pub fn not_equals(
@@ -145,7 +145,7 @@ pub fn not_equals(
 ) -> Expression(Bool) {
   Expression(
     NotEquals(first |> to_dynamic(), second |> to_dynamic()),
-    types.bool,
+    type_.bool,
   )
 }
 
@@ -155,7 +155,7 @@ pub fn not_equals(
 pub fn tuple2(arg1: Expression(a), arg2: Expression(b)) -> Expression(#(a, b)) {
   Expression(
     TupleLiteral([arg1 |> to_dynamic(), arg2 |> to_dynamic()]),
-    types.tuple2(type_(arg1), type_(arg2)),
+    type_.tuple2(type_(arg1), type_(arg2)),
   )
 }
 
@@ -170,7 +170,7 @@ pub fn tuple3(
       arg2 |> to_dynamic(),
       arg3 |> to_dynamic(),
     ]),
-    types.tuple3(type_(arg1), type_(arg2), type_(arg3)),
+    type_.tuple3(type_(arg1), type_(arg2), type_(arg3)),
   )
 }
 
@@ -187,7 +187,7 @@ pub fn tuple4(
       arg3 |> to_dynamic(),
       arg4 |> to_dynamic(),
     ]),
-    types.tuple4(type_(arg1), type_(arg2), type_(arg3), type_(arg4)),
+    type_.tuple4(type_(arg1), type_(arg2), type_(arg3), type_(arg4)),
   )
 }
 
@@ -206,7 +206,7 @@ pub fn tuple5(
       arg4 |> to_dynamic(),
       arg5 |> to_dynamic(),
     ]),
-    types.tuple5(
+    type_.tuple5(
       type_(arg1),
       type_(arg2),
       type_(arg3),
@@ -233,7 +233,7 @@ pub fn tuple6(
       arg5 |> to_dynamic(),
       arg6 |> to_dynamic(),
     ]),
-    types.tuple6(
+    type_.tuple6(
       type_(arg1),
       type_(arg2),
       type_(arg3),
@@ -263,7 +263,7 @@ pub fn tuple7(
       arg6 |> to_dynamic(),
       arg7 |> to_dynamic(),
     ]),
-    types.tuple7(
+    type_.tuple7(
       type_(arg1),
       type_(arg2),
       type_(arg3),
@@ -296,7 +296,7 @@ pub fn tuple8(
       arg7 |> to_dynamic(),
       arg8 |> to_dynamic(),
     ]),
-    types.tuple8(
+    type_.tuple8(
       type_(arg1),
       type_(arg2),
       type_(arg3),
@@ -332,7 +332,7 @@ pub fn tuple9(
       arg8 |> to_dynamic(),
       arg9 |> to_dynamic(),
     ]),
-    types.tuple9(
+    type_.tuple9(
       type_(arg1),
       type_(arg2),
       type_(arg3),
@@ -352,12 +352,12 @@ pub fn tuple9(
 
 /// Provide an ident that could be of any type
 pub fn raw(value: String) -> Expression(a) {
-  Expression(Ident(value), types.dynamic())
+  Expression(Ident(value), type_.dynamic())
 }
 
 @internal
 pub fn raw_doc(value: doc.Document) -> Expression(a) {
-  Expression(RawDoc(value), types.dynamic())
+  Expression(RawDoc(value), type_.dynamic())
 }
 
 @internal
@@ -365,13 +365,13 @@ pub fn imported_ident(
   import_reference: import_reference.ImportReference,
   value: String,
 ) -> Expression(a) {
-  Expression(ImportedIdent(import_reference, value), types.dynamic())
+  Expression(ImportedIdent(import_reference, value), type_.dynamic())
 }
 
 /// Provide a string to inject without any checking of the specified type
 pub fn raw_of_type(
   value: String,
-  type_: types.GeneratedType(t),
+  type_: type_.GeneratedType(t),
 ) -> Expression(t) {
   Expression(Ident(value), type_)
 }
@@ -380,7 +380,7 @@ pub fn raw_of_type(
 pub fn imported_ident_of_type(
   import_reference: import_reference.ImportReference,
   value: String,
-  type_: types.GeneratedType(t),
+  type_: type_.GeneratedType(t),
 ) -> Expression(t) {
   Expression(ImportedIdent(import_reference, value), type_)
 }
@@ -396,7 +396,7 @@ pub fn concat_string(
   expr1: Expression(String),
   expr2: Expression(String),
 ) -> Expression(String) {
-  Expression(ConcatString(to_dynamic(expr1), to_dynamic(expr2)), types.string)
+  Expression(ConcatString(to_dynamic(expr1), to_dynamic(expr2)), type_.string)
 }
 
 /// Create a todo expression with an optional as clause
@@ -407,7 +407,7 @@ pub fn concat_string(
 /// // -> "todo as \"some unimplemented thing\""
 /// ```
 pub fn todo_(as_string: Option(String)) -> Expression(a) {
-  Expression(Todo(as_string), types.dynamic())
+  Expression(Todo(as_string), type_.dynamic())
 }
 
 /// Create a panic expression with an optional as clause
@@ -418,7 +418,7 @@ pub fn todo_(as_string: Option(String)) -> Expression(a) {
 /// // -> "panic as \"ahhhhhh!!!\""
 /// ```
 pub fn panic_(as_string: Option(String)) -> Expression(a) {
-  Expression(Panic(as_string), types.dynamic())
+  Expression(Panic(as_string), type_.dynamic())
 }
 
 /// Create an assert expression with an optional as clause
@@ -426,7 +426,7 @@ pub fn assert_(
   condition: Expression(Bool),
   as_string: Option(String),
 ) -> Expression(Nil) {
-  Expression(Assert(to_dynamic(condition), as_string), types.nil)
+  Expression(Assert(to_dynamic(condition), as_string), type_.nil)
 }
 
 pub fn echo_(
@@ -439,14 +439,14 @@ pub fn echo_(
 pub fn ok(ok_value: Expression(ok)) -> Expression(Result(ok, err)) {
   Expression(
     internal: Call(raw("Ok"), [ok_value |> to_dynamic]),
-    type_: types.result(type_(ok_value), types.dynamic()),
+    type_: type_.result(type_(ok_value), type_.dynamic()),
   )
 }
 
 pub fn error(err_value: Expression(err)) -> Expression(Result(ok, err)) {
   Expression(
     internal: Call(raw("Error"), [err_value |> to_dynamic]),
-    type_: types.result(types.dynamic(), type_(err_value)),
+    type_: type_.result(type_.dynamic(), type_(err_value)),
   )
 }
 
@@ -459,7 +459,7 @@ pub fn option_some(value: Expression(t)) -> Expression(option.Option(t)) {
       ),
       [to_dynamic(value)],
     ),
-    type_: types.option(value.type_),
+    type_: type_.option(value.type_),
   )
 }
 
@@ -469,7 +469,7 @@ pub fn option_none() -> Expression(option.Option(t)) {
       import_reference.new_implied_reference(["gleam", "option"]),
       "None",
     )),
-    type_: types.option(types.dynamic()),
+    type_: type_.option(type_.dynamic()),
   )
 }
 
@@ -500,7 +500,7 @@ pub fn math_operator(
   op: MathOperator,
   expr2: Expression(Int),
 ) -> Expression(Int) {
-  Expression(MathOperator(to_dynamic(expr1), op, to_dynamic(expr2)), types.int)
+  Expression(MathOperator(to_dynamic(expr1), op, to_dynamic(expr2)), type_.int)
 }
 
 /// Apply a math operator to two expressions with the type of Float
@@ -521,7 +521,7 @@ pub fn math_operator_float(
 ) -> Expression(Int) {
   Expression(
     MathOperatorFloat(to_dynamic(expr1), op, to_dynamic(expr2)),
-    types.int,
+    type_.int,
   )
 }
 
@@ -532,7 +532,7 @@ pub fn comparison(
 ) -> Expression(Bool) {
   Expression(
     Comparison(to_dynamic(expr1), operator, to_dynamic(expr2)),
-    types.bool,
+    type_.bool,
   )
 }
 
@@ -543,7 +543,7 @@ pub fn comparison_float(
 ) -> Expression(Bool) {
   Expression(
     ComparisonFloat(to_dynamic(expr1), operator, to_dynamic(expr2)),
-    types.bool,
+    type_.bool,
   )
 }
 
@@ -557,7 +557,7 @@ pub fn comparison_float(
 /// // -> "dict.new()"
 /// ```
 pub fn call0(func: Expression(fn() -> ret)) -> Expression(ret) {
-  Expression(internal: Call(func |> to_dynamic, []), type_: types.dynamic())
+  Expression(internal: Call(func |> to_dynamic, []), type_: type_.dynamic())
 }
 
 /// Call a function or constructor with one argument
@@ -568,7 +568,7 @@ pub fn call1(
 ) -> Expression(ret) {
   Expression(
     internal: Call(func |> to_dynamic, [arg1 |> to_dynamic]),
-    type_: types.dynamic(),
+    type_: type_.dynamic(),
   )
 }
 
@@ -587,7 +587,7 @@ pub fn call2(
       arg1 |> to_dynamic,
       arg2 |> to_dynamic,
     ]),
-    type_: types.dynamic(),
+    type_: type_.dynamic(),
   )
 }
 
@@ -605,7 +605,7 @@ pub fn call3(
       arg2 |> to_dynamic,
       arg3 |> to_dynamic,
     ]),
-    type_: types.dynamic(),
+    type_: type_.dynamic(),
   )
 }
 
@@ -625,7 +625,7 @@ pub fn call4(
       arg3 |> to_dynamic,
       arg4 |> to_dynamic,
     ]),
-    type_: types.dynamic(),
+    type_: type_.dynamic(),
   )
 }
 
@@ -647,7 +647,7 @@ pub fn call5(
       arg4 |> to_dynamic,
       arg5 |> to_dynamic,
     ]),
-    type_: types.dynamic(),
+    type_: type_.dynamic(),
   )
 }
 
@@ -671,7 +671,7 @@ pub fn call6(
       arg5 |> to_dynamic,
       arg6 |> to_dynamic,
     ]),
-    type_: types.dynamic(),
+    type_: type_.dynamic(),
   )
 }
 
@@ -697,7 +697,7 @@ pub fn call7(
       arg6 |> to_dynamic,
       arg7 |> to_dynamic,
     ]),
-    type_: types.dynamic(),
+    type_: type_.dynamic(),
   )
 }
 
@@ -725,7 +725,7 @@ pub fn call8(
       arg7 |> to_dynamic,
       arg8 |> to_dynamic,
     ]),
-    type_: types.dynamic(),
+    type_: type_.dynamic(),
   )
 }
 
@@ -757,7 +757,7 @@ pub fn call9(
       arg8 |> to_dynamic,
       arg9 |> to_dynamic,
     ]),
-    type_: types.dynamic(),
+    type_: type_.dynamic(),
   )
 }
 
@@ -765,16 +765,16 @@ pub fn call9(
 
 /// Call a function or constructor without type checking
 pub fn call_dynamic(
-  func: Expression(types.Dynamic),
-  args: List(Expression(types.Dynamic)),
-) -> Expression(types.Dynamic) {
-  Expression(internal: Call(func, args), type_: types.dynamic())
+  func: Expression(type_.Dynamic),
+  args: List(Expression(type_.Dynamic)),
+) -> Expression(type_.Dynamic) {
+  Expression(internal: Call(func, args), type_: type_.dynamic())
 }
 
 pub fn construct0(constructor: Expression(fn() -> ret)) -> Expression(ret) {
   Expression(
     internal: SingleConstructor(constructor |> to_dynamic),
-    type_: types.dynamic(),
+    type_: type_.dynamic(),
   )
 }
 
@@ -840,8 +840,8 @@ pub fn new_use(
   function: Expression(a),
   args,
   callback_args,
-) -> Expression(types.Dynamic) {
-  let return = types.get_return_type(function.type_)
+) -> Expression(type_.Dynamic) {
+  let return = type_.get_return_type(function.type_)
   Expression(
     internal: Use(function |> to_dynamic(), args, callback_args),
     type_: return,
@@ -864,9 +864,9 @@ pub fn new_case(
 @internal
 pub fn new_anonymous_function(
   function: fn(render.Context) -> render.Rendered,
-  function_body: Expression(types.Dynamic),
-  function_parameters: List(parameter.Parameter(types.Dynamic)),
-  return: types.GeneratedType(type_),
+  function_body: Expression(type_.Dynamic),
+  function_parameters: List(parameter.Parameter(type_.Dynamic)),
+  return: type_.GeneratedType(type_),
 ) -> Expression(type_) {
   Expression(
     internal: AnonymousFunction(function, function_body, function_parameters),
@@ -875,7 +875,7 @@ pub fn new_anonymous_function(
 }
 
 /// Get the internal type of an expression
-pub fn type_(expr: Expression(t)) -> types.GeneratedType(t) {
+pub fn type_(expr: Expression(t)) -> type_.GeneratedType(t) {
   expr.type_
 }
 
@@ -895,7 +895,7 @@ pub fn with_render_config(
 
 @external(erlang, "gleamgen_ffi", "identity")
 @external(javascript, "../gleamgen_ffi.mjs", "identity")
-pub fn to_dynamic(type_: Expression(t)) -> Expression(types.Dynamic)
+pub fn to_dynamic(type_: Expression(t)) -> Expression(type_.Dynamic)
 
 /// Convert an expression to any type without checking
 @external(erlang, "gleamgen_ffi", "identity")
@@ -910,10 +910,10 @@ pub fn coerce_dynamic_unsafe(type_: Expression(t1)) -> Expression(t2)
 pub type Statement {
   LetDeclaration(
     pattern: fn(render.Context) -> render.Rendered,
-    value: Expression(types.Dynamic),
+    value: Expression(type_.Dynamic),
     assert_: Bool,
   )
-  ExpressionStatement(Expression(types.Dynamic))
+  ExpressionStatement(Expression(type_.Dynamic))
   Comment(List(String))
   Linebreak
 }
@@ -1052,7 +1052,7 @@ pub fn render(
 }
 
 fn create_echo(
-  expression: Expression(types.Dynamic),
+  expression: Expression(type_.Dynamic),
   context: render.Context,
 ) -> render.Rendered {
   let rendered_expr = render(expression, context)
@@ -1065,7 +1065,7 @@ fn create_echo(
 }
 
 fn create_assert(
-  condition: Expression(types.Dynamic),
+  condition: Expression(type_.Dynamic),
   context,
 ) -> render.Rendered {
   let rendered_condition = render(condition, context)
@@ -1209,7 +1209,7 @@ pub fn render_statement(statement: Statement, context) -> render.Rendered {
         render.merge_details(rendered_value.details, rendered_pattern.details)
 
       let #(type_annotation, details) = case
-        types.render_type(value.type_, context)
+        type_.render_type(value.type_, context)
       {
         Ok(rendered_type) if context.config.annotate_type_in_let_declarations -> #(
           doc.concat([
@@ -1376,11 +1376,11 @@ fn inline_anonymous_function_args(
 }
 
 fn inline_with(
-  expression: Expression(types.Dynamic),
-  run_update: fn(Expression(types.Dynamic)) ->
-    Result(Expression(types.Dynamic), Nil),
+  expression: Expression(type_.Dynamic),
+  run_update: fn(Expression(type_.Dynamic)) ->
+    Result(Expression(type_.Dynamic), Nil),
   rendered_parameters_by_name: dict.Dict(String, doc.Document),
-) -> Result(Expression(types.Dynamic), Nil) {
+) -> Result(Expression(type_.Dynamic), Nil) {
   case expression.internal {
     Ident(name) -> {
       case dict.get(rendered_parameters_by_name, name) {
@@ -1469,14 +1469,14 @@ fn is_minimal_ident(ident: String) -> Bool {
 }
 
 fn recursively_update_expression(
-  expression: Expression(types.Dynamic),
+  expression: Expression(type_.Dynamic),
   run_update: fn(
-    Expression(types.Dynamic),
-    fn(Expression(types.Dynamic)) -> Result(Expression(types.Dynamic), Nil),
+    Expression(type_.Dynamic),
+    fn(Expression(type_.Dynamic)) -> Result(Expression(type_.Dynamic), Nil),
   ) ->
-    Result(Expression(types.Dynamic), Nil),
+    Result(Expression(type_.Dynamic), Nil),
 ) {
-  let default_update = fn(expr: Expression(types.Dynamic)) {
+  let default_update = fn(expr: Expression(type_.Dynamic)) {
     let updated_internal = case expr.internal {
       Call(func, args) -> {
         use updated_func <- result.try(recursively_update_expression(

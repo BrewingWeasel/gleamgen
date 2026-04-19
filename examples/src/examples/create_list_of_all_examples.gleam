@@ -6,7 +6,7 @@ import gleamgen/import_
 import gleamgen/module
 import gleamgen/module/definition
 import gleamgen/render
-import gleamgen/types
+import gleamgen/type_
 import simplifile
 
 pub fn generate() -> String {
@@ -21,7 +21,7 @@ pub fn generate() -> String {
     use _ <- module.with_function(
       definition.new("get_all_examples") |> definition.with_publicity(True),
       function.new0(
-        types.list(types.tuple2(types.function0(types.string), types.string)),
+        type_.list(type_.tuple2(type_.function0(type_.string), type_.string)),
         fn() {
           imports
           |> list.zip(file_roots)
@@ -29,9 +29,9 @@ pub fn generate() -> String {
             let #(imported_example, file_name) = current_import
             expression.tuple2(
               import_.value_of_type(
-                imported_example,
+                import_.import_to_reference(imported_example),
                 "generate",
-                types.reference(generate),
+                type_.reference(generate),
               ),
               expression.string(file_name),
             )

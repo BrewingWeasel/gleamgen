@@ -13,7 +13,7 @@ import gleamgen/module/definition
 import gleamgen/parameter
 import gleamgen/render
 import gleamgen/source
-import gleamgen/types
+import gleamgen/type_
 
 const sample_module = "import gleam/int
 import gleam/io
@@ -32,7 +32,7 @@ pub fn extend_module_from_string_test() {
     use _ <- module.with_function(
       definition.new("main")
         |> definition.with_publicity(True),
-      function.new0(types.nil, fn() {
+      function.new0(type_.nil, fn() {
         expression.call1(expression.raw("println_int"), expression.int(46))
       }),
     )
@@ -80,19 +80,19 @@ pub fn extend_module_other_imports_test() {
     )
 
     let io_println =
-      import_.value_of_type(io_mod, "print", types.reference(io.print))
+      import_.value_of_type(io_mod, "print", type_.reference(io.print))
 
     let string_repeat =
       import_.value_of_type(
         string_mod,
         "repeat",
-        types.reference(string.repeat),
+        type_.reference(string.repeat),
       )
 
     use _ <- module.with_function(
       definition.new("main")
         |> definition.with_publicity(True),
-      function.new0(types.nil, fn() {
+      function.new0(type_.nil, fn() {
         expression.call1(
           io_println,
           expression.call2(
@@ -135,19 +135,19 @@ pub fn extend_module_added_unqualified_imports_test() {
     use io_mod <- module.with_import(import_.new(["gleam", "io"]))
 
     let io_println =
-      import_.value_of_type(io_mod, "println", types.reference(io.println))
+      import_.value_of_type(io_mod, "println", type_.reference(io.println))
 
     let string_repeat =
       import_.value_of_type(
         string_mod,
         "repeat",
-        types.reference(string.repeat),
+        type_.reference(string.repeat),
       )
 
     use _ <- module.with_function(
       definition.new("main")
         |> definition.with_publicity(True),
-      function.new0(types.nil, fn() {
+      function.new0(type_.nil, fn() {
         expression.call1(
           io_println,
           expression.call2(
@@ -191,7 +191,7 @@ pub fn module_definition_placement_test() {
       definition.new("main")
         |> definition.with_publicity(True)
         |> definition.with_position(definition.Top),
-      function.new0(types.nil, fn() {
+      function.new0(type_.nil, fn() {
         expression.call1(expression.raw("println_int"), expression.int(46))
       }),
     )
@@ -226,20 +226,20 @@ pub fn module_replace_function_test() {
     use io_mod <- module.with_import(import_.new(["gleam", "io"]))
 
     let io_print =
-      import_.value_of_type(io_mod, "print", types.reference(io.print))
+      import_.value_of_type(io_mod, "print", type_.reference(io.print))
 
     let int_to_string =
       import_.value_of_type(
         int_mod,
         "to_string",
-        types.reference(int.to_string),
+        type_.reference(int.to_string),
       )
 
     use mod, _println_int <- module.replace_function(
       "println_int",
       mod,
       fn(_original_function) {
-        function.new1(parameter.new("int", types.int), types.nil, fn(arg) {
+        function.new1(parameter.new("int", type_.int), type_.nil, fn(arg) {
           expression.call1(io_print, expression.call1(int_to_string, arg))
         })
       },
@@ -272,13 +272,13 @@ pub fn module_replace_function_make_private_test() {
     use io_mod <- module.with_import(import_.new(["gleam", "io"]))
 
     let io_print =
-      import_.value_of_type(io_mod, "print", types.reference(io.print))
+      import_.value_of_type(io_mod, "print", type_.reference(io.print))
 
     let int_to_string =
       import_.value_of_type(
         int_mod,
         "to_string",
-        types.reference(int.to_string),
+        type_.reference(int.to_string),
       )
 
     let replacement_method =
@@ -290,7 +290,7 @@ pub fn module_replace_function_make_private_test() {
       "println_int",
       mod,
       fn(_original_function) {
-        function.new1(parameter.new("int", types.int), types.nil, fn(arg) {
+        function.new1(parameter.new("int", type_.int), type_.nil, fn(arg) {
           expression.call1(io_print, expression.call1(int_to_string, arg))
         })
       },
@@ -340,7 +340,7 @@ pub fn replace_function_update_statements_test() {
       mod,
       fn(original_function) {
         let assert option.Some(function) = original_function
-        function.new0(types.nil, fn() {
+        function.new0(type_.nil, fn() {
           source.get_function_body(function)
           |> list.map(statement.from_source_map)
           |> block.new_dynamic()

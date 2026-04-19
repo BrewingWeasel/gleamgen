@@ -10,14 +10,14 @@ import gleamgen/module
 import gleamgen/module/definition
 import gleamgen/parameter
 import gleamgen/render
-import gleamgen/types
+import gleamgen/type_
 
 pub fn sort_like_module_emits_one_structure_import_test() {
   let mod = {
     use structure <- module.with_import(import_.new(["cat_db", "structure"]))
-    let field_t = types.custom_type(Some(structure), "CatField", [])
+    let field_t = type_.custom_type(Some(structure), "CatField", [])
     let func =
-      function.new1(parameter.new("field", field_t), types.string, fn(_f) {
+      function.new1(parameter.new("field", field_t), type_.string, fn(_f) {
         expression.string("x")
       })
     let details =

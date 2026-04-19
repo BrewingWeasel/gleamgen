@@ -5,19 +5,19 @@ import gleam/result
 import gleamgen/expression
 import gleamgen/internal/render
 import gleamgen/parameter.{type Parameter}
-import gleamgen/types.{type Dynamic}
+import gleamgen/type_.{type Dynamic}
 
 pub type Function(type_, ret) {
   Function(
     parameters: List(Parameter(Dynamic)),
-    returns: types.GeneratedType(ret),
+    returns: type_.GeneratedType(ret),
     body: expression.Expression(ret),
   )
 }
 
 pub fn new_raw(
   parameters parameters: List(Parameter(Dynamic)),
-  returns returns: types.GeneratedType(ret),
+  returns returns: type_.GeneratedType(ret),
   handler handler: fn(List(expression.Expression(Dynamic))) ->
     expression.Expression(ret),
 ) -> Function(Dynamic, ret) {
@@ -30,7 +30,7 @@ pub fn new_raw(
 }
 
 pub fn new0(
-  returns returns: types.GeneratedType(ret),
+  returns returns: type_.GeneratedType(ret),
   handler handler: fn() -> expression.Expression(ret),
 ) -> Function(fn() -> ret, ret) {
   let body = handler()
@@ -39,7 +39,7 @@ pub fn new0(
 
 pub fn new1(
   param1 param1: Parameter(param1),
-  returns returns: types.GeneratedType(ret),
+  returns returns: type_.GeneratedType(ret),
   handler handler: fn(expression.Expression(param1)) ->
     expression.Expression(ret),
 ) -> Function(fn(param1) -> ret, ret) {
@@ -53,7 +53,7 @@ pub fn new1(
 pub fn new2(
   param1 param1: Parameter(param1),
   param2 param2: Parameter(param2),
-  returns returns: types.GeneratedType(ret),
+  returns returns: type_.GeneratedType(ret),
   handler handler: fn(
     expression.Expression(param1),
     expression.Expression(param2),
@@ -79,7 +79,7 @@ pub fn new3(
   param1 param1: Parameter(param1),
   param2 param2: Parameter(param2),
   param3 param3: Parameter(param3),
-  returns returns: types.GeneratedType(ret),
+  returns returns: type_.GeneratedType(ret),
   handler handler: fn(
     expression.Expression(param1),
     expression.Expression(param2),
@@ -109,7 +109,7 @@ pub fn new4(
   param2 param2: Parameter(param2),
   param3 param3: Parameter(param3),
   param4 param4: Parameter(param4),
-  returns returns: types.GeneratedType(ret),
+  returns returns: type_.GeneratedType(ret),
   handler handler: fn(
     expression.Expression(param1),
     expression.Expression(param2),
@@ -143,7 +143,7 @@ pub fn new5(
   param3 param3: Parameter(param3),
   param4 param4: Parameter(param4),
   param5 param5: Parameter(param5),
-  returns returns: types.GeneratedType(ret),
+  returns returns: type_.GeneratedType(ret),
   handler handler: fn(
     expression.Expression(param1),
     expression.Expression(param2),
@@ -181,7 +181,7 @@ pub fn new6(
   param4 param4: Parameter(param4),
   param5 param5: Parameter(param5),
   param6 param6: Parameter(param6),
-  returns returns: types.GeneratedType(ret),
+  returns returns: type_.GeneratedType(ret),
   handler handler: fn(
     expression.Expression(param1),
     expression.Expression(param2),
@@ -223,7 +223,7 @@ pub fn new7(
   param5 param5: Parameter(param5),
   param6 param6: Parameter(param6),
   param7 param7: Parameter(param7),
-  returns returns: types.GeneratedType(ret),
+  returns returns: type_.GeneratedType(ret),
   handler handler: fn(
     expression.Expression(param1),
     expression.Expression(param2),
@@ -272,7 +272,7 @@ pub fn new8(
   param6 param6: Parameter(param6),
   param7 param7: Parameter(param7),
   param8 param8: Parameter(param8),
-  returns returns: types.GeneratedType(ret),
+  returns returns: type_.GeneratedType(ret),
   handler handler: fn(
     expression.Expression(param1),
     expression.Expression(param2),
@@ -325,7 +325,7 @@ pub fn new9(
   param7 param7: Parameter(param7),
   param8 param8: Parameter(param8),
   param9 param9: Parameter(param9),
-  returns returns: types.GeneratedType(ret),
+  returns returns: type_.GeneratedType(ret),
   handler handler: fn(
     expression.Expression(param1),
     expression.Expression(param2),
@@ -378,7 +378,7 @@ pub fn new9(
 @external(javascript, "../gleamgen_ffi.mjs", "identity")
 pub fn to_dynamic(
   type_: Function(a, b),
-) -> Function(types.Dynamic, types.Dynamic)
+) -> Function(type_.Dynamic, type_.Dynamic)
 
 @external(erlang, "gleamgen_ffi", "get_function_name")
 @external(javascript, "../gleamgen_ffi.mjs", "get_function_name")
@@ -389,8 +389,8 @@ pub fn anonymous(function: Function(type_, ret)) -> expression.Expression(type_)
   let type_ =
     function.parameters
     |> list.map(parameter.type_)
-    |> types.dynamic_function(function.returns |> types.to_dynamic())
-    |> types.coerce_dynamic_unsafe()
+    |> type_.dynamic_function(function.returns |> type_.to_dynamic())
+    |> type_.coerce_dynamic_unsafe()
 
   let renderer = fn(context) { render(function, context, option.None) }
 
@@ -416,7 +416,7 @@ pub fn render(
       context:,
     )
 
-  let rendered_type = types.render_type(func.returns, context)
+  let rendered_type = type_.render_type(func.returns, context)
   let rendered_body =
     expression.render(
       func.body,

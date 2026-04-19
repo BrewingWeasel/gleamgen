@@ -15,8 +15,8 @@ import gleamgen/internal/import_reference
 import gleamgen/internal/render
 import gleamgen/module/definition
 import gleamgen/source
-import gleamgen/types.{type Dynamic}
-import gleamgen/types/custom
+import gleamgen/type_.{type Dynamic}
+import gleamgen/type_/custom
 
 pub opaque type ExternalModule {
   ExternalModule(
@@ -49,7 +49,7 @@ pub opaque type Definable {
   Function(function.Function(Dynamic, Dynamic))
   CustomTypeBuilder(custom.CustomTypeBuilder(Dynamic, Nil, Nil))
   Constant(Expression(Dynamic))
-  TypeAlias(types.GeneratedType(Dynamic))
+  TypeAlias(type_.GeneratedType(Dynamic))
   Predefined(
     ast: PredefinedDefinition,
     text_before: String,
@@ -615,12 +615,12 @@ pub fn with_custom_type_dynamic(
 
 pub fn with_type_alias(
   details: definition.Definition,
-  type_: types.GeneratedType(repr),
-  handler: fn(types.GeneratedType(repr)) -> Module,
+  type_: type_.GeneratedType(repr),
+  handler: fn(type_.GeneratedType(repr)) -> Module,
 ) -> Module {
-  let rest = handler(types.raw(details.name))
+  let rest = handler(type_.raw(details.name))
   Module(..rest, definitions: [
-    Definition(details:, value: TypeAlias(type_ |> types.to_dynamic())),
+    Definition(details:, value: TypeAlias(type_ |> type_.to_dynamic())),
     ..rest.definitions
   ])
 }
@@ -850,7 +850,7 @@ fn render_definition(definition: ModuleDefinition, context) {
       )
     }
     TypeAlias(type_) -> {
-      let rendered_type = types.render_type(type_, context)
+      let rendered_type = type_.render_type(type_, context)
       #(
         doc.concat([
           doc.from_string("type "),

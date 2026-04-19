@@ -6,9 +6,9 @@ import gleamgen/function
 import gleamgen/module
 import gleamgen/module/definition
 import gleamgen/render
-import gleamgen/types
-import gleamgen/types/custom
-import gleamgen/types/variant
+import gleamgen/type_
+import gleamgen/type_/custom
+import gleamgen/type_/variant
 
 type MyCustomTypeReference {
   MyCustomTypeReference
@@ -18,9 +18,9 @@ pub fn generate() {
   let generate_argument = fn(x) {
     let assert [type_, ..] =
       [
-        types.int |> types.to_dynamic(),
-        types.string |> types.to_dynamic(),
-        types.bool |> types.to_dynamic(),
+        type_.int |> type_.to_dynamic(),
+        type_.string |> type_.to_dynamic(),
+        type_.bool |> type_.to_dynamic(),
       ]
       |> list.shuffle()
     #(option.Some("arg" <> int.to_string(x)), type_)

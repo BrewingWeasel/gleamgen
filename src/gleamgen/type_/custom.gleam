@@ -4,8 +4,8 @@ import gleam/option
 import gleam/result
 import gleamgen/internal/import_reference
 import gleamgen/internal/render
-import gleamgen/types.{type Dynamic}
-import gleamgen/types/variant.{type Variant}
+import gleamgen/type_.{type Dynamic}
+import gleamgen/type_/variant.{type Variant}
 
 pub type CustomTypeBuilder(repr, variants, generics) {
   CustomTypeBuilder(
@@ -50,12 +50,12 @@ pub fn new_dynamic(
   _typed_representation: repr,
   variants: List(Variant(Dynamic)),
   generics_list: List(String),
-) -> CustomTypeBuilder(repr, a, List(types.GeneratedType(Dynamic))) {
+) -> CustomTypeBuilder(repr, a, List(type_.GeneratedType(Dynamic))) {
   CustomTypeBuilder(
     variants:,
     generics_list:,
     generics: list.map(generics_list, fn(t) {
-      types.generic(t) |> types.to_dynamic
+      type_.generic(t) |> type_.to_dynamic
     }),
   )
 }
@@ -63,10 +63,10 @@ pub fn new_dynamic(
 pub fn with_generic(
   old: CustomTypeBuilder(repr, variants, old_generics),
   generic: String,
-) -> CustomTypeBuilder(repr, variants, #(old_generics, types.GeneratedType(a))) {
+) -> CustomTypeBuilder(repr, variants, #(old_generics, type_.GeneratedType(a))) {
   CustomTypeBuilder(
     variants: old.variants,
-    generics: #(old.generics, types.generic(generic)),
+    generics: #(old.generics, type_.generic(generic)),
     generics_list: [generic, ..old.generics_list],
   )
 }
@@ -114,35 +114,35 @@ pub type CustomType(repr, generics) {
 
 pub fn to_type(
   input: CustomType(repr, #()),
-) -> types.GeneratedType(CustomType(repr, #())) {
-  types.custom_type(input.module, input.name, [])
+) -> type_.GeneratedType(CustomType(repr, #())) {
+  type_.custom_type(input.module, input.name, [])
 }
 
 pub fn to_type1(
-  input: CustomType(repr, Generics1(types.GeneratedType(a))),
-  type1: types.GeneratedType(type_a),
-) -> types.GeneratedType(
-  CustomType(repr, Generics1(types.GeneratedType(type_a))),
+  input: CustomType(repr, Generics1(type_.GeneratedType(a))),
+  type1: type_.GeneratedType(type_a),
+) -> type_.GeneratedType(
+  CustomType(repr, Generics1(type_.GeneratedType(type_a))),
 ) {
-  types.custom_type(input.module, input.name, [type1 |> types.to_dynamic()])
+  type_.custom_type(input.module, input.name, [type1 |> type_.to_dynamic()])
 }
 
 pub fn to_type2(
   input: CustomType(
     repr,
-    Generics2(types.GeneratedType(a), types.GeneratedType(b)),
+    Generics2(type_.GeneratedType(a), type_.GeneratedType(b)),
   ),
-  type1: types.GeneratedType(type_a),
-  type2: types.GeneratedType(type_b),
-) -> types.GeneratedType(
+  type1: type_.GeneratedType(type_a),
+  type2: type_.GeneratedType(type_b),
+) -> type_.GeneratedType(
   CustomType(
     repr,
-    Generics2(types.GeneratedType(type_a), types.GeneratedType(type_b)),
+    Generics2(type_.GeneratedType(type_a), type_.GeneratedType(type_b)),
   ),
 ) {
-  types.custom_type(input.module, input.name, [
-    type1 |> types.to_dynamic(),
-    type2 |> types.to_dynamic(),
+  type_.custom_type(input.module, input.name, [
+    type1 |> type_.to_dynamic(),
+    type2 |> type_.to_dynamic(),
   ])
 }
 
@@ -150,28 +150,28 @@ pub fn to_type3(
   input: CustomType(
     repr,
     Generics3(
-      types.GeneratedType(a),
-      types.GeneratedType(b),
-      types.GeneratedType(c),
+      type_.GeneratedType(a),
+      type_.GeneratedType(b),
+      type_.GeneratedType(c),
     ),
   ),
-  type1: types.GeneratedType(type_a),
-  type2: types.GeneratedType(type_b),
-  type3: types.GeneratedType(type_c),
-) -> types.GeneratedType(
+  type1: type_.GeneratedType(type_a),
+  type2: type_.GeneratedType(type_b),
+  type3: type_.GeneratedType(type_c),
+) -> type_.GeneratedType(
   CustomType(
     repr,
     Generics3(
-      types.GeneratedType(type_a),
-      types.GeneratedType(type_b),
-      types.GeneratedType(type_c),
+      type_.GeneratedType(type_a),
+      type_.GeneratedType(type_b),
+      type_.GeneratedType(type_c),
     ),
   ),
 ) {
-  types.custom_type(input.module, input.name, [
-    type1 |> types.to_dynamic(),
-    type2 |> types.to_dynamic(),
-    type3 |> types.to_dynamic(),
+  type_.custom_type(input.module, input.name, [
+    type1 |> type_.to_dynamic(),
+    type2 |> type_.to_dynamic(),
+    type3 |> type_.to_dynamic(),
   ])
 }
 
@@ -179,32 +179,32 @@ pub fn to_type4(
   input: CustomType(
     repr,
     Generics4(
-      types.GeneratedType(a),
-      types.GeneratedType(b),
-      types.GeneratedType(c),
-      types.GeneratedType(d),
+      type_.GeneratedType(a),
+      type_.GeneratedType(b),
+      type_.GeneratedType(c),
+      type_.GeneratedType(d),
     ),
   ),
-  type1: types.GeneratedType(type_a),
-  type2: types.GeneratedType(type_b),
-  type3: types.GeneratedType(type_c),
-  type4: types.GeneratedType(type_d),
-) -> types.GeneratedType(
+  type1: type_.GeneratedType(type_a),
+  type2: type_.GeneratedType(type_b),
+  type3: type_.GeneratedType(type_c),
+  type4: type_.GeneratedType(type_d),
+) -> type_.GeneratedType(
   CustomType(
     repr,
     Generics4(
-      types.GeneratedType(type_a),
-      types.GeneratedType(type_b),
-      types.GeneratedType(type_c),
-      types.GeneratedType(type_d),
+      type_.GeneratedType(type_a),
+      type_.GeneratedType(type_b),
+      type_.GeneratedType(type_c),
+      type_.GeneratedType(type_d),
     ),
   ),
 ) {
-  types.custom_type(input.module, input.name, [
-    type1 |> types.to_dynamic(),
-    type2 |> types.to_dynamic(),
-    type3 |> types.to_dynamic(),
-    type4 |> types.to_dynamic(),
+  type_.custom_type(input.module, input.name, [
+    type1 |> type_.to_dynamic(),
+    type2 |> type_.to_dynamic(),
+    type3 |> type_.to_dynamic(),
+    type4 |> type_.to_dynamic(),
   ])
 }
 
@@ -212,36 +212,36 @@ pub fn to_type5(
   input: CustomType(
     repr,
     Generics5(
-      types.GeneratedType(a),
-      types.GeneratedType(b),
-      types.GeneratedType(c),
-      types.GeneratedType(d),
-      types.GeneratedType(e),
+      type_.GeneratedType(a),
+      type_.GeneratedType(b),
+      type_.GeneratedType(c),
+      type_.GeneratedType(d),
+      type_.GeneratedType(e),
     ),
   ),
-  type1: types.GeneratedType(type_a),
-  type2: types.GeneratedType(type_b),
-  type3: types.GeneratedType(type_c),
-  type4: types.GeneratedType(type_d),
-  type5: types.GeneratedType(type_e),
-) -> types.GeneratedType(
+  type1: type_.GeneratedType(type_a),
+  type2: type_.GeneratedType(type_b),
+  type3: type_.GeneratedType(type_c),
+  type4: type_.GeneratedType(type_d),
+  type5: type_.GeneratedType(type_e),
+) -> type_.GeneratedType(
   CustomType(
     repr,
     Generics5(
-      types.GeneratedType(type_a),
-      types.GeneratedType(type_b),
-      types.GeneratedType(type_c),
-      types.GeneratedType(type_d),
-      types.GeneratedType(type_e),
+      type_.GeneratedType(type_a),
+      type_.GeneratedType(type_b),
+      type_.GeneratedType(type_c),
+      type_.GeneratedType(type_d),
+      type_.GeneratedType(type_e),
     ),
   ),
 ) {
-  types.custom_type(input.module, input.name, [
-    type1 |> types.to_dynamic(),
-    type2 |> types.to_dynamic(),
-    type3 |> types.to_dynamic(),
-    type4 |> types.to_dynamic(),
-    type5 |> types.to_dynamic(),
+  type_.custom_type(input.module, input.name, [
+    type1 |> type_.to_dynamic(),
+    type2 |> type_.to_dynamic(),
+    type3 |> type_.to_dynamic(),
+    type4 |> type_.to_dynamic(),
+    type5 |> type_.to_dynamic(),
   ])
 }
 
@@ -260,7 +260,7 @@ pub fn render(
             var.arguments
             |> list.reverse()
             |> list.map_fold(render.empty_details, fn(acc_details, arg) {
-              let rendered = types.render_type(arg.1, context)
+              let rendered = type_.render_type(arg.1, context)
               let type_doc =
                 rendered
                 |> result.map(fn(v) { v.doc })

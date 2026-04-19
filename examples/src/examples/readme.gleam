@@ -9,7 +9,7 @@ import gleamgen/module
 import gleamgen/module/definition
 import gleamgen/parameter
 import gleamgen/render
-import gleamgen/types
+import gleamgen/type_
 
 pub fn generate() {
   let mod = {
@@ -25,10 +25,10 @@ pub fn generate() {
     use greeter <- module.with_function(
       definition.new("greeter"),
       function.new1(
-        param1: parameter.new("greeting", types.string),
+        param1: parameter.new("greeting", type_.string),
         // we have said that greeter returns a string, so handler returning anything
         // else would be a type error
-        returns: types.string,
+        returns: type_.string,
         handler: fn(greeting) {
           greeting
           |> expression.concat_string(expression.string(" from "))
@@ -49,7 +49,7 @@ pub fn generate() {
           import_.value_of_type(
             imported_string,
             "repeat",
-            types.reference(string.repeat),
+            type_.reference(string.repeat),
           ),
           expression.string("Hi"),
           expression.int(5),
@@ -58,7 +58,7 @@ pub fn generate() {
 
     use _main <- module.with_function(
       definition.new("main") |> definition.with_publicity(True),
-      function.new0(types.nil, fn() {
+      function.new0(type_.nil, fn() {
         use greeting <- block.with_let_declaration(
           "greeting",
           expression.call1(greeter, outer_greeting),
@@ -69,7 +69,7 @@ pub fn generate() {
           import_.value_of_type(
             imported_io,
             "println",
-            types.reference(io.println),
+            type_.reference(io.println),
           ),
           greeting,
         )

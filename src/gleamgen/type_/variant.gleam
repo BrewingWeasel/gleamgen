@@ -1,11 +1,11 @@
 import gleam/list
 import gleam/option.{type Option}
-import gleamgen/types.{type Dynamic}
+import gleamgen/type_.{type Dynamic}
 
 pub type Variant(a) {
   Variant(
     name: String,
-    arguments: List(#(Option(String), types.GeneratedType(Dynamic))),
+    arguments: List(#(Option(String), type_.GeneratedType(Dynamic))),
   )
 }
 
@@ -16,17 +16,17 @@ pub fn new(name: String) -> Variant(#()) {
 pub fn with_argument(
   old: Variant(old),
   name: Option(String),
-  type_: types.GeneratedType(argument),
+  type_: type_.GeneratedType(argument),
 ) -> Variant(#(old, argument)) {
   Variant(name: old.name, arguments: [
-    #(name, type_ |> types.to_dynamic()),
+    #(name, type_ |> type_.to_dynamic()),
     ..old.arguments
   ])
 }
 
 pub fn with_arguments_dynamic(
   old: Variant(old),
-  variants: List(#(Option(String), types.GeneratedType(Dynamic))),
+  variants: List(#(Option(String), type_.GeneratedType(Dynamic))),
 ) -> Variant(Dynamic) {
   Variant(
     name: old.name,

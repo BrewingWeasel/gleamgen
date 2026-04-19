@@ -4,17 +4,17 @@ import gleam/option
 import gleam/result
 import gleamgen/internal/render
 import gleamgen/render/report
-import gleamgen/types
+import gleamgen/type_
 
 pub opaque type Parameter(type_) {
   Parameter(
     name: String,
-    type_: types.GeneratedType(type_),
+    type_: type_.GeneratedType(type_),
     label: option.Option(String),
   )
 }
 
-pub fn new(name: String, type_: types.GeneratedType(type_)) -> Parameter(type_) {
+pub fn new(name: String, type_: type_.GeneratedType(type_)) -> Parameter(type_) {
   Parameter(name:, type_:, label: option.None)
 }
 
@@ -26,7 +26,7 @@ pub fn name(parameter: Parameter(a)) -> String {
   parameter.name
 }
 
-pub fn type_(parameter: Parameter(type_)) -> types.GeneratedType(type_) {
+pub fn type_(parameter: Parameter(type_)) -> type_.GeneratedType(type_) {
   parameter.type_
 }
 
@@ -47,7 +47,7 @@ pub fn render(
   }
 
   let name = doc.from_string(parameter.name)
-  let addition = case types.render_type(parameter.type_, context) {
+  let addition = case type_.render_type(parameter.type_, context) {
     Ok(rendered) if context.config.render_function_parameter_types ->
       doc.concat([doc.from_string(":"), doc.from_string(" "), rendered.doc])
     _ -> doc.empty
@@ -58,7 +58,7 @@ pub fn render(
 
 @internal
 pub fn render_parameters(
-  parameters: List(Parameter(types.Dynamic)),
+  parameters: List(Parameter(type_.Dynamic)),
   include_labels include_labels: Bool,
   context context: render.Context,
 ) {
@@ -74,16 +74,16 @@ pub fn render_parameters(
 }
 
 fn parameter_type_details(
-  param: Parameter(types.Dynamic),
+  param: Parameter(type_.Dynamic),
   context context: render.Context,
 ) -> render.RenderedDetails {
-  types.render_type(type_(param), context)
+  type_.render_type(type_(param), context)
   |> result.map(fn(r) { r.details })
   |> result.unwrap(render.empty_details)
 }
 
 fn do_render_parameters(
-  parameters: List(Parameter(types.Dynamic)),
+  parameters: List(Parameter(type_.Dynamic)),
   acc: List(doc.Document),
   last_parameter_had_label: Bool,
   should_have_been_labeled_params: List(String),
@@ -177,4 +177,4 @@ fn do_render_parameters(
 
 @external(erlang, "gleamgen_ffi", "identity")
 @external(javascript, "../gleamgen_ffi.mjs", "identity")
-pub fn to_dynamic(_parameter: Parameter(a)) -> Parameter(types.Dynamic)
+pub fn to_dynamic(_parameter: Parameter(a)) -> Parameter(type_.Dynamic)

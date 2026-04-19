@@ -9,7 +9,7 @@ import gleam/set
 import gleamgen/expression.{type Expression}
 import gleamgen/internal/render
 import gleamgen/pattern.{type Pattern}
-import gleamgen/types.{type Dynamic}
+import gleamgen/type_.{type Dynamic}
 
 pub type CaseExpression(input, output) {
   CaseExpression(
@@ -153,6 +153,6 @@ pub fn build_expression(
     case_.cases
       |> list.first()
       |> result.map(fn(c) { expression.type_(c.1) })
-      |> result.lazy_unwrap(fn() { types.dynamic() }),
+      |> result.lazy_unwrap(fn() { type_.dynamic() }),
   )
 }

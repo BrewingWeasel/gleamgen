@@ -5,18 +5,18 @@ import gleamgen/import_
 import gleamgen/module
 import gleamgen/module/definition
 import gleamgen/render
-import gleamgen/types
+import gleamgen/type_
 
 pub fn generate() {
   let mod = {
     use io_mod <- module.with_import(import_.new(["gleam", "io"]))
 
     let io_println =
-      import_.value_of_type(io_mod, "println", types.reference(io.println))
+      import_.value_of_type(io_mod, "println", type_.reference(io.println))
 
     use _ <- module.with_function(
       definition.new("main") |> definition.with_publicity(True),
-      function.new0(types.nil, fn() {
+      function.new0(type_.nil, fn() {
         expression.call1(io_println, expression.string("Hello, world!"))
       }),
     )

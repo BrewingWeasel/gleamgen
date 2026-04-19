@@ -4,13 +4,13 @@ import gleamgen/expression.{type Expression}
 import gleamgen/expression/statement
 import gleamgen/internal/render
 import gleamgen/pattern
-import gleamgen/types
+import gleamgen/type_
 
 /// Create a block expression that returns a specific type (see also `new_dynamic`)
 /// Prefer building a block implicitly using the `with_` functions of this module
 pub fn new(
   statements: List(statement.Statement),
-  return: types.GeneratedType(type_),
+  return: type_.GeneratedType(type_),
 ) -> expression.Expression(type_) {
   expression.new_block(statements, return)
 }
@@ -18,7 +18,7 @@ pub fn new(
 pub fn new_dynamic(
   statements: List(statement.Statement),
 ) -> expression.Expression(any) {
-  expression.new_block(statements, types.dynamic())
+  expression.new_block(statements, type_.dynamic())
 }
 
 pub fn with_comments(comments: List(String), handler: fn() -> Expression(ret)) {
@@ -114,8 +114,8 @@ pub fn with_statements(
 
 pub type UseFunction(callback_args, ret) {
   UseFunction(
-    function: Expression(types.Dynamic),
-    args: List(Expression(types.Dynamic)),
+    function: Expression(type_.Dynamic),
+    args: List(Expression(type_.Dynamic)),
   )
 }
 
@@ -272,7 +272,7 @@ pub fn use_function9(
 
 pub fn use_function_dynamic(
   func: Expression(any),
-  args: List(Expression(types.Dynamic)),
+  args: List(Expression(type_.Dynamic)),
 ) -> UseFunction(callback, ret) {
   UseFunction(expression.to_dynamic(func), args)
 }
@@ -601,7 +601,7 @@ pub fn with_use9(
 pub fn with_use_dynamic(
   use_function: UseFunction(any_func, ret),
   args: List(String),
-  callback: fn(List(Expression(types.Dynamic))) -> Expression(ret),
+  callback: fn(List(Expression(type_.Dynamic))) -> Expression(ret),
 ) -> Expression(ret) {
   let rest = callback(list.map(args, expression.raw))
   expression.add_to_or_create_block(

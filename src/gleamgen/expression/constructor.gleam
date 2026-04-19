@@ -1,11 +1,11 @@
 import gleamgen/expression
-import gleamgen/types
-import gleamgen/types/custom
-import gleamgen/types/variant
+import gleamgen/type_
+import gleamgen/type_/custom
+import gleamgen/type_/variant
 
 /// Use to_expression[n] or to_expression_unchecked to create an expression from the constructor.
 pub opaque type Constructor(construct_to, args, generics) {
-  Constructor(variant: variant.Variant(types.Dynamic))
+  Constructor(variant: variant.Variant(type_.Dynamic))
 }
 
 pub type Variants1(a) =
@@ -37,7 +37,7 @@ pub type Variants9(a, b, c, d, e, f, g, h, i) =
 
 @internal
 pub fn new(
-  variant: variant.Variant(types.Dynamic),
+  variant: variant.Variant(type_.Dynamic),
 ) -> Constructor(construct_to, a, generics) {
   Constructor(variant)
 }

@@ -2,13 +2,12 @@ import glam/doc
 import gleam/int
 import gleam/list
 import gleam/option.{type Option}
-import gleam/result
 import gleamgen/expression.{type Expression}
 import gleamgen/expression/constructor
 import gleamgen/internal/import_reference
 import gleamgen/internal/render
-import gleamgen/types
-import gleamgen/types/custom
+import gleamgen/type_
+import gleamgen/type_/custom
 
 pub opaque type Pattern(input, match_output) {
   Variable(name: String, output: match_output)
@@ -17,11 +16,11 @@ pub opaque type Pattern(input, match_output) {
   IntLiteral(contents: Int, output: match_output)
   BoolLiteral(contents: Bool, output: match_output)
   Tuple(
-    contents: List(Pattern(types.Dynamic, types.Dynamic)),
+    contents: List(Pattern(type_.Dynamic, type_.Dynamic)),
     output: match_output,
   )
   Constructor(
-    constructor: #(String, List(Pattern(types.Dynamic, types.Dynamic))),
+    constructor: #(String, List(Pattern(type_.Dynamic, type_.Dynamic))),
     output: match_output,
     module: Option(import_reference.ImportReference),
   )
@@ -30,7 +29,7 @@ pub opaque type Pattern(input, match_output) {
     output: match_output,
   )
   As(
-    options: #(Pattern(types.Dynamic, types.Dynamic), String),
+    options: #(Pattern(type_.Dynamic, type_.Dynamic), String),
     output: match_output,
   )
 }
@@ -140,8 +139,8 @@ pub fn as_(
 
 pub fn from_constructor_dynamic(
   constructor: constructor.Constructor(construct_to, any, generics),
-  constructors: List(Pattern(types.Dynamic, types.Dynamic)),
-) -> Pattern(construct, List(Expression(types.Dynamic))) {
+  constructors: List(Pattern(type_.Dynamic, type_.Dynamic)),
+) -> Pattern(construct, List(Expression(type_.Dynamic))) {
   Constructor(
     module: option.None,
     constructor: #(
@@ -155,8 +154,8 @@ pub fn from_constructor_dynamic(
 @external(erlang, "gleamgen_ffi", "get_pattern_output")
 @external(javascript, "../gleamgen_ffi.mjs", "get_pattern_output")
 fn get_pattern_output(
-  pattern: Pattern(types.Dynamic, types.Dynamic),
-) -> Result(Expression(types.Dynamic), Nil)
+  pattern: Pattern(type_.Dynamic, type_.Dynamic),
+) -> Result(Expression(type_.Dynamic), Nil)
 
 pub fn from_constructor0(
   constructor: constructor.Constructor(construct_to, #(), generics),
@@ -731,7 +730,7 @@ pub fn get_output(pattern: Pattern(_, output)) -> output {
 @external(javascript, "../gleamgen_ffi.mjs", "identity")
 pub fn to_dynamic(
   type_: Pattern(input, handler_output),
-) -> Pattern(types.Dynamic, types.Dynamic)
+) -> Pattern(type_.Dynamic, type_.Dynamic)
 
 pub fn render(
   pattern: Pattern(_, _),

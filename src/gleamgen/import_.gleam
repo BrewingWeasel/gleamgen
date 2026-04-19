@@ -30,7 +30,8 @@ pub type ImportedModule {
 pub type ImportReference =
   import_reference.ImportReference
 
-@internal
+/// Convert an import statement into its corresponding reference.
+/// In almost all cases, you should prefer using module.with_import.
 pub fn import_to_reference(module: ImportedModule) -> ImportReference {
   import_reference.ImportReference(
     module: module.name,

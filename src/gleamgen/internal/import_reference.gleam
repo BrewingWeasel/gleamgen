@@ -1,3 +1,4 @@
+import glam/doc
 import gleam/dict
 import gleam/list
 import gleam/option
@@ -31,20 +32,29 @@ pub fn get_module_representation(imported: ImportReference) -> String {
 pub fn get_reference(
   imported: ImportReference,
   item_name: String,
-) -> #(option.Option(String), String) {
+) -> doc.Document {
   case imported.alias {
     option.Some(alias) -> {
       case dict.get(imported.unqualified_values, item_name) {
-        Ok(alias_name) -> #(option.None, alias_name)
-        Error(_) -> #(option.Some(alias), item_name)
+        Ok(alias_name) -> doc.from_string(alias_name)
+        Error(_) -> doc.from_string(alias <> "." <> item_name)
       }
     }
     option.None -> {
       let assert Ok(name) = imported.module |> list.last
       case dict.get(imported.unqualified_values, item_name) {
-        Ok(alias_name) -> #(option.None, alias_name)
-        Error(Nil) -> #(option.Some(name), item_name)
+        Ok(alias_name) -> doc.from_string(alias_name)
+        Error(Nil) -> doc.from_string(name <> "." <> item_name)
       }
     }
   }
+}
+
+pub fn new_implied_reference(name: List(String)) -> ImportReference {
+  ImportReference(
+    module: name,
+    alias: option.None,
+    implied: True,
+    unqualified_values: dict.new(),
+  )
 }

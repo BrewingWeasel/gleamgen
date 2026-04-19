@@ -44,16 +44,6 @@ pub fn import_to_reference(module: ImportedModule) -> ImportReference {
   )
 }
 
-@internal
-pub fn new_implied_reference(name: List(String)) -> ImportReference {
-  import_reference.ImportReference(
-    module: name,
-    alias: option.None,
-    implied: True,
-    unqualified_values: dict.new(),
-  )
-}
-
 pub fn new(name: List(String)) -> ImportedModule {
   ImportedModule(
     name: name,
@@ -116,8 +106,7 @@ pub fn raw_type(
   imported: ImportReference,
   name: String,
 ) -> custom.CustomType(t, generics) {
-  let #(module, name) = import_reference.get_reference(imported, name)
-  custom.CustomType(module, name)
+  custom.CustomType(option.Some(imported), name)
 }
 
 // @internal

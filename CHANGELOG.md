@@ -5,6 +5,7 @@
 - inline anonymous functions that are called directly after definition
 - automatically import gleam/option module when using option helpers
 - return import reference rather than import statement when importing a module
+- add option expression and type helpers
 
 ## v0.4.0 - 2026-04-06
 

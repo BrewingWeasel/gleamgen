@@ -5,7 +5,6 @@ import gleam/option.{type Option}
 import gleam/result
 import gleamgen/expression.{type Expression}
 import gleamgen/expression/constructor
-import gleamgen/import_
 import gleamgen/internal/import_reference
 import gleamgen/internal/render
 import gleamgen/types
@@ -797,41 +796,22 @@ pub fn render(
       |> render.Render(details: original.details)
     }
     Constructor(module:, constructor: #(name, patterns), ..) -> {
-      let #(module_doc, constructor_doc, module_details) = case module {
-        option.None -> #(doc.empty, doc.from_string(name), render.empty_details)
+      let #(constructor_doc, module_details) = case module {
+        option.None -> #(doc.from_string(name), render.empty_details)
         option.Some(module) -> {
-          let module_to_use = case module.implied {
-            True -> {
-              // Search for existing imports of the same module to standardize aliases, unqualified imports, etc. 
-              context.imports
-              |> list.reverse()
-              |> list.find(fn(reference) { reference.module == module.module })
-              |> result.unwrap(module)
-            }
-            False -> module
-          }
-          let #(module_name, constructor_name) =
+          let module_to_use = render.get_import_from_context(context, module)
+          let constructor_doc =
             import_reference.get_reference(module_to_use, name)
 
-          let module_doc = case module_name {
-            option.None -> doc.empty
-            option.Some(module_name) -> doc.from_string(module_name <> ".")
-          }
-
           #(
-            module_doc,
-            doc.from_string(constructor_name),
-            render.RenderedDetails(
-              ..render.empty_details,
-              required_implied_imports: [module.module],
-            ),
+            constructor_doc,
+            render.add_import_to_details(render.empty_details, module),
           )
         }
       }
       case patterns {
         [] ->
-          module_doc
-          |> doc.append(doc.from_string(name))
+          constructor_doc
           |> render.Render(details: module_details)
         _ -> {
           let #(details, rendered_patterns) =
@@ -844,7 +824,6 @@ pub fn render(
           rendered_patterns
           |> render.pretty_list()
           |> doc.prepend(constructor_doc)
-          |> doc.prepend(module_doc)
           |> render.Render(details: render.merge_details(
             details,
             module_details,
@@ -900,7 +879,9 @@ pub fn list_first_discard_rest(first: String) -> Pattern(List(a), Expression(a))
 /// `Some(inner)`.
 pub fn option_some(inner: Pattern(a, a_out)) -> Pattern(Option(a), a_out) {
   Constructor(
-    module: option.Some(import_.new_implied_reference(["gleam", "option"])),
+    module: option.Some(
+      import_reference.new_implied_reference(["gleam", "option"]),
+    ),
     constructor: #("Some", [inner |> to_dynamic]),
     output: inner.output,
   )
@@ -909,7 +890,9 @@ pub fn option_some(inner: Pattern(a, a_out)) -> Pattern(Option(a), a_out) {
 /// `None`.
 pub fn option_none() -> Pattern(Option(a), Nil) {
   Constructor(
-    module: option.Some(import_.new_implied_reference(["gleam", "option"])),
+    module: option.Some(
+      import_reference.new_implied_reference(["gleam", "option"]),
+    ),
     constructor: #("None", []),
     output: Nil,
   )

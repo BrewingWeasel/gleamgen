@@ -450,6 +450,29 @@ pub fn error(err_value: Expression(err)) -> Expression(Result(ok, err)) {
   )
 }
 
+pub fn option_some(value: Expression(t)) -> Expression(option.Option(t)) {
+  Expression(
+    internal: Call(
+      imported_ident(
+        import_reference.new_implied_reference(["gleam", "option"]),
+        "Some",
+      ),
+      [to_dynamic(value)],
+    ),
+    type_: types.option(value.type_),
+  )
+}
+
+pub fn option_none() -> Expression(option.Option(t)) {
+  Expression(
+    internal: SingleConstructor(imported_ident(
+      import_reference.new_implied_reference(["gleam", "option"]),
+      "None",
+    )),
+    type_: types.option(types.dynamic()),
+  )
+}
+
 /// See `math_operator` and `math_operator_float`
 pub type MathOperator {
   Add
@@ -940,22 +963,15 @@ pub fn render(
         details: render.RenderedDetails(..render.empty_details, used_imports:),
       )
     }
-    ImportedIdent(reference, value) -> {
-      let used_imports = [
-        import_reference.get_module_representation(reference),
-      ]
-      let #(module_text, value_text) =
-        import_reference.get_reference(reference, value)
-
-      let representation = case module_text {
-        Some(module) -> doc.from_string(module <> "." <> value_text)
-        None -> doc.from_string(value_text)
-      }
+    ImportedIdent(module, value) -> {
+      let module_to_use = render.get_import_from_context(context, module)
+      let representation = import_reference.get_reference(module_to_use, value)
 
       representation
-      |> render.Render(
-        details: render.RenderedDetails(..render.empty_details, used_imports:),
-      )
+      |> render.Render(render.add_import_to_details(
+        render.empty_details,
+        module,
+      ))
     }
     RawDoc(doc) -> render.Render(doc, details: render.empty_details)
     Todo(as_string) ->
@@ -1192,7 +1208,9 @@ pub fn render_statement(statement: Statement, context) -> render.Rendered {
       let details =
         render.merge_details(rendered_value.details, rendered_pattern.details)
 
-      let #(type_annotation, details) = case types.render_type(value.type_) {
+      let #(type_annotation, details) = case
+        types.render_type(value.type_, context)
+      {
         Ok(rendered_type) if context.config.annotate_type_in_let_declarations -> #(
           doc.concat([
             doc.from_string(":"),

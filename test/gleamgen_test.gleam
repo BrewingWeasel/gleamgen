@@ -1603,6 +1603,57 @@ pub fn describe_name() -> String {
   assert result == expected
 }
 
+pub fn option_helpers_expression_and_type_test() {
+  let mod = {
+    // use _option_module <- module.with_import(
+    //   import_.new(["gleam", "option"]) |> import_.with_alias("opt"),
+    // )
+
+    use _ <- module.with_function(
+      definition.new(name: "create_optional_name")
+        |> definition.with_publicity(True),
+      function.new1(
+        parameter.new("name", types.string),
+        types.option(types.string),
+        fn(name) {
+          case_.new(name)
+          |> case_.with_pattern(pattern.string_literal(""), fn(_) {
+            expression.option_none()
+          })
+          |> case_.with_pattern(
+            pattern.variable("existing_name"),
+            fn(existing_name) {
+              expression.option_some(expression.concat_string(
+                existing_name,
+                expression.string("!"),
+              ))
+            },
+          )
+          |> case_.build_expression()
+        },
+      ),
+    )
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "import gleam/option
+
+pub fn create_optional_name(name: String) -> option.Option(String) {
+  case name {
+    \"\" -> option.None
+    existing_name -> option.Some(existing_name <> \"!\")
+  }
+}"
+
+  assert result == expected
+}
+
 pub fn option_helper_combine_with_unqualified_import_test() {
   let mod = {
     use _option_module <- module.with_import(

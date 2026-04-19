@@ -47,7 +47,7 @@ pub fn render(
   }
 
   let name = doc.from_string(parameter.name)
-  let addition = case types.render_type(parameter.type_) {
+  let addition = case types.render_type(parameter.type_, context) {
     Ok(rendered) if context.config.render_function_parameter_types ->
       doc.concat([doc.from_string(":"), doc.from_string(" "), rendered.doc])
     _ -> doc.empty
@@ -75,8 +75,9 @@ pub fn render_parameters(
 
 fn parameter_type_details(
   param: Parameter(types.Dynamic),
+  context context: render.Context,
 ) -> render.RenderedDetails {
-  types.render_type(type_(param))
+  types.render_type(type_(param), context)
   |> result.map(fn(r) { r.details })
   |> result.unwrap(render.empty_details)
 }
@@ -124,7 +125,10 @@ fn do_render_parameters(
     [param, ..rest] -> {
       let has_label = option.is_some(param.label)
       let next_type_details =
-        render.merge_details(type_details_acc, parameter_type_details(param))
+        render.merge_details(
+          type_details_acc,
+          parameter_type_details(param, context),
+        )
       case has_label {
         True ->
           do_render_parameters(
@@ -144,7 +148,7 @@ fn do_render_parameters(
           let merged_details =
             render.merge_details(
               type_details_acc,
-              parameter_type_details(fixed_parameter),
+              parameter_type_details(fixed_parameter, context),
             )
           do_render_parameters(
             rest,

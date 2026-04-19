@@ -1,5 +1,6 @@
 import glam/doc
 import gleam/list
+import gleam/result
 import gleam/string
 import gleamgen/internal/import_reference
 import gleamgen/render/config
@@ -62,6 +63,40 @@ pub fn default_context() -> Context {
 
 pub fn context_from_config(config: config.Config) -> Context {
   Context(config:, imports: [], include_brackets_current_level: True)
+}
+
+pub fn get_import_from_context(
+  context: Context,
+  module: import_reference.ImportReference,
+) -> import_reference.ImportReference {
+  case module.implied {
+    True -> {
+      // Search for existing imports of the same module to standardize aliases, unqualified imports, etc. 
+      context.imports
+      |> list.reverse()
+      |> list.find(fn(reference) { reference.module == module.module })
+      |> result.unwrap(module)
+    }
+    False -> module
+  }
+}
+
+pub fn add_import_to_details(
+  details: RenderedDetails,
+  module: import_reference.ImportReference,
+) -> RenderedDetails {
+  let used_imports = [
+    import_reference.get_module_representation(module),
+    ..details.used_imports
+  ]
+  case module.implied {
+    True ->
+      RenderedDetails(..details, used_imports:, required_implied_imports: [
+        module.module,
+        ..details.required_implied_imports
+      ])
+    False -> RenderedDetails(..details, used_imports:)
+  }
 }
 
 pub fn to_string(to_render: Rendered) -> String {

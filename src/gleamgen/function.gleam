@@ -416,7 +416,7 @@ pub fn render(
       context:,
     )
 
-  let rendered_type = types.render_type(func.returns)
+  let rendered_type = types.render_type(func.returns, context)
   let rendered_body =
     expression.render(
       func.body,

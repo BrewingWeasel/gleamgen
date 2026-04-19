@@ -839,7 +839,7 @@ fn render_definition(definition: ModuleDefinition, context) {
       )
     }
     CustomTypeBuilder(type_) -> {
-      let rendered_type = custom.render(type_)
+      let rendered_type = custom.render(type_, context)
       #(
         doc.concat([
           doc.from_string("type "),
@@ -850,7 +850,7 @@ fn render_definition(definition: ModuleDefinition, context) {
       )
     }
     TypeAlias(type_) -> {
-      let rendered_type = types.render_type(type_)
+      let rendered_type = types.render_type(type_, context)
       #(
         doc.concat([
           doc.from_string("type "),

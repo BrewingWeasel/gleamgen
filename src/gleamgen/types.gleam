@@ -3,6 +3,7 @@ import gleam/list
 import gleam/option
 import gleam/result
 import gleam/string
+import gleamgen/internal/import_reference
 import gleamgen/internal/render
 
 pub type Dynamic
@@ -18,7 +19,11 @@ pub opaque type GeneratedType(type_) {
   GeneratedTuple(List(GeneratedType(Dynamic)))
   GeneratedFunction(List(GeneratedType(Dynamic)), GeneratedType(Dynamic))
   Dynamic
-  CustomType(option.Option(String), String, List(GeneratedType(Dynamic)))
+  CustomType(
+    option.Option(import_reference.ImportReference),
+    String,
+    List(GeneratedType(Dynamic)),
+  )
   Raw(String)
   Generic(String)
 }
@@ -200,6 +205,18 @@ pub fn result(
     ok_type |> to_dynamic,
     err_type |> to_dynamic,
   ])
+}
+
+pub fn option(
+  possible_type: GeneratedType(t),
+) -> GeneratedType(option.Option(t)) {
+  CustomType(
+    option.Some(import_reference.new_implied_reference(["gleam", "option"])),
+    "Option",
+    [
+      to_dynamic(possible_type),
+    ],
+  )
 }
 
 pub fn function0(returns: GeneratedType(ret)) -> GeneratedType(fn() -> ret) {
@@ -392,7 +409,7 @@ pub fn get_return_type(function: GeneratedType(any)) {
 
 @internal
 pub fn custom_type(
-  module: option.Option(String),
+  module: option.Option(import_reference.ImportReference),
   name: String,
   types: List(GeneratedType(Dynamic)),
 ) -> GeneratedType(a) {
@@ -407,7 +424,10 @@ pub fn to_dynamic(type_: GeneratedType(t)) -> GeneratedType(Dynamic)
 @external(javascript, "../gleamgen_ffi.mjs", "identity")
 pub fn coerce_dynamic_unsafe(type_: GeneratedType(Dynamic)) -> GeneratedType(a)
 
-pub fn render_type(type_: GeneratedType(a)) -> Result(render.Rendered, Nil) {
+pub fn render_type(
+  type_: GeneratedType(a),
+  context: render.Context,
+) -> Result(render.Rendered, Nil) {
   case type_ {
     GeneratedBool ->
       doc.from_string("Bool")
@@ -433,9 +453,10 @@ pub fn render_type(type_: GeneratedType(a)) -> Result(render.Rendered, Nil) {
       doc.from_string("BitArray")
       |> render.Render(details: render.empty_details)
       |> Ok
-    GeneratedList(t) -> render_custom(option.None, "List", [t])
-    GeneratedTuple(t) -> render_tuple(t)
-    CustomType(module, name, types) -> render_custom(module, name, types)
+    GeneratedList(t) -> render_custom(option.None, "List", [t], context)
+    GeneratedTuple(t) -> render_tuple(t, context)
+    CustomType(module, name, types) ->
+      render_custom(module, name, types, context)
     Dynamic -> Error(Nil)
     Raw(t) -> {
       let used_imports = case string.split_once(t, ".") {
@@ -451,16 +472,19 @@ pub fn render_type(type_: GeneratedType(a)) -> Result(render.Rendered, Nil) {
     Generic(t) ->
       doc.from_string(t) |> render.Render(details: render.empty_details) |> Ok
     GeneratedFunction(args, return) -> {
-      render_function(args, return)
+      render_function(args, return, context)
     }
   }
 }
 
-fn render_type_list(types: List(GeneratedType(Dynamic))) {
+fn render_type_list(
+  types: List(GeneratedType(Dynamic)),
+  context: render.Context,
+) -> Result(#(List(doc.Document), render.RenderedDetails), Nil) {
   let possibly_rendered =
     types
     |> list.try_fold(#([], render.empty_details), fn(acc, t) {
-      render_type(t)
+      render_type(t, context)
       |> result.map(fn(rendered) {
         #(
           [rendered.doc, ..acc.0],
@@ -472,32 +496,39 @@ fn render_type_list(types: List(GeneratedType(Dynamic))) {
 }
 
 fn render_custom(
-  module: option.Option(String),
+  module: option.Option(import_reference.ImportReference),
   name: String,
   types: List(GeneratedType(Dynamic)),
+  context,
 ) -> Result(render.Rendered, Nil) {
-  let rendered = render_type_list(types)
+  let rendered = render_type_list(types, context)
   use #(rendered_types, details) <- result.try(rendered)
 
-  let #(used_imports, import_doc) = case module {
-    option.Some(m) -> #([m, ..details.used_imports], doc.from_string(m <> "."))
-    option.None -> #(details.used_imports, doc.empty)
+  let #(details, type_doc) = case module {
+    option.Some(module) -> {
+      let module_to_use = render.get_import_from_context(context, module)
+      let doc = import_reference.get_reference(module_to_use, name)
+
+      let details = render.add_import_to_details(render.empty_details, module)
+      #(details, doc)
+    }
+    option.None -> #(details, doc.from_string(name))
   }
 
-  import_doc
-  |> doc.append(doc.from_string(name))
+  type_doc
   |> doc.append(case types {
     [] -> doc.empty
     _ -> render.pretty_list(rendered_types)
   })
-  |> render.Render(details: render.RenderedDetails(..details, used_imports:))
+  |> render.Render(details:)
   |> Ok
 }
 
 fn render_tuple(
   types: List(GeneratedType(Dynamic)),
+  context: render.Context,
 ) -> Result(render.Rendered, Nil) {
-  let rendered = render_type_list(types)
+  let rendered = render_type_list(types, context)
   use #(rendered_types, details) <- result.try(rendered)
   doc.from_string("#")
   |> doc.append(render.pretty_list(rendered_types))
@@ -505,10 +536,10 @@ fn render_tuple(
   |> Ok
 }
 
-fn render_function(args, return) {
-  let rendered = render_type_list(args)
+fn render_function(args, return, context) {
+  let rendered = render_type_list(args, context)
   use #(rendered_types, details) <- result.try(rendered)
-  let return = render_type(return)
+  let return = render_type(return, context)
 
   let details = case return {
     Ok(ret) -> render.merge_details(ret.details, details)

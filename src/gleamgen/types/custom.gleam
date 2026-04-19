@@ -2,6 +2,7 @@ import glam/doc
 import gleam/list
 import gleam/option
 import gleam/result
+import gleamgen/internal/import_reference
 import gleamgen/internal/render
 import gleamgen/types.{type Dynamic}
 import gleamgen/types/variant.{type Variant}
@@ -105,7 +106,10 @@ pub fn to_dynamic(
 }
 
 pub type CustomType(repr, generics) {
-  CustomType(module: option.Option(String), name: String)
+  CustomType(
+    module: option.Option(import_reference.ImportReference),
+    name: String,
+  )
 }
 
 pub fn to_type(
@@ -243,6 +247,7 @@ pub fn to_type5(
 
 pub fn render(
   type_: CustomTypeBuilder(repr, variants, generics),
+  context: render.Context,
 ) -> render.Rendered {
   let #(details, variants) =
     type_.variants
@@ -255,7 +260,7 @@ pub fn render(
             var.arguments
             |> list.reverse()
             |> list.map_fold(render.empty_details, fn(acc_details, arg) {
-              let rendered = types.render_type(arg.1)
+              let rendered = types.render_type(arg.1, context)
               let type_doc =
                 rendered
                 |> result.map(fn(v) { v.doc })

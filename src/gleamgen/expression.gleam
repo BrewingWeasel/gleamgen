@@ -25,6 +25,7 @@
 //// - [`error`](#error)
 //// - [`option_some`](#option_some)
 //// - [`option_none`](#option_none)
+//// - [`function.anonymous`](function.html#anonymous)
 //// - constructors ([`construct0`](#construct0), [`construct1`](#construct1), [`construct2`](#construct2), [`construct3`](#construct3), [`construct4`](#construct4), [`construct5`](#construct5), [`construct6`](#construct6), [`construct7`](#construct7), [`construct8`](#construct8), [`construct9`](#construct9))
 //// - call expressions ([`call0`](#call0), [`call1`](#call1), [`call2`](#call2), [`call3`](#call3), [`call4`](#call4), [`call5`](#call5), [`call6`](#call6), [`call7`](#call7), [`call8`](#call8), [`call9`](#call9))
 //// - import from other files ([`import_.value_of_type`](import_.html#value_of_type), [`import_.raw_ident`](import_.html#raw_ident))
@@ -1041,6 +1042,9 @@ pub fn type_(expr: Expression(t)) -> type_.GeneratedType(t) {
   expr.type_
 }
 
+/// Return a new expression that will be rendered with a specific render config, 
+/// separate from the config used for the surrounding expression.
+/// See the [`render`](render.html) module for more information.
 pub fn with_render_config(
   expression: Expression(t),
   config: config.Config,
@@ -1084,6 +1088,8 @@ pub type Statement {
 // Rendering functions
 // ----------------------------------------------------------------------------
 
+/// Render an expression. See the [`render`](render.html) module for more information.
+/// In general, prefer rendering at the module level, rather than individual expressions.
 pub fn render(
   expression: Expression(t),
   context: public_render.Context,
@@ -1513,12 +1519,14 @@ fn render_call(func, args, context) {
 
 fn inline_anonymous_function_args(
   function_expression: Expression(a),
-  rendered_args,
-  details,
-  context,
-) {
+  rendered_args: List(doc.Document),
+  details: public_render.RenderedDetails,
+  context: public_render.Context,
+) -> Result(public_render.Rendered, Nil) {
   case function_expression.internal {
-    AnonymousFunction(body:, parameters:, ..) -> {
+    AnonymousFunction(body:, parameters:, ..)
+      if context.config.inline_instantly_called_anonymous_functions
+    -> {
       use <- bool.guard(
         list.length(parameters) != list.length(rendered_args),
         Error(Nil),

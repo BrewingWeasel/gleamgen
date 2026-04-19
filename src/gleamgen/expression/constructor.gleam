@@ -44,7 +44,7 @@ pub fn new(
 
 pub fn to_expression0(
   constructor: Constructor(construct_to, #(), generics),
-) -> expression.Expression(construct_to) {
+) -> expression.Expression(fn() -> custom.CustomType(construct_to, generics)) {
   expression.raw(constructor.variant.name)
 }
 

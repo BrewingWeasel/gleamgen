@@ -1,3 +1,43 @@
+//// ## Generating Expressions:
+//// ### Literals:
+//// - [`int`](#int)
+//// - [`float`](#float)
+//// - [`string`](#string)
+//// - [`bool`](#bool)
+//// - [`nil`](#nil)
+//// - [`list`](#list)
+//// - tuple literals ([`tuple1`](#tuple1), [`tuple2`](#tuple2), [`tuple3`](#tuple3), [`tuple4`](#tuple4), [`tuple5`](#tuple5), [`tuple6`](#tuple6), [`tuple7`](#tuple7), [`tuple8`](#tuple8), [`tuple9`](#tuple9))
+//// ### Operators:
+//// - [`comparison`](#comparison)
+//// - [`comparison_float`](#comparison_float)
+//// - [`math_operator`](#math_operator)
+//// - [`math_operator_float`](#math_operator_float)
+//// - [`equals`](#equals)
+//// - [`not_equals`](#not_equals)
+//// - [`list_prepend`](#list_prepend)
+//// ### Keywords:
+//// - [`echo_`](#echo_)
+//// - [`todo_`](#todo_)
+//// - [`panic_`](#panic_)
+//// - [`assert_`](#assert_)
+//// ### Other expressions:
+//// - [`ok`](#ok)
+//// - [`error`](#error)
+//// - [`option_some`](#option_some)
+//// - [`option_none`](#option_none)
+//// - constructors ([`construct0`](#construct0), [`construct1`](#construct1), [`construct2`](#construct2), [`construct3`](#construct3), [`construct4`](#construct4), [`construct5`](#construct5), [`construct6`](#construct6), [`construct7`](#construct7), [`construct8`](#construct8), [`construct9`](#construct9))
+//// - call expressions ([`call0`](#call0), [`call1`](#call1), [`call2`](#call2), [`call3`](#call3), [`call4`](#call4), [`call5`](#call5), [`call6`](#call6), [`call7`](#call7), [`call8`](#call8), [`call9`](#call9))
+//// - import from other files ([`import_.value_of_type`](import_.html#value_of_type), [`import_.raw_ident`](import_.html#raw_ident))
+//// ### Creating dynamic expressions:
+//// - [`raw`](#raw)
+//// - [`raw_of_type`](#raw_of_type)
+//// - [`call_dynamic`](#call_dynamic)
+//// - [`to_dynamic`](#to_dynamic)
+//// - [`coerce_dynamic_unsafe`](#coerce_dynamic_unsafe)
+//// ## Using expressions:
+//// - [`render`](#render)
+//// - [`type_`](#type_)
+
 import glam/doc
 import gleam/bool
 import gleam/dict
@@ -82,26 +122,62 @@ type InternalExpression(type_) {
 // Expression functions
 // ----------------------------------------------------------------------------
 
+/// Create an integer literal expression.
+///
+/// ```gleam
+/// expression.int(42) // Expression(Int) -> 42
+/// ```
 pub fn int(value: Int) -> Expression(Int) {
   Expression(IntLiteral(value), type_.int)
 }
 
+/// Create a float literal expression.
+///
+/// ```gleam
+/// expression.float(3.14) // Expression(Float) -> 3.14
+/// ```
 pub fn float(value: Float) -> Expression(Float) {
   Expression(FloatLiteral(value), type_.float)
 }
 
+/// Create a string literal expression.
+///
+/// ```gleam
+/// expression.string("Labas!") // Expression(String) -> "Labas!"
+/// ```
 pub fn string(value: String) -> Expression(String) {
   Expression(StrLiteral(value), type_.string)
 }
 
+/// Create a boolean literal expression.
+///
+/// ```gleam
+/// expression.bool(True) // Expression(Bool) -> True
+/// ```
 pub fn bool(value: Bool) -> Expression(Bool) {
   Expression(BoolLiteral(value), type_.bool)
 }
 
+/// Create a Nil literal expression.
+///
+/// ```gleam
+/// expression.nil() // Expression(Nil) -> Nil
+/// ```
 pub fn nil() -> Expression(Nil) {
   Expression(NilLiteral, type_.nil)
 }
 
+/// Create a list literal expression.
+///
+/// ```gleam
+/// expression.list([
+///   expression.int(1),
+///   expression.int(2),
+///   expression.int(3),
+///   expression.int(4),
+/// ]) // Expression(List(Int)) -> [1, 2, 3, 4]
+/// ```
+/// See also [`list_prepend`](#list_prepend).
 pub fn list(value: List(Expression(t))) -> Expression(List(t)) {
   Expression(
     ListLiteral(value |> list.map(to_dynamic), None),
@@ -113,7 +189,14 @@ pub fn list(value: List(Expression(t))) -> Expression(List(t)) {
   )
 }
 
-/// Prepend value(s) to list using [value, ..original] syntax
+/// Prepend value(s) to list using `[value, ..original]` syntax.
+/// 
+/// ```gleam
+/// expression.list_prepend(
+///   [expression.int(1), expression.int(2)],
+///   expression.raw("integers")
+/// ) Expression(List(Int)) // -> [1, 2, ..integers]
+/// ```
 pub fn list_prepend(
   prepending: List(Expression(t)),
   original: Expression(List(t)),
@@ -131,14 +214,28 @@ pub fn list_prepend(
   )
 }
 
-pub fn tuple1(arg1: Expression(a)) -> Expression(#(a)) {
-  Expression(TupleLiteral([arg1 |> to_dynamic()]), type_.tuple1(type_(arg1)))
-}
-
+/// Determine if values are equal using `==` syntax.
+///
+/// ```gleam
+/// expression.equals(
+///   expression.raw("movie"),
+///   expression.string("The Needle")
+/// ) // Expression(Bool) -> movie == "The Needle"
+/// ```
+/// See also: `not_equals`.
 pub fn equals(first: Expression(a), second: Expression(a)) -> Expression(Bool) {
   Expression(Equals(first |> to_dynamic(), second |> to_dynamic()), type_.bool)
 }
 
+/// Determine if values are not equal using `!=` syntax.
+///
+/// ```gleam
+/// expression.not_equals(
+///   expression.raw("movie"),
+///   expression.string("The Shining")
+/// ) // Expression(Bool) -> movie != "The Shining"
+/// ```
+/// See also: `equals`.
 pub fn not_equals(
   first: Expression(a),
   second: Expression(a),
@@ -147,6 +244,10 @@ pub fn not_equals(
     NotEquals(first |> to_dynamic(), second |> to_dynamic()),
     type_.bool,
   )
+}
+
+pub fn tuple1(arg1: Expression(a)) -> Expression(#(a)) {
+  Expression(TupleLiteral([arg1 |> to_dynamic()]), type_.tuple1(type_(arg1)))
 }
 
 // Remaining repetitive tuple functions
@@ -351,6 +452,7 @@ pub fn tuple9(
 // TODO: undefined tuple
 
 /// Provide an ident that could be of any type
+/// Prefer using `raw_of_type`
 pub fn raw(value: String) -> Expression(a) {
   Expression(Ident(value), type_.dynamic())
 }
@@ -385,12 +487,11 @@ pub fn imported_ident_of_type(
   Expression(ImportedIdent(import_reference, value), type_)
 }
 
-/// Use the <> operator to concatenate two strings
+/// Use the <> operator to concatenate two strings.
+///
 /// ```gleam
-/// expression.concat_string(expression.string("hello "), expression.string("world"))
-/// |> expression.render(render.default_context())
-/// |> render.to_string()
-/// // -> "\"hello \" <> \"world\""
+/// expression.concat_string(expression.raw("greeting"), expression.string("world"))
+/// // Expression(String) -> greeting <> "world"
 /// ```
 pub fn concat_string(
   expr1: Expression(String),
@@ -399,29 +500,27 @@ pub fn concat_string(
   Expression(ConcatString(to_dynamic(expr1), to_dynamic(expr2)), type_.string)
 }
 
-/// Create a todo expression with an optional as clause
+/// Create a todo expression with an optional as clause.
+///
 /// ```gleam
 /// expression.todo_(option.Some("some unimplemented thing"))
-/// |> expression.render(render.default_context())
-/// |> render.to_string()
-/// // -> "todo as \"some unimplemented thing\""
+/// // Expression(a) -> "todo as \"some unimplemented thing\""
 /// ```
 pub fn todo_(as_string: Option(String)) -> Expression(a) {
   Expression(Todo(as_string), type_.dynamic())
 }
 
-/// Create a panic expression with an optional as clause
+/// Create a panic expression with an optional as clause.
+///
 /// ```gleam
-/// expression.todo_(option.Some("ahhhhhh!!!"))
-/// |> expression.render(render.default_context())
-/// |> render.to_string()
-/// // -> "panic as \"ahhhhhh!!!\""
+/// expression.panic_(option.Some("ahhhhhh!!!"))
+/// // Expression(a) -> "panic as \"ahhhhhh!!!\""
 /// ```
 pub fn panic_(as_string: Option(String)) -> Expression(a) {
   Expression(Panic(as_string), type_.dynamic())
 }
 
-/// Create an assert expression with an optional as clause
+/// Create an assert expression with an optional as clause.
 pub fn assert_(
   condition: Expression(Bool),
   as_string: Option(String),
@@ -429,6 +528,18 @@ pub fn assert_(
   Expression(Assert(to_dynamic(condition), as_string), type_.nil)
 }
 
+/// Create an echo expression with an optional as clause.
+///
+/// ```gleam
+/// expression.echo_(
+///   expression.math_operator(
+///     expression.int(2),
+///     expression.Add,
+///     expression.int(3),
+///   ), 
+///   option.None
+/// ) // Expression(Int) -> echo 2 + 3
+/// ```
 pub fn echo_(
   expression: Expression(a),
   as_string: Option(String),
@@ -436,6 +547,12 @@ pub fn echo_(
   Expression(Echo(to_dynamic(expression), as_string), expression.type_)
 }
 
+/// Create an Ok value of the result type.
+///
+/// ```gleam
+/// expression.ok(expression.int(5))
+/// // Expression(Result(Int, error)) -> Ok(5)
+/// ```
 pub fn ok(ok_value: Expression(ok)) -> Expression(Result(ok, err)) {
   Expression(
     internal: Call(raw("Ok"), [ok_value |> to_dynamic]),
@@ -443,6 +560,12 @@ pub fn ok(ok_value: Expression(ok)) -> Expression(Result(ok, err)) {
   )
 }
 
+/// Create an Error value of the result type.
+///
+/// ```gleam
+/// expression.error(expression.string("File not found"))
+/// // Expression(Result(ok, String)) -> Error("File not found")
+/// ```
 pub fn error(err_value: Expression(err)) -> Expression(Result(ok, err)) {
   Expression(
     internal: Call(raw("Error"), [err_value |> to_dynamic]),
@@ -473,7 +596,7 @@ pub fn option_none() -> Expression(option.Option(t)) {
   )
 }
 
-/// See `math_operator` and `math_operator_float`
+/// See [`math_operator`](#math_operator) and [`math_operator_flaot`](#math_operator_float)`
 pub type MathOperator {
   Add
   Sub
@@ -548,20 +671,25 @@ pub fn comparison_float(
 }
 
 /// Call a function or constructor with no arguments
+///
 /// ```gleam
 /// expression.call0(
-///   import_.function0(dict_module, dict.new)
-/// )
-/// |> expression.render(render.default_context())
-/// |> render.to_string()
-/// // -> "dict.new()"
+///   import_.value_of_type(dict_module, "new", types.reference(dict.new))
+/// ) // Expression(dict.Dict(key, value)) -> "dict.new()"
 /// ```
 pub fn call0(func: Expression(fn() -> ret)) -> Expression(ret) {
   Expression(internal: Call(func |> to_dynamic, []), type_: type_.dynamic())
 }
 
-/// Call a function or constructor with one argument
-/// See `call0`
+/// Call a function or constructor with one argument.
+///
+/// ```gleam
+/// expression.call1(
+///   import_.value_of_type(list_module, "is_empty", types.reference(list.is_empty))
+///   expression.list([])
+/// ) // Expression(Bool) -> "list.is_empty([])"
+/// ```
+/// To call with a dynamic number of arguments, use [`call_dynamic`](#call_dynamic).
 pub fn call1(
   func: Expression(fn(arg1) -> ret),
   arg1: Expression(arg1),
@@ -575,8 +703,8 @@ pub fn call1(
 // remaining repetitive call functions
 // {{{
 
-/// Call a function or constructor with two arguments
-/// See `call0`
+/// Call a function or constructor with two arguments.
+/// See [`call1`](#call1).
 pub fn call2(
   func: Expression(fn(arg1, arg2) -> ret),
   arg1: Expression(arg1),
@@ -591,8 +719,8 @@ pub fn call2(
   )
 }
 
-/// Call a function or constructor with three arguments
-/// See `call0`
+/// Call a function or constructor with three arguments.
+/// See [`call1`](#call1).
 pub fn call3(
   func: Expression(fn(arg1, arg2, arg3) -> ret),
   arg1: Expression(arg1),
@@ -609,8 +737,8 @@ pub fn call3(
   )
 }
 
-/// Call a function or constructor with four arguments
-/// See `call0`
+/// Call a function or constructor with four arguments.
+/// See [`call1`](#call1).
 pub fn call4(
   func: Expression(fn(arg1, arg2, arg3, arg4) -> ret),
   arg1: Expression(arg1),
@@ -629,8 +757,8 @@ pub fn call4(
   )
 }
 
-/// Call a function or constructor with five arguments
-/// See `call0`
+/// Call a function or constructor with five arguments.
+/// See [`call1`](#call1).
 pub fn call5(
   func: Expression(fn(arg1, arg2, arg3, arg4, arg5) -> ret),
   arg1: Expression(arg1),
@@ -651,8 +779,8 @@ pub fn call5(
   )
 }
 
-/// Call a function or constructor with six arguments
-/// See `call0`
+/// Call a function or constructor with six arguments.
+/// See [`call1`](#call1).
 pub fn call6(
   func: Expression(fn(arg1, arg2, arg3, arg4, arg5, arg6) -> ret),
   arg1: Expression(arg1),
@@ -675,8 +803,8 @@ pub fn call6(
   )
 }
 
-/// Call a function or constructor with seven arguments
-/// See `call0`
+/// Call a function or constructor with seven arguments.
+/// See [`call1`](#call1).
 pub fn call7(
   func: Expression(fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7) -> ret),
   arg1: Expression(arg1),
@@ -701,8 +829,8 @@ pub fn call7(
   )
 }
 
-/// Call a function or constructor with eight arguments
-/// See `call0`
+/// Call a function or constructor with eight arguments.
+/// See [`call1`](#call1).
 pub fn call8(
   func: Expression(fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) -> ret),
   arg1: Expression(arg1),
@@ -729,8 +857,8 @@ pub fn call8(
   )
 }
 
-/// Call a function or constructor with nine arguments
-/// See `call0`
+/// Call a function or constructor with nine arguments.
+/// See [`call1`](#call1).
 pub fn call9(
   func: Expression(
     fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) -> ret,
@@ -1639,6 +1767,7 @@ fn recursively_update_expression(
   run_update(expression, default_update)
 }
 
+// Needed for silly gleam phantom type reasons
 fn render_constructor(func, context) {
   render(func, context)
 }

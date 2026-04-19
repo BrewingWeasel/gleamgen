@@ -34,26 +34,35 @@ pub opaque type Pattern(input, match_output) {
   )
 }
 
+/// Match any value with a variable name.
+/// If you do not care about the contents, use `discard`
 pub fn variable(name: String) -> Pattern(a, Expression(a)) {
   Variable(name, output: expression.raw(name))
 }
 
+/// Match a string literal
 pub fn string_literal(literal: String) -> Pattern(a, Nil) {
   StringLiteral(literal, output: Nil)
 }
 
+/// Match and discard any value (Generates `_`).
+/// If you want to name the discarded value, use `named_discard`
+/// If you want to use the discarded value in the output, use `variable`
 pub fn discard() -> Pattern(a, Nil) {
   Variable("_", output: Nil)
 }
 
+/// Match and discard any value (Generates `_name`)
 pub fn named_discard(name: String) -> Pattern(a, Nil) {
   Variable("_" <> name, output: Nil)
 }
 
+/// Match an integer literal
 pub fn int_literal(literal: Int) -> Pattern(Int, Nil) {
   IntLiteral(literal, output: Nil)
 }
 
+/// Match a boolean literal
 pub fn bool_literal(literal: Bool) -> Pattern(Bool, Nil) {
   BoolLiteral(literal, output: Nil)
 }
@@ -157,6 +166,7 @@ fn get_pattern_output(
   pattern: Pattern(type_.Dynamic, type_.Dynamic),
 ) -> Result(Expression(type_.Dynamic), Nil)
 
+/// See `from_constructor1`.
 pub fn from_constructor0(
   constructor: constructor.Constructor(construct_to, #(), generics),
 ) -> Pattern(construct_to, Nil) {
@@ -167,6 +177,27 @@ pub fn from_constructor0(
   )
 }
 
+/// Create a pattern that matches a custom constructor with one argument.
+/// Use `from_constructor_dynamic` for ad dynamic number of arguments.
+/// ```gleam
+/// let animals =
+///   custom.new(ExampleAnimal)
+///   |> custom.with_variant(fn(_) {
+///     variant.new("Dog")
+///     |> variant.with_argument(option.Some("bones"), type_.int)
+///   })
+/// 
+/// use animal_type, dog_constructor <- module.with_custom_type1(
+///   definition.new("Animal") |> definition.with_publicity(True),
+///   animals,
+/// )
+/// ...
+/// pattern.from_constructor1(
+///   dog_constructor,
+///   pattern.variable("bones"),
+/// ) |> pattern.render(context, 1)
+/// // -> "Dog(bones)"
+/// ```
 pub fn from_constructor1(
   constructor: constructor.Constructor(construct_to, #(#(), a), generics),
   first: Pattern(a, a_output),
@@ -852,6 +883,7 @@ pub fn render(
   }
 }
 
+@internal
 pub fn can_match_on_multiple(pattern: Pattern(_, _)) -> Bool {
   case pattern {
     // Or(..) -> True
@@ -861,7 +893,7 @@ pub fn can_match_on_multiple(pattern: Pattern(_, _)) -> Bool {
   }
 }
 
-/// Renders `[]`. List this branch before a catch-all (e.g. `variable`) so the empty case matches first.
+/// Renders `[]`.
 pub fn list_empty() -> Pattern(List(a), Nil) {
   Constructor(module: option.None, constructor: #("[]", []), output: Nil)
 }
@@ -875,7 +907,8 @@ pub fn list_first_discard_rest(first: String) -> Pattern(List(a), Expression(a))
   )
 }
 
-/// `Some(inner)`.
+/// Matches with `option.Some(inner)`. If the option module is already imported, this uses the existing 
+/// import options (ie qualified or unqualified and aliases). Otherwise, it adds the import.
 pub fn option_some(inner: Pattern(a, a_out)) -> Pattern(Option(a), a_out) {
   Constructor(
     module: option.Some(
@@ -886,7 +919,8 @@ pub fn option_some(inner: Pattern(a, a_out)) -> Pattern(Option(a), a_out) {
   )
 }
 
-/// `None`.
+/// Matches with `None`. If the option module is already imported, this uses the existing 
+/// import options (ie qualified or unqualified and aliases). Otherwise, it adds the import.
 pub fn option_none() -> Pattern(Option(a), Nil) {
   Constructor(
     module: option.Some(

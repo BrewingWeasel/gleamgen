@@ -15,6 +15,25 @@ import gleamgen/render
 import gleamgen/source
 import gleamgen/type_
 
+pub fn simple_module_test() {
+  let mod = {
+    use _based_number <- module.with_constant(
+      definition.new("based_number") |> definition.with_publicity(True),
+      expression.int(46),
+    )
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "pub const based_number = 46"
+
+  assert result == expected
+}
+
 const sample_module = "import gleam/int
 import gleam/io
 

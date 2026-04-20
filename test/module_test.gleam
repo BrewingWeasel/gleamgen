@@ -34,6 +34,40 @@ pub fn simple_module_test() {
   assert result == expected
 }
 
+pub fn module_documentation_comments_test() {
+  let mod = {
+    use <- module.with_module_documentation_comments([
+      "This is a module",
+      "It has documentation comments",
+    ])
+    use _based_number <- module.with_constant(
+      definition.new("favorite_number")
+        |> definition.with_publicity(True)
+        |> definition.with_documentation_comments([
+          "My favorite number",
+          "(I really like it)",
+        ]),
+      expression.int(46),
+    )
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "//// This is a module
+//// It has documentation comments
+
+/// My favorite number
+/// (I really like it)
+pub const favorite_number = 46"
+
+  assert result == expected
+}
+
 const sample_module = "import gleam/int
 import gleam/io
 

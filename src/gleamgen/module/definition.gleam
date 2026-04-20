@@ -1,5 +1,6 @@
 import glam/doc
 import glance
+import gleam/list
 import gleam/result
 import gleamgen/internal/render
 
@@ -14,7 +15,7 @@ pub type Target {
   Javascript
 }
 
-pub type Definition {
+pub opaque type Definition {
   Definition(
     name: String,
     is_public: Bool,
@@ -22,6 +23,7 @@ pub type Definition {
     position: Position,
     text_before: String,
     predefined: Bool,
+    documentation_comments: List(String),
   )
 }
 
@@ -38,6 +40,7 @@ pub fn new(name name: String) -> Definition {
     attributes: [],
     position: Bottom,
     text_before: "",
+    documentation_comments: [],
     predefined: False,
   )
 }
@@ -60,6 +63,13 @@ pub fn with_position(
   Definition(..definition, position:)
 }
 
+pub fn with_documentation_comments(
+  definition: Definition,
+  comments: List(String),
+) -> Definition {
+  Definition(..definition, documentation_comments: comments)
+}
+
 @internal
 pub fn with_text_before(
   definition: Definition,
@@ -71,6 +81,46 @@ pub fn with_text_before(
 @internal
 pub fn set_predefined(definition: Definition, predefined: Bool) -> Definition {
   Definition(..definition, predefined:)
+}
+
+pub fn get_name(definition: Definition) -> String {
+  definition.name
+}
+
+pub fn get_position(definition: Definition) -> Position {
+  definition.position
+}
+
+@internal
+pub fn create_base_definition(details: Definition) -> doc.Document {
+  let documentation_comments =
+    doc.join(
+      list.map(details.documentation_comments, fn(comment) {
+        doc.from_string("/// " <> comment)
+      }),
+      doc.line,
+    )
+    |> doc.append(case details.documentation_comments {
+      [] -> doc.empty
+      _ -> doc.line
+    })
+
+  let rendered_attributes = case list.is_empty(details.attributes) {
+    True -> doc.empty
+    False -> doc.line
+  }
+  let pub_keyword = case details.is_public && !details.predefined {
+    True -> doc.concat([doc.from_string("pub"), doc.space])
+    False -> doc.empty
+  }
+
+  doc.concat([
+    doc.from_string(details.text_before),
+    documentation_comments,
+    doc.join(list.map(details.attributes, render_attribute), doc.line),
+  ])
+  |> doc.append(rendered_attributes)
+  |> doc.append(pub_keyword)
 }
 
 pub fn render_attribute(attribute: Attribute) -> doc.Document {

@@ -26,11 +26,12 @@ pub opaque type ExternalModule {
   )
 }
 
-pub type Module {
+pub opaque type Module {
   Module(
     definitions: List(ModuleDefinition),
     imports: List(import_.ImportedModule),
     external_module: Option(ExternalModule),
+    module_documentation_comments: List(String),
   )
 }
 
@@ -84,7 +85,7 @@ pub fn from_source_map(module: source.SourceMapped(glance.Module)) -> Module {
     })
     |> source.fold(
       module.source,
-      Module([], [], option.Some(ExternalModule(option.Some(module), []))),
+      Module([], [], option.Some(ExternalModule(option.Some(module), [])), []),
       handle_existing_definition,
       get_location,
     )
@@ -171,12 +172,20 @@ fn handle_existing_definition(
   }
 }
 
+pub fn with_module_documentation_comments(
+  comments: List(String),
+  handler: fn() -> Module,
+) -> Module {
+  let rest = handler()
+  Module(..rest, module_documentation_comments: comments)
+}
+
 pub fn with_constant(
   details: definition.Definition,
   value: Expression(t),
   handler: fn(Expression(t)) -> Module,
 ) -> Module {
-  let rest = handler(expression.raw(details.name))
+  let rest = handler(expression.raw(definition.get_name(details)))
   Module(..rest, definitions: [
     Definition(details:, value: Constant(value |> expression.to_dynamic())),
     ..rest.definitions
@@ -220,7 +229,7 @@ pub fn replace_function(
       let definitions =
         list.map(definitions, fn(definition) {
           use <- bool.guard(
-            definition.details.name != function_name,
+            definition.get_name(definition.details) != function_name,
             definition,
           )
 
@@ -274,7 +283,7 @@ pub fn with_function(
   func: function.Function(func_type, ret),
   handler: fn(Expression(func_type)) -> Module,
 ) -> Module {
-  let rest = handler(expression.raw(details.name))
+  let rest = handler(expression.raw(definition.get_name(details)))
   Module(..rest, definitions: [
     Definition(details:, value: Function(func |> function.to_dynamic())),
     ..rest.definitions
@@ -316,7 +325,7 @@ pub fn with_custom_type1(
   let assert [variant1] = type_.variants
   let rest =
     handler(
-      custom.new_custom_type(option.None, details.name),
+      custom.new_custom_type(option.None, definition.get_name(details)),
       constructor.new(option.None, variant1),
     )
   Module(..rest, definitions: [
@@ -406,7 +415,7 @@ pub fn with_custom_type2(
   let assert [variant2, variant1] = type_.variants
   let rest =
     handler(
-      custom.new_custom_type(option.None, details.name),
+      custom.new_custom_type(option.None, definition.get_name(details)),
       constructor.new(option.None, variant1),
       constructor.new(option.None, variant2),
     )
@@ -475,7 +484,7 @@ pub fn with_custom_type3(
   let assert [variant3, variant2, variant1] = type_.variants
   let rest =
     handler(
-      custom.new_custom_type(option.None, details.name),
+      custom.new_custom_type(option.None, definition.get_name(details)),
       constructor.new(option.None, variant1),
       constructor.new(option.None, variant2),
       constructor.new(option.None, variant3),
@@ -526,7 +535,7 @@ pub fn with_custom_type4(
   let assert [variant4, variant3, variant2, variant1] = type_.variants
   let rest =
     handler(
-      custom.new_custom_type(option.None, details.name),
+      custom.new_custom_type(option.None, definition.get_name(details)),
       constructor.new(option.None, variant1),
       constructor.new(option.None, variant2),
       constructor.new(option.None, variant3),
@@ -585,7 +594,7 @@ pub fn with_custom_type5(
   let assert [variant5, variant4, variant3, variant2, variant1] = type_.variants
   let rest =
     handler(
-      custom.new_custom_type(option.None, details.name),
+      custom.new_custom_type(option.None, definition.get_name(details)),
       constructor.new(option.None, variant1),
       constructor.new(option.None, variant2),
       constructor.new(option.None, variant3),
@@ -653,7 +662,7 @@ pub fn with_custom_type6(
     type_.variants
   let rest =
     handler(
-      custom.new_custom_type(option.None, details.name),
+      custom.new_custom_type(option.None, definition.get_name(details)),
       constructor.new(option.None, variant1),
       constructor.new(option.None, variant2),
       constructor.new(option.None, variant3),
@@ -733,7 +742,7 @@ pub fn with_custom_type7(
   ] = type_.variants
   let rest =
     handler(
-      custom.new_custom_type(option.None, details.name),
+      custom.new_custom_type(option.None, definition.get_name(details)),
       constructor.new(option.None, variant1),
       constructor.new(option.None, variant2),
       constructor.new(option.None, variant3),
@@ -825,7 +834,7 @@ pub fn with_custom_type8(
   ] = type_.variants
   let rest =
     handler(
-      custom.new_custom_type(option.None, details.name),
+      custom.new_custom_type(option.None, definition.get_name(details)),
       constructor.new(option.None, variant1),
       constructor.new(option.None, variant2),
       constructor.new(option.None, variant3),
@@ -923,7 +932,7 @@ pub fn with_custom_type9(
   ] = type_.variants
   let rest =
     handler(
-      custom.new_custom_type(option.None, details.name),
+      custom.new_custom_type(option.None, definition.get_name(details)),
       constructor.new(option.None, variant1),
       constructor.new(option.None, variant2),
       constructor.new(option.None, variant3),
@@ -1004,7 +1013,7 @@ pub fn with_custom_type_dynamic(
 ) -> Module {
   let rest =
     handler(
-      custom.new_custom_type(option.None, details.name),
+      custom.new_custom_type(option.None, definition.get_name(details)),
       type_.variants
         |> list.reverse()
         |> list.map(constructor.new(option.None, _)),
@@ -1040,7 +1049,7 @@ pub fn with_type_alias(
   type_: type_.GeneratedType(repr),
   handler: fn(type_.GeneratedType(repr)) -> Module,
 ) -> Module {
-  let rest = handler(type_.raw(details.name))
+  let rest = handler(type_.raw(definition.get_name(details)))
   Module(..rest, definitions: [
     Definition(details:, value: TypeAlias(type_ |> type_.to_dynamic())),
     ..rest.definitions
@@ -1048,7 +1057,7 @@ pub fn with_type_alias(
 }
 
 pub fn eof() -> Module {
-  Module([], [], option.None)
+  Module([], [], option.None, [])
 }
 
 pub fn render(
@@ -1109,12 +1118,30 @@ pub fn render(
     |> list.map(fn(x) { x |> render_imported_module |> render.to_string() })
     |> list.map(doc.from_string)
 
+  let documentation_comments =
+    doc.join(
+      list.map(module.module_documentation_comments, fn(comment) {
+        doc.from_string("//// " <> comment)
+      }),
+      doc.line,
+    )
+    |> doc.append(case module.module_documentation_comments, rendered_imports {
+      [], _ | _, [] -> doc.empty
+      _, _ -> doc.line
+    })
+
   rendered_imports
   |> doc.join(with: doc.line)
-  |> doc.append(case list.is_empty(rendered_imports) {
-    True -> doc.empty
-    False -> doc.concat([doc.line, doc.line])
-  })
+  |> doc.prepend(documentation_comments)
+  |> doc.append(
+    case
+      list.is_empty(rendered_imports)
+      && list.is_empty(module.module_documentation_comments)
+    {
+      True -> doc.empty
+      False -> doc.concat([doc.line, doc.line])
+    },
+  )
   |> doc.append(doc.concat_join(rendered_defs, [doc.line, doc.line]))
   |> render.Render(details:)
 }
@@ -1185,7 +1212,7 @@ fn render_all_definitions(
           render_all_definitions(
             rest,
             after_definition,
-            option.Some(definition.details.name),
+            option.Some(definition.get_name(definition.details)),
             context,
             render.merge_details(previous_details, new_details),
             [rendered_def, ..rendered_definitions],
@@ -1211,7 +1238,7 @@ fn separate_definitions(
 ) {
   case definitions {
     [definition, ..rest] -> {
-      case definition.details.position {
+      case definition.get_position(definition.details) {
         definition.Top ->
           separate_definitions(
             rest,
@@ -1248,13 +1275,14 @@ fn separate_definitions(
 }
 
 fn render_definition(definition: ModuleDefinition, context) {
+  let name = definition.get_name(definition.details)
   let #(rendered, details) = case definition.value {
     Constant(value) -> {
       let rendered_expr = expression.render(value, context)
       #(
         doc.concat([
           doc.from_string("const "),
-          doc.from_string(definition.details.name),
+          doc.from_string(name),
           doc.space,
           doc.from_string("="),
           doc.space,
@@ -1268,7 +1296,7 @@ fn render_definition(definition: ModuleDefinition, context) {
       #(
         doc.concat([
           doc.from_string("type "),
-          doc.from_string(definition.details.name),
+          doc.from_string(name),
           rendered_type.doc,
         ]),
         rendered_type.details,
@@ -1279,7 +1307,7 @@ fn render_definition(definition: ModuleDefinition, context) {
       #(
         doc.concat([
           doc.from_string("type "),
-          doc.from_string(definition.details.name),
+          doc.from_string(name),
           doc.space,
           doc.from_string("="),
           doc.space,
@@ -1293,8 +1321,7 @@ fn render_definition(definition: ModuleDefinition, context) {
       )
     }
     Function(func) -> {
-      let rendered =
-        function.render(func, context, option.Some(definition.details.name))
+      let rendered = function.render(func, context, option.Some(name))
       #(rendered.doc, rendered.details)
     }
     Predefined(_, _, content, _source) -> {
@@ -1303,23 +1330,7 @@ fn render_definition(definition: ModuleDefinition, context) {
   }
 
   let full_doc =
-    doc.concat([
-      doc.from_string(definition.details.text_before),
-      doc.join(
-        list.map(definition.details.attributes, definition.render_attribute),
-        doc.line,
-      ),
-    ])
-    |> doc.append(case list.is_empty(definition.details.attributes) {
-      True -> doc.empty
-      False -> doc.line
-    })
-    |> doc.append(
-      case definition.details.is_public && !definition.details.predefined {
-        True -> doc.concat([doc.from_string("pub"), doc.space])
-        False -> doc.empty
-      },
-    )
+    definition.create_base_definition(definition.details)
     |> doc.append(rendered)
 
   #(full_doc, details)

@@ -10,9 +10,7 @@ import gleamgen/type_
 import gleamgen/type_/custom
 import gleamgen/type_/variant
 
-type MyCustomTypeReference {
-  MyCustomTypeReference
-}
+type MyCustomTypeReference
 
 pub fn generate() {
   let generate_argument = fn(x) {
@@ -40,8 +38,8 @@ pub fn generate() {
     int.range(0, 25, [], fn(acc, i) { [generate_variant(i), ..acc] })
     |> list.reverse()
 
-  let custom_type =
-    custom.new(MyCustomTypeReference)
+  let custom_type: custom.CustomTypeBuilder(MyCustomTypeReference, _, _) =
+    custom.new()
     |> custom.with_dynamic_variants(fn(_) { all_variants })
 
   let mod = {

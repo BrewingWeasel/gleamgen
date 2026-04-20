@@ -2,7 +2,7 @@ import gleam/list
 import gleam/option.{type Option}
 import gleamgen/type_.{type Dynamic}
 
-pub type Variant(a) {
+pub opaque type Variant(a) {
   Variant(
     name: String,
     arguments: List(#(Option(String), type_.GeneratedType(Dynamic))),
@@ -37,4 +37,14 @@ pub fn with_arguments_dynamic(
 pub fn to_dynamic(variant: Variant(a)) -> Variant(Dynamic) {
   let Variant(name, args) = variant
   Variant(name, args)
+}
+
+pub fn get_name(variant: Variant(a)) -> String {
+  variant.name
+}
+
+pub fn get_arguments(
+  variant: Variant(a),
+) -> List(#(Option(String), type_.GeneratedType(Dynamic))) {
+  variant.arguments
 }

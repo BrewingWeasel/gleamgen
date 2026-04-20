@@ -107,7 +107,7 @@ pub fn raw_type(
   imported: ImportReference,
   name: String,
 ) -> custom.CustomType(t, generics) {
-  custom.CustomType(option.Some(imported), name)
+  custom.new_custom_type(option.Some(imported), name)
 }
 
 // @internal

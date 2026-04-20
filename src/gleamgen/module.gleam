@@ -281,6 +281,29 @@ pub fn with_function(
   ])
 }
 
+/// Define a custom type with one variant.
+///
+/// ```gleam
+/// let cat =
+///   custom.new()
+///   |> custom.with_variant(fn(_) {
+///     variant.new("Cat")
+///     |> variant.with_argument(option.Some("name"), type_.string)
+///     |> variant.with_argument(option.Some("age"), type_.int)
+///     |> variant.with_argument(option.Some("has_catnip"), type_.bool)
+///   })
+///
+/// use cat_type, cat_constructor <- module.with_custom_type1(
+///   definition.new("Cat"),
+///   cat,
+/// )
+/// ```
+///
+/// The type can be instantiated with [`custom.to_type`](type_/custom.html#to_type1).
+/// The constructors can be used to create values of the type ([`constructor.to_expression`](expression/constructor.html#to_expression1))
+/// or pattern match on values of the type ([`pattern.from_constructor`](pattern.html#from_constructor1)).
+///
+/// To define a custom type with a dynamic number of variants, see [`with_custom_type_dynamic`](#with_custom_type_dynamic).
 pub fn with_custom_type1(
   details: definition.Definition,
   type_: custom.CustomTypeBuilder(repr, custom.Generics1(a), generics),
@@ -293,8 +316,8 @@ pub fn with_custom_type1(
   let assert [variant1] = type_.variants
   let rest =
     handler(
-      custom.CustomType(option.None, details.name),
-      constructor.new(variant1),
+      custom.new_custom_type(option.None, details.name),
+      constructor.new(option.None, variant1),
     )
   Module(..rest, definitions: [
     Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
@@ -302,8 +325,74 @@ pub fn with_custom_type1(
   ])
 }
 
+/// Import a custom type with one variant.
+///
+/// ```gleam
+/// use cat_module <- module.with_import(import_.new(["animal", "cat"]))
+/// let cat =
+///   custom.new()
+///   |> custom.with_variant(fn(_) {
+///     variant.new("Cat")
+///     |> variant.with_argument(option.Some("name"), type_.string)
+///     |> variant.with_argument(option.Some("age"), type_.int)
+///     |> variant.with_argument(option.Some("has_catnip"), type_.bool)
+///   })
+///
+/// use cat_type, cat_constructor <- module.with_imported_custom_type1(
+///   cat_module,
+///   "Cat"
+///   cat,
+/// )
+/// ```
+///
+/// The type can be instantiated with [`custom.to_type`](type_/custom.html#to_type1).
+/// The constructors can be used to create values of the type ([`constructor.to_expression`](expression/constructor.html#to_expression1))
+/// or pattern match on values of the type ([`pattern.from_constructor`](pattern.html#from_constructor1)).
+///
+/// To define a custom type with a dynamic number of variants, see [`with_custom_type_dynamic`](#with_custom_type_dynamic).
+pub fn with_imported_custom_type1(
+  module: import_.ImportReference,
+  name: String,
+  type_: custom.CustomTypeBuilder(repr, custom.Generics1(a), generics),
+  handler: fn(
+    custom.CustomType(repr, generics),
+    constructor.Constructor(repr, a, generics),
+  ) ->
+    Module,
+) -> Module {
+  let assert [variant1] = type_.variants
+  handler(
+    custom.new_custom_type(option.Some(module), name),
+    constructor.new(option.Some(module), variant1),
+  )
+}
+
 // {{{
 
+/// Define a custom type with two variants.
+/// ```gleam
+/// let animals =
+///   custom.new()
+///   |> custom.with_variant(fn(_) {
+///     variant.new("Dog")
+///     |> variant.with_argument(option.Some("bones"), type_.int)
+///   })
+///   |> custom.with_variant(fn(_) {
+///     variant.new("Cat")
+///     |> variant.with_argument(option.Some("name"), type_.string)
+///     |> variant.with_argument(option.Some("has_catnip"), type_.bool)
+///   })
+///
+/// use animal_type, dog_constructor, cat_constructor <- module.with_custom_type2(
+///   definition.new("Animal") |> definition.with_publicity(True),
+///   animals,
+/// )
+/// ```
+/// The type can be instantiated with [`custom.to_type`](type_/custom.html#to_type1).
+/// The constructors can be used to create values of the type ([`constructor.to_expression`](expression/constructor.html#to_expression1))
+/// or pattern match on values of the type ([`pattern.from_constructor`](pattern.html#from_constructor1)).
+///
+/// To define a custom type with a dynamic number of variants, see [`with_custom_type_dynamic`](#with_custom_type_dynamic).
 pub fn with_custom_type2(
   details: definition.Definition,
   type_: custom.CustomTypeBuilder(repr, custom.Generics2(a, b), generics),
@@ -317,9 +406,9 @@ pub fn with_custom_type2(
   let assert [variant2, variant1] = type_.variants
   let rest =
     handler(
-      custom.CustomType(option.None, details.name),
-      constructor.new(variant1),
-      constructor.new(variant2),
+      custom.new_custom_type(option.None, details.name),
+      constructor.new(option.None, variant1),
+      constructor.new(option.None, variant2),
     )
   Module(..rest, definitions: [
     Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
@@ -327,6 +416,51 @@ pub fn with_custom_type2(
   ])
 }
 
+/// Import a custom type with two variants.
+/// ```gleam
+/// use option_module <- module.with_import(import_.new(["gleam", "option"]))
+/// let option =
+///   custom.new()
+///   |> custom.with_generic("a")
+///   |> custom.with_variant(fn(generics) {
+///     let #(#(), a) = generics
+///     variant.new("Some")
+///     |> variant.with_argument(option.None, a)
+///   })
+///   |> custom.with_variant(fn(_generics) { variant.new("None") })
+///
+/// use option_type, some_constructor, none_constructor <- module.with_imported_custom_type2(
+///   option_module,
+///   "Option",
+///   option,
+/// )
+/// ```
+/// The type can be instantiated with [`custom.to_type`](type_/custom.html#to_type1).
+/// The constructors can be used to create values of the type ([`constructor.to_expression`](expression/constructor.html#to_expression1))
+/// or pattern match on values of the type ([`pattern.from_constructor`](pattern.html#from_constructor1)).
+///
+/// To import a custom type with a dynamic number of variants, see [`with_imported_custom_type_dynamic`](#with_imported_custom_type_dynamic).
+pub fn with_imported_custom_type2(
+  module: import_.ImportReference,
+  name: String,
+  type_: custom.CustomTypeBuilder(repr, custom.Generics2(a, b), generics),
+  handler: fn(
+    custom.CustomType(repr, generics),
+    constructor.Constructor(repr, a, generics),
+    constructor.Constructor(repr, b, generics),
+  ) ->
+    Module,
+) -> Module {
+  let assert [variant2, variant1] = type_.variants
+  handler(
+    custom.new_custom_type(option.Some(module), name),
+    constructor.new(option.Some(module), variant1),
+    constructor.new(option.Some(module), variant2),
+  )
+}
+
+/// Define a custom type with three variants.
+/// See [`with_custom_type1`](#with_custom_type1).
 pub fn with_custom_type3(
   details: definition.Definition,
   type_: custom.CustomTypeBuilder(repr, custom.Generics3(a, b, c), generics),
@@ -341,10 +475,10 @@ pub fn with_custom_type3(
   let assert [variant3, variant2, variant1] = type_.variants
   let rest =
     handler(
-      custom.CustomType(option.None, details.name),
-      constructor.new(variant1),
-      constructor.new(variant2),
-      constructor.new(variant3),
+      custom.new_custom_type(option.None, details.name),
+      constructor.new(option.None, variant1),
+      constructor.new(option.None, variant2),
+      constructor.new(option.None, variant3),
     )
   Module(..rest, definitions: [
     Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
@@ -352,6 +486,31 @@ pub fn with_custom_type3(
   ])
 }
 
+/// Import a custom type with three variants.
+/// See [`with_imported_custom_type1`](#with_imported_custom_type1).
+pub fn with_imported_custom_type3(
+  module: import_.ImportReference,
+  name: String,
+  type_: custom.CustomTypeBuilder(repr, custom.Generics3(a, b, c), generics),
+  handler: fn(
+    custom.CustomType(repr, generics),
+    constructor.Constructor(repr, a, generics),
+    constructor.Constructor(repr, b, generics),
+    constructor.Constructor(repr, c, generics),
+  ) ->
+    Module,
+) -> Module {
+  let assert [variant3, variant2, variant1] = type_.variants
+  handler(
+    custom.new_custom_type(option.Some(module), name),
+    constructor.new(option.Some(module), variant1),
+    constructor.new(option.Some(module), variant2),
+    constructor.new(option.Some(module), variant3),
+  )
+}
+
+/// Define a custom type with four variants.
+/// See [`with_custom_type1`](#with_custom_type1).
 pub fn with_custom_type4(
   details: definition.Definition,
   type_: custom.CustomTypeBuilder(repr, custom.Generics4(a, b, c, d), generics),
@@ -367,11 +526,11 @@ pub fn with_custom_type4(
   let assert [variant4, variant3, variant2, variant1] = type_.variants
   let rest =
     handler(
-      custom.CustomType(option.None, details.name),
-      constructor.new(variant1),
-      constructor.new(variant2),
-      constructor.new(variant3),
-      constructor.new(variant4),
+      custom.new_custom_type(option.None, details.name),
+      constructor.new(option.None, variant1),
+      constructor.new(option.None, variant2),
+      constructor.new(option.None, variant3),
+      constructor.new(option.None, variant4),
     )
   Module(..rest, definitions: [
     Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
@@ -379,6 +538,33 @@ pub fn with_custom_type4(
   ])
 }
 
+/// Import a custom type with four variants.
+/// See [`with_imported_custom_type1`](#with_imported_custom_type1).
+pub fn with_imported_custom_type4(
+  module: import_.ImportReference,
+  name: String,
+  type_: custom.CustomTypeBuilder(repr, custom.Generics4(a, b, c, d), generics),
+  handler: fn(
+    custom.CustomType(repr, generics),
+    constructor.Constructor(repr, a, generics),
+    constructor.Constructor(repr, b, generics),
+    constructor.Constructor(repr, c, generics),
+    constructor.Constructor(repr, d, generics),
+  ) ->
+    Module,
+) -> Module {
+  let assert [variant4, variant3, variant2, variant1] = type_.variants
+  handler(
+    custom.new_custom_type(option.Some(module), name),
+    constructor.new(option.Some(module), variant1),
+    constructor.new(option.Some(module), variant2),
+    constructor.new(option.Some(module), variant3),
+    constructor.new(option.Some(module), variant4),
+  )
+}
+
+/// Define a custom type with five variants.
+/// See [`with_custom_type1`](#with_custom_type1).
 pub fn with_custom_type5(
   details: definition.Definition,
   type_: custom.CustomTypeBuilder(
@@ -399,12 +585,12 @@ pub fn with_custom_type5(
   let assert [variant5, variant4, variant3, variant2, variant1] = type_.variants
   let rest =
     handler(
-      custom.CustomType(option.None, details.name),
-      constructor.new(variant1),
-      constructor.new(variant2),
-      constructor.new(variant3),
-      constructor.new(variant4),
-      constructor.new(variant5),
+      custom.new_custom_type(option.None, details.name),
+      constructor.new(option.None, variant1),
+      constructor.new(option.None, variant2),
+      constructor.new(option.None, variant3),
+      constructor.new(option.None, variant4),
+      constructor.new(option.None, variant5),
     )
   Module(..rest, definitions: [
     Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
@@ -412,6 +598,39 @@ pub fn with_custom_type5(
   ])
 }
 
+/// Import a custom type with five variants.
+/// See [`with_imported_custom_type1`](#with_imported_custom_type1).
+pub fn with_imported_custom_type5(
+  module: import_.ImportReference,
+  name: String,
+  type_: custom.CustomTypeBuilder(
+    repr,
+    custom.Generics5(a, b, c, d, e),
+    generics,
+  ),
+  handler: fn(
+    custom.CustomType(repr, generics),
+    constructor.Constructor(repr, a, generics),
+    constructor.Constructor(repr, b, generics),
+    constructor.Constructor(repr, c, generics),
+    constructor.Constructor(repr, d, generics),
+    constructor.Constructor(repr, e, generics),
+  ) ->
+    Module,
+) -> Module {
+  let assert [variant5, variant4, variant3, variant2, variant1] = type_.variants
+  handler(
+    custom.new_custom_type(option.Some(module), name),
+    constructor.new(option.Some(module), variant1),
+    constructor.new(option.Some(module), variant2),
+    constructor.new(option.Some(module), variant3),
+    constructor.new(option.Some(module), variant4),
+    constructor.new(option.Some(module), variant5),
+  )
+}
+
+/// Define a custom type with six variants.
+/// See [`with_custom_type1`](#with_custom_type1).
 pub fn with_custom_type6(
   details: definition.Definition,
   type_: custom.CustomTypeBuilder(
@@ -434,13 +653,13 @@ pub fn with_custom_type6(
     type_.variants
   let rest =
     handler(
-      custom.CustomType(option.None, details.name),
-      constructor.new(variant1),
-      constructor.new(variant2),
-      constructor.new(variant3),
-      constructor.new(variant4),
-      constructor.new(variant5),
-      constructor.new(variant6),
+      custom.new_custom_type(option.None, details.name),
+      constructor.new(option.None, variant1),
+      constructor.new(option.None, variant2),
+      constructor.new(option.None, variant3),
+      constructor.new(option.None, variant4),
+      constructor.new(option.None, variant5),
+      constructor.new(option.None, variant6),
     )
   Module(..rest, definitions: [
     Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
@@ -448,6 +667,42 @@ pub fn with_custom_type6(
   ])
 }
 
+/// Import a custom type with six variants.
+/// See [`with_imported_custom_type1`](#with_imported_custom_type1).
+pub fn with_imported_custom_type6(
+  module: import_.ImportReference,
+  name: String,
+  type_: custom.CustomTypeBuilder(
+    repr,
+    custom.Generics6(a, b, c, d, e, f),
+    generics,
+  ),
+  handler: fn(
+    custom.CustomType(repr, generics),
+    constructor.Constructor(repr, a, generics),
+    constructor.Constructor(repr, b, generics),
+    constructor.Constructor(repr, c, generics),
+    constructor.Constructor(repr, d, generics),
+    constructor.Constructor(repr, e, generics),
+    constructor.Constructor(repr, f, generics),
+  ) ->
+    Module,
+) -> Module {
+  let assert [variant6, variant5, variant4, variant3, variant2, variant1] =
+    type_.variants
+  handler(
+    custom.new_custom_type(option.Some(module), name),
+    constructor.new(option.Some(module), variant1),
+    constructor.new(option.Some(module), variant2),
+    constructor.new(option.Some(module), variant3),
+    constructor.new(option.Some(module), variant4),
+    constructor.new(option.Some(module), variant5),
+    constructor.new(option.Some(module), variant6),
+  )
+}
+
+/// Define a custom type with seven variants.
+/// See [`with_custom_type1`](#with_custom_type1).
 pub fn with_custom_type7(
   details: definition.Definition,
   type_: custom.CustomTypeBuilder(
@@ -478,14 +733,14 @@ pub fn with_custom_type7(
   ] = type_.variants
   let rest =
     handler(
-      custom.CustomType(option.None, details.name),
-      constructor.new(variant1),
-      constructor.new(variant2),
-      constructor.new(variant3),
-      constructor.new(variant4),
-      constructor.new(variant5),
-      constructor.new(variant6),
-      constructor.new(variant7),
+      custom.new_custom_type(option.None, details.name),
+      constructor.new(option.None, variant1),
+      constructor.new(option.None, variant2),
+      constructor.new(option.None, variant3),
+      constructor.new(option.None, variant4),
+      constructor.new(option.None, variant5),
+      constructor.new(option.None, variant6),
+      constructor.new(option.None, variant7),
     )
   Module(..rest, definitions: [
     Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
@@ -493,6 +748,51 @@ pub fn with_custom_type7(
   ])
 }
 
+/// Import a custom type with seven variants.
+/// See [`with_imported_custom_type1`](#with_imported_custom_type1).
+pub fn with_imported_custom_type7(
+  module: import_.ImportReference,
+  name: String,
+  type_: custom.CustomTypeBuilder(
+    repr,
+    custom.Generics7(a, b, c, d, e, f, g),
+    generics,
+  ),
+  handler: fn(
+    custom.CustomType(repr, generics),
+    constructor.Constructor(repr, a, generics),
+    constructor.Constructor(repr, b, generics),
+    constructor.Constructor(repr, c, generics),
+    constructor.Constructor(repr, d, generics),
+    constructor.Constructor(repr, e, generics),
+    constructor.Constructor(repr, f, generics),
+    constructor.Constructor(repr, g, generics),
+  ) ->
+    Module,
+) -> Module {
+  let assert [
+    variant7,
+    variant6,
+    variant5,
+    variant4,
+    variant3,
+    variant2,
+    variant1,
+  ] = type_.variants
+  handler(
+    custom.new_custom_type(option.Some(module), name),
+    constructor.new(option.Some(module), variant1),
+    constructor.new(option.Some(module), variant2),
+    constructor.new(option.Some(module), variant3),
+    constructor.new(option.Some(module), variant4),
+    constructor.new(option.Some(module), variant5),
+    constructor.new(option.Some(module), variant6),
+    constructor.new(option.Some(module), variant7),
+  )
+}
+
+/// Define a custom type with eight variants.
+/// See [`with_custom_type1`](#with_custom_type1).
 pub fn with_custom_type8(
   details: definition.Definition,
   type_: custom.CustomTypeBuilder(
@@ -525,15 +825,15 @@ pub fn with_custom_type8(
   ] = type_.variants
   let rest =
     handler(
-      custom.CustomType(option.None, details.name),
-      constructor.new(variant1),
-      constructor.new(variant2),
-      constructor.new(variant3),
-      constructor.new(variant4),
-      constructor.new(variant5),
-      constructor.new(variant6),
-      constructor.new(variant7),
-      constructor.new(variant8),
+      custom.new_custom_type(option.None, details.name),
+      constructor.new(option.None, variant1),
+      constructor.new(option.None, variant2),
+      constructor.new(option.None, variant3),
+      constructor.new(option.None, variant4),
+      constructor.new(option.None, variant5),
+      constructor.new(option.None, variant6),
+      constructor.new(option.None, variant7),
+      constructor.new(option.None, variant8),
     )
   Module(..rest, definitions: [
     Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
@@ -541,6 +841,54 @@ pub fn with_custom_type8(
   ])
 }
 
+/// Import a custom type with eight variants.
+/// See [`with_imported_custom_type1`](#with_imported_custom_type1).
+pub fn with_imported_custom_type8(
+  module: import_.ImportReference,
+  name: String,
+  type_: custom.CustomTypeBuilder(
+    repr,
+    custom.Generics8(a, b, c, d, e, f, g, h),
+    generics,
+  ),
+  handler: fn(
+    custom.CustomType(repr, generics),
+    constructor.Constructor(repr, a, generics),
+    constructor.Constructor(repr, b, generics),
+    constructor.Constructor(repr, c, generics),
+    constructor.Constructor(repr, d, generics),
+    constructor.Constructor(repr, e, generics),
+    constructor.Constructor(repr, f, generics),
+    constructor.Constructor(repr, g, generics),
+    constructor.Constructor(repr, h, generics),
+  ) ->
+    Module,
+) -> Module {
+  let assert [
+    variant8,
+    variant7,
+    variant6,
+    variant5,
+    variant4,
+    variant3,
+    variant2,
+    variant1,
+  ] = type_.variants
+  handler(
+    custom.new_custom_type(option.Some(module), name),
+    constructor.new(option.Some(module), variant1),
+    constructor.new(option.Some(module), variant2),
+    constructor.new(option.Some(module), variant3),
+    constructor.new(option.Some(module), variant4),
+    constructor.new(option.Some(module), variant5),
+    constructor.new(option.Some(module), variant6),
+    constructor.new(option.Some(module), variant7),
+    constructor.new(option.Some(module), variant8),
+  )
+}
+
+/// Define a custom type with nine variants.
+/// See [`with_custom_type1`](#with_custom_type1).
 pub fn with_custom_type9(
   details: definition.Definition,
   type_: custom.CustomTypeBuilder(
@@ -575,16 +923,16 @@ pub fn with_custom_type9(
   ] = type_.variants
   let rest =
     handler(
-      custom.CustomType(option.None, details.name),
-      constructor.new(variant1),
-      constructor.new(variant2),
-      constructor.new(variant3),
-      constructor.new(variant4),
-      constructor.new(variant5),
-      constructor.new(variant6),
-      constructor.new(variant7),
-      constructor.new(variant8),
-      constructor.new(variant9),
+      custom.new_custom_type(option.None, details.name),
+      constructor.new(option.None, variant1),
+      constructor.new(option.None, variant2),
+      constructor.new(option.None, variant3),
+      constructor.new(option.None, variant4),
+      constructor.new(option.None, variant5),
+      constructor.new(option.None, variant6),
+      constructor.new(option.None, variant7),
+      constructor.new(option.None, variant8),
+      constructor.new(option.None, variant9),
     )
   Module(..rest, definitions: [
     Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
@@ -592,8 +940,59 @@ pub fn with_custom_type9(
   ])
 }
 
+/// Import a custom type with nine variants.
+/// See [`with_imported_custom_type1`](#with_imported_custom_type1).
+pub fn with_imported_custom_type9(
+  module: import_.ImportReference,
+  name: String,
+  type_: custom.CustomTypeBuilder(
+    repr,
+    custom.Generics9(a, b, c, d, e, f, g, h, i),
+    generics,
+  ),
+  handler: fn(
+    custom.CustomType(repr, generics),
+    constructor.Constructor(repr, a, generics),
+    constructor.Constructor(repr, b, generics),
+    constructor.Constructor(repr, c, generics),
+    constructor.Constructor(repr, d, generics),
+    constructor.Constructor(repr, e, generics),
+    constructor.Constructor(repr, f, generics),
+    constructor.Constructor(repr, g, generics),
+    constructor.Constructor(repr, h, generics),
+    constructor.Constructor(repr, i, generics),
+  ) ->
+    Module,
+) -> Module {
+  let assert [
+    variant9,
+    variant8,
+    variant7,
+    variant6,
+    variant5,
+    variant4,
+    variant3,
+    variant2,
+    variant1,
+  ] = type_.variants
+  handler(
+    custom.new_custom_type(option.Some(module), name),
+    constructor.new(option.Some(module), variant1),
+    constructor.new(option.Some(module), variant2),
+    constructor.new(option.Some(module), variant3),
+    constructor.new(option.Some(module), variant4),
+    constructor.new(option.Some(module), variant5),
+    constructor.new(option.Some(module), variant6),
+    constructor.new(option.Some(module), variant7),
+    constructor.new(option.Some(module), variant8),
+    constructor.new(option.Some(module), variant9),
+  )
+}
+
 // }}}
 
+/// Define a custom type with a dynamic number of variants.
+/// See [`with_custom_type1`](#with_custom_type1).
 pub fn with_custom_type_dynamic(
   details: definition.Definition,
   type_: custom.CustomTypeBuilder(repr, Dynamic, generics),
@@ -605,13 +1004,35 @@ pub fn with_custom_type_dynamic(
 ) -> Module {
   let rest =
     handler(
-      custom.CustomType(option.None, details.name),
-      type_.variants |> list.reverse() |> list.map(constructor.new),
+      custom.new_custom_type(option.None, details.name),
+      type_.variants
+        |> list.reverse()
+        |> list.map(constructor.new(option.None, _)),
     )
   Module(..rest, definitions: [
     Definition(details:, value: CustomTypeBuilder(type_ |> custom.to_dynamic())),
     ..rest.definitions
   ])
+}
+
+/// Import a custom type with a dynamic number of variants.
+/// See [`with_imported_custom_type1`](#with_imported_custom_type1).
+pub fn with_imported_custom_type_dynamic(
+  module: import_.ImportReference,
+  name: String,
+  type_: custom.CustomTypeBuilder(repr, Dynamic, generics),
+  handler: fn(
+    custom.CustomType(repr, generics),
+    List(constructor.Constructor(repr, Dynamic, generics)),
+  ) ->
+    Module,
+) -> Module {
+  handler(
+    custom.new_custom_type(option.Some(module), name),
+    type_.variants
+      |> list.reverse()
+      |> list.map(constructor.new(option.Some(module), _)),
+  )
 }
 
 pub fn with_type_alias(

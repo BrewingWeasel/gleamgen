@@ -7,6 +7,29 @@ import gleamgen/internal/render
 import gleamgen/type_.{type Dynamic}
 import gleamgen/type_/variant.{type Variant}
 
+/// Define a custom type.
+/// Once you have built the type, add it to the module with [`module.with_custom_type`](module#with_custom_type1).
+/// If you want to add type safety to an imported type, use [`module.with_imported_custom_type`](module#with_imported_custom_type1).
+///
+/// ```gleam
+/// let animals =
+///   custom.new()
+///   |> custom.with_variant(fn(_) {
+///     variant.new("Dog")
+///     |> variant.with_argument(option.Some("bones"), type_.int)
+///   })
+///   |> custom.with_variant(fn(_) {
+///     variant.new("Cat")
+///     |> variant.with_argument(option.Some("name"), type_.string)
+///     |> variant.with_argument(option.Some("has_catnip"), type_.bool)
+///   })
+/// use animal_type, dog_constructor, cat_constructor <- module.with_custom_type2(
+///   definition.new("Animal") |> definition.with_publicity(True),
+///   animals,
+/// )
+/// ```
+///
+/// To create, see [`new`](#new), [`with_generic`](#with_generic), and [`with_variant`](#with_variant).
 pub type CustomTypeBuilder(repr, variants, generics) {
   CustomTypeBuilder(
     variants: List(Variant(Dynamic)),
@@ -15,42 +38,56 @@ pub type CustomTypeBuilder(repr, variants, generics) {
   )
 }
 
+/// Represents the generics of a custom type with 1 generic parameter.
 pub type Generics1(a) =
   #(#(), a)
 
+/// Represents the generics of a custom type with 2 generic parameters.
 pub type Generics2(a, b) =
   #(#(#(), a), b)
 
+/// Represents the generics of a custom type with 3 generic parameters.
 pub type Generics3(a, b, c) =
   #(#(#(#(), a), b), c)
 
+/// Represents the generics of a custom type with 4 generic parameters.
 pub type Generics4(a, b, c, d) =
   #(#(#(#(#(), a), b), c), d)
 
+/// Represents the generics of a custom type with 5 generic parameters.
 pub type Generics5(a, b, c, d, e) =
   #(#(#(#(#(#(), a), b), c), d), e)
 
+/// Represents the generics of a custom type with 6 generic parameters.
 pub type Generics6(a, b, c, d, e, f) =
   #(#(#(#(#(#(#(), a), b), c), d), e), f)
 
+/// Represents the generics of a custom type with 7 generic parameters.
 pub type Generics7(a, b, c, d, e, f, g) =
   #(#(#(#(#(#(#(#(), a), b), c), d), e), f), g)
 
+/// Represents the generics of a custom type with 8 generic parameters.
 pub type Generics8(a, b, c, d, e, f, g, h) =
   #(#(#(#(#(#(#(#(#(), a), b), c), d), e), f), g), h)
 
+/// Represents the generics of a custom type with 9 generic parameters.
 pub type Generics9(a, b, c, d, e, f, g, h, i) =
   #(#(#(#(#(#(#(#(#(#(), a), b), c), d), e), f), g), h), i)
 
-pub fn new(_typed_representation: a) -> CustomTypeBuilder(a, #(), #()) {
+/// Create a new [`CustomTypeBuilder`](#CustomTypeBuilder).
+/// See also [`new_dynamic`](#new_dynamic) for creating a custom type from a dynamic list of variants and generics.
+pub fn new() -> CustomTypeBuilder(typed_representation, #(), #()) {
   CustomTypeBuilder(variants: [], generics: #(), generics_list: [])
 }
 
 pub fn new_dynamic(
-  _typed_representation: repr,
   variants: List(Variant(Dynamic)),
   generics_list: List(String),
-) -> CustomTypeBuilder(repr, a, List(type_.GeneratedType(Dynamic))) {
+) -> CustomTypeBuilder(
+  repr,
+  typed_representation,
+  List(type_.GeneratedType(Dynamic)),
+) {
   CustomTypeBuilder(
     variants:,
     generics_list:,
@@ -60,12 +97,30 @@ pub fn new_dynamic(
   )
 }
 
+/// Add a generic type parameter to the custom type.
+/// ```gleam
+/// let my_option =
+///   custom.new()
+///   |> custom.with_generic("a")
+///   |> custom.with_variant(fn(generics) {
+///     let #(#(), a) = generics
+///     variant.new("MySome")
+///     |> variant.with_argument(option.None, a)
+///   })
+///   |> custom.with_variant(fn(_generics) {
+///     variant.new("MyNone")
+///   })
+/// use my_option_type, my_some_constructor, my_none_constructor <- module.with_custom_type2(
+///   definition.new("MyOption"),
+///   my_option,
+/// )
+/// ```
 pub fn with_generic(
   old: CustomTypeBuilder(repr, variants, old_generics),
   generic: String,
 ) -> CustomTypeBuilder(repr, variants, #(old_generics, type_.GeneratedType(a))) {
   CustomTypeBuilder(
-    variants: old.variants,
+    ..old,
     generics: #(old.generics, type_.generic(generic)),
     generics_list: [generic, ..old.generics_list],
   )
@@ -73,43 +128,61 @@ pub fn with_generic(
 
 // TODO: with generics dynamic
 
+/// Add a variant the custom type, given its generics (see [`with_generic`](#with_generic)).
+/// See also [`with_dynamic_variants`](#with_dynamic_variants) for adding multiple variants at once.
+///
+/// ```gleam
+/// custom.new()
+/// |> custom.with_variant(fn(_) {
+///   variant.new("Dog")
+///   |> variant.with_argument(option.Some("bones"), type_.int)
+/// })
+/// |> custom.with_variant(fn(_) {
+///   variant.new("Cat")
+///   |> variant.with_argument(option.Some("name"), type_.string)
+///   |> variant.with_argument(option.Some("has_catnip"), type_.bool)
+/// })
+/// ```
 pub fn with_variant(
   old: CustomTypeBuilder(repr, old, generics),
   variant: fn(generics) -> Variant(new),
 ) -> CustomTypeBuilder(repr, #(old, new), generics) {
-  CustomTypeBuilder(
-    variants: [old.generics |> variant |> variant.to_dynamic(), ..old.variants],
-    generics: old.generics,
-    generics_list: old.generics_list,
-  )
+  CustomTypeBuilder(..old, variants: [
+    old.generics |> variant |> variant.to_dynamic(),
+    ..old.variants
+  ])
 }
 
+/// Add a dynamic list of variants to the custom type, given its generics (see [`with_generic`](#with_generic)).
 pub fn with_dynamic_variants(
   old: CustomTypeBuilder(repr, old, generics),
   variants: fn(generics) -> List(Variant(Dynamic)),
 ) -> CustomTypeBuilder(repr, Dynamic, generics) {
   CustomTypeBuilder(
+    ..old,
     variants: list.append(
       old.generics |> variants |> list.reverse(),
       old.variants,
     ),
-    generics: old.generics,
-    generics_list: old.generics_list,
   )
 }
 
 pub fn to_dynamic(
   old: CustomTypeBuilder(_repr, _, _),
 ) -> CustomTypeBuilder(Dynamic, Nil, Nil) {
-  let CustomTypeBuilder(variants, _, generics_list:) = old
-  CustomTypeBuilder(variants:, generics: Nil, generics_list:)
+  CustomTypeBuilder(..old, generics: Nil)
 }
 
-pub type CustomType(repr, generics) {
+pub opaque type CustomType(repr, generics) {
   CustomType(
     module: option.Option(import_reference.ImportReference),
     name: String,
   )
+}
+
+@internal
+pub fn new_custom_type(module, name) -> CustomType(repr, generics) {
+  CustomType(module:, name:)
 }
 
 pub fn to_type(
@@ -253,11 +326,11 @@ pub fn render(
     type_.variants
     |> list.reverse()
     |> list.map_fold(render.empty_details, fn(old_details, var) {
-      let #(details, variant) = case var.arguments {
+      let #(details, variant) = case variant.get_arguments(var) {
         [] -> #(render.empty_details, doc.empty)
         _ -> {
           let #(details, arguments) =
-            var.arguments
+            variant.get_arguments(var)
             |> list.reverse()
             |> list.map_fold(render.empty_details, fn(acc_details, arg) {
               let rendered = type_.render_type(arg.1, context)
@@ -288,7 +361,7 @@ pub fn render(
       }
       #(
         render.merge_details(old_details, details),
-        doc.from_string(var.name)
+        doc.from_string(variant.get_name(var))
           |> doc.append(variant),
       )
     })

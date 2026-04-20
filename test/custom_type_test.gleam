@@ -17,13 +17,11 @@ import gleamgen/type_
 import gleamgen/type_/custom
 import gleamgen/type_/variant
 
-pub type ExampleAnimal {
-  ExampleAnimal
-}
+pub type ExampleAnimal
 
 pub fn module_with_custom_type_test() {
-  let animals =
-    custom.new(ExampleAnimal)
+  let animals: custom.CustomTypeBuilder(ExampleAnimal, _, _) =
+    custom.new()
     |> custom.with_variant(fn(_) {
       variant.new("Dog")
       |> variant.with_argument(option.Some("bones"), type_.int)
@@ -105,9 +103,191 @@ pub fn main() -> Nil {
   assert result == expected
 }
 
+type MyOptionType
+
+pub fn module_with_my_option_type_test() {
+  let my_option: custom.CustomTypeBuilder(MyOptionType, _, _) =
+    custom.new()
+    |> custom.with_generic("a")
+    |> custom.with_variant(fn(generics) {
+      let #(#(), a) = generics
+      variant.new("MySome")
+      |> variant.with_argument(option.None, a)
+    })
+    |> custom.with_variant(fn(_generics) { variant.new("MyNone") })
+
+  let mod = {
+    use my_option_type, my_some_constructor, my_none_constructor <- module.with_custom_type2(
+      definition.new("MyOption"),
+      my_option,
+    )
+
+    use describer <- module.with_function(
+      definition.new("describer") |> definition.with_publicity(True),
+      function.new1(
+        param1: parameter.new(
+          "animal",
+          my_option_type |> custom.to_type1(type_.string),
+        ),
+        returns: type_.string,
+        handler: fn(_thing) { expression.todo_(option.Some("implement me")) },
+      ),
+    )
+
+    use _main <- module.with_function(
+      definition.new(name: "main")
+        |> definition.with_publicity(True),
+      function.new0(returns: type_.nil, handler: fn() {
+        {
+          use dog_var <- block.with_let_declaration(
+            "dog",
+            expression.construct1(
+              constructor.to_expression1(my_some_constructor),
+              expression.string("jake"),
+            ),
+          )
+          use <- block.with_expression(expression.call1(describer, dog_var))
+          use
+            cat_var: expression.Expression(
+              custom.CustomType(
+                MyOptionType,
+                custom.Generics1(type_.GeneratedType(String)),
+              ),
+            )
+          <- block.with_let_declaration(
+            "cat",
+            expression.construct0(constructor.to_expression0(
+              my_none_constructor,
+            )),
+          )
+          use <- block.with_expression(expression.call1(describer, cat_var))
+          expression.nil()
+        }
+      }),
+    )
+
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "type MyOption(a) {
+  MySome(a)
+  MyNone
+}
+
+pub fn describer(animal: MyOption(String)) -> String {
+  todo as \"implement me\"
+}
+
+pub fn main() -> Nil {
+  let dog = MySome(\"jake\")
+  describer(dog)
+  let cat = MyNone
+  describer(cat)
+  Nil
+}"
+
+  assert result == expected
+}
+
+pub fn module_importing_my_option_type_test() {
+  let my_option: custom.CustomTypeBuilder(MyOptionType, _, _) =
+    custom.new()
+    |> custom.with_generic("a")
+    |> custom.with_variant(fn(generics) {
+      let #(#(), a) = generics
+      variant.new("MySome")
+      |> variant.with_argument(option.None, a)
+    })
+    |> custom.with_variant(fn(_generics) { variant.new("MyNone") })
+
+  let mod = {
+    use my_option_mod <- module.with_import(import_.new(["my_option"]))
+
+    use my_option_type, my_some_constructor, my_none_constructor <- module.with_imported_custom_type2(
+      my_option_mod,
+      "MyOption",
+      my_option,
+    )
+
+    use describer <- module.with_function(
+      definition.new("describer") |> definition.with_publicity(True),
+      function.new1(
+        param1: parameter.new(
+          "animal",
+          my_option_type |> custom.to_type1(type_.string),
+        ),
+        returns: type_.string,
+        handler: fn(_thing) { expression.todo_(option.Some("implement me")) },
+      ),
+    )
+
+    use _main <- module.with_function(
+      definition.new(name: "main")
+        |> definition.with_publicity(True),
+      function.new0(returns: type_.nil, handler: fn() {
+        {
+          use dog_var <- block.with_let_declaration(
+            "dog",
+            expression.construct1(
+              constructor.to_expression1(my_some_constructor),
+              expression.string("jake"),
+            ),
+          )
+          use <- block.with_expression(expression.call1(describer, dog_var))
+          use
+            cat_var: expression.Expression(
+              custom.CustomType(
+                MyOptionType,
+                custom.Generics1(type_.GeneratedType(String)),
+              ),
+            )
+          <- block.with_let_declaration(
+            "cat",
+            expression.construct0(constructor.to_expression0(
+              my_none_constructor,
+            )),
+          )
+          use <- block.with_expression(expression.call1(describer, cat_var))
+          expression.nil()
+        }
+      }),
+    )
+
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "import my_option
+
+pub fn describer(animal: my_option.MyOption(String)) -> String {
+  todo as \"implement me\"
+}
+
+pub fn main() -> Nil {
+  let dog = my_option.MySome(\"jake\")
+  describer(dog)
+  let cat = my_option.MyNone
+  describer(cat)
+  Nil
+}"
+
+  assert result == expected
+}
+
 pub fn module_case_on_custom_type_test() {
   let animals =
-    custom.new(ExampleAnimal)
+    custom.new()
     |> custom.with_variant(fn(_) {
       variant.new("Dog")
       |> variant.with_argument(option.Some("bones"), type_.int)
@@ -243,7 +423,7 @@ pub fn main() -> Nil {
 
 pub fn module_let_on_custom_type_test() {
   let animals =
-    custom.new(ExampleAnimal)
+    custom.new()
     |> custom.with_variant(fn(_) {
       variant.new("Dog")
       |> variant.with_argument(option.Some("bones"), type_.int)
@@ -330,7 +510,7 @@ pub fn describer() -> String {
 
 pub fn module_with_custom_type_generics_test() {
   let more_awesome_result: custom.CustomTypeBuilder(Nil, _, _) =
-    custom.new(Nil)
+    custom.new()
     |> custom.with_generic("awesome")
     |> custom.with_generic("not_awesome")
     |> custom.with_variant(fn(generics) {
@@ -401,7 +581,7 @@ pub fn module_with_custom_type_generics_multiple_ways_test() {
     _,
     custom.Generics2(type_.GeneratedType(a), type_.GeneratedType(b)),
   ) =
-    custom.new(Nil)
+    custom.new()
     |> custom.with_generic("awesome")
     |> custom.with_generic("not_awesome")
     |> custom.with_variant(fn(generics) {
@@ -494,7 +674,7 @@ pub fn case_unchecked_variant_test() {
     |> variant.to_dynamic()
 
   let custom_type =
-    custom.new(#())
+    custom.new()
     |> custom.with_dynamic_variants(fn(_) { [custom_variant] })
 
   let mod = {
@@ -627,7 +807,7 @@ pub fn module_with_unchecked_custom_type__test() {
     })
 
   let custom_type =
-    custom.new(#())
+    custom.new()
     |> custom.with_dynamic_variants(fn(_) { all_variants })
 
   let mod = {

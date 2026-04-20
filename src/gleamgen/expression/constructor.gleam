@@ -1,11 +1,16 @@
+import gleam/option
 import gleamgen/expression
+import gleamgen/internal/import_reference
 import gleamgen/type_
 import gleamgen/type_/custom
 import gleamgen/type_/variant
 
 /// Use to_expression[n] or to_expression_unchecked to create an expression from the constructor.
 pub opaque type Constructor(construct_to, args, generics) {
-  Constructor(variant: variant.Variant(type_.Dynamic))
+  Constructor(
+    module: option.Option(import_reference.ImportReference),
+    variant: variant.Variant(type_.Dynamic),
+  )
 }
 
 pub type Variants1(a) =
@@ -37,21 +42,22 @@ pub type Variants9(a, b, c, d, e, f, g, h, i) =
 
 @internal
 pub fn new(
+  module: option.Option(import_reference.ImportReference),
   variant: variant.Variant(type_.Dynamic),
 ) -> Constructor(construct_to, a, generics) {
-  Constructor(variant)
+  Constructor(module, variant)
 }
 
 pub fn to_expression0(
   constructor: Constructor(construct_to, #(), generics),
 ) -> expression.Expression(fn() -> custom.CustomType(construct_to, generics)) {
-  expression.raw(constructor.variant.name)
+  to_expression_dynamic(constructor)
 }
 
 pub fn to_expression1(
   constructor: Constructor(construct_to, Variants1(a), generics),
 ) -> expression.Expression(fn(a) -> custom.CustomType(construct_to, generics)) {
-  expression.raw(constructor.variant.name)
+  to_expression_dynamic(constructor)
 }
 
 // rest of repetitive expression generators
@@ -62,7 +68,7 @@ pub fn to_expression2(
 ) -> expression.Expression(
   fn(a, b) -> custom.CustomType(construct_to, generics),
 ) {
-  expression.raw(constructor.variant.name)
+  to_expression_dynamic(constructor)
 }
 
 pub fn to_expression3(
@@ -70,25 +76,31 @@ pub fn to_expression3(
 ) -> expression.Expression(
   fn(a, b, c) -> custom.CustomType(construct_to, generics),
 ) {
-  expression.raw(constructor.variant.name)
+  to_expression_dynamic(constructor)
 }
 
 pub fn to_expression4(
   constructor: Constructor(construct_to, Variants4(a, b, c, d), generics),
-) -> expression.Expression(fn(a, b, c, d) -> construct_to) {
-  expression.raw(constructor.variant.name)
+) -> expression.Expression(
+  fn(a, b, c, d) -> custom.CustomType(construct_to, generics),
+) {
+  to_expression_dynamic(constructor)
 }
 
 pub fn to_expression5(
   constructor: Constructor(construct_to, Variants5(a, b, c, d, e), generics),
-) -> expression.Expression(fn(a, b, c, d, e) -> construct_to) {
-  expression.raw(constructor.variant.name)
+) -> expression.Expression(
+  fn(a, b, c, d, e) -> custom.CustomType(construct_to, generics),
+) {
+  to_expression_dynamic(constructor)
 }
 
 pub fn to_expression6(
   constructor: Constructor(construct_to, Variants6(a, b, c, d, e, f), generics),
-) -> expression.Expression(fn(a, b, c, d, e, f) -> construct_to) {
-  expression.raw(constructor.variant.name)
+) -> expression.Expression(
+  fn(a, b, c, d, e, f) -> custom.CustomType(construct_to, generics),
+) {
+  to_expression_dynamic(constructor)
 }
 
 pub fn to_expression7(
@@ -97,8 +109,10 @@ pub fn to_expression7(
     Variants7(a, b, c, d, e, f, g),
     generics,
   ),
-) -> expression.Expression(fn(a, b, c, d, e, f, g) -> construct_to) {
-  expression.raw(constructor.variant.name)
+) -> expression.Expression(
+  fn(a, b, c, d, e, f, g) -> custom.CustomType(construct_to, generics),
+) {
+  to_expression_dynamic(constructor)
 }
 
 pub fn to_expression8(
@@ -107,8 +121,10 @@ pub fn to_expression8(
     Variants8(a, b, c, d, e, f, g, h),
     generics,
   ),
-) -> expression.Expression(fn(a, b, c, d, e, f, g, h) -> construct_to) {
-  expression.raw(constructor.variant.name)
+) -> expression.Expression(
+  fn(a, b, c, d, e, f, g, h) -> custom.CustomType(construct_to, generics),
+) {
+  to_expression_dynamic(constructor)
 }
 
 pub fn to_expression9(
@@ -117,8 +133,10 @@ pub fn to_expression9(
     Variants9(a, b, c, d, e, f, g, h, i),
     generics,
   ),
-) -> expression.Expression(fn(a, b, c, d, e, f, g, h, i) -> construct_to) {
-  expression.raw(constructor.variant.name)
+) -> expression.Expression(
+  fn(a, b, c, d, e, f, g, h, i) -> custom.CustomType(construct_to, generics),
+) {
+  to_expression_dynamic(constructor)
 }
 
 // }}}
@@ -126,16 +144,20 @@ pub fn to_expression9(
 pub fn to_expression_dynamic(
   constructor: Constructor(construct_to, _, _),
 ) -> expression.Expression(a) {
-  expression.raw(constructor.variant.name)
+  case constructor.module {
+    option.Some(module) ->
+      expression.imported_ident(module, variant.get_name(constructor.variant))
+    option.None -> expression.raw(variant.get_name(constructor.variant))
+  }
 }
 
 pub fn name(constructor: Constructor(_, _, _)) -> String {
-  constructor.variant.name
+  variant.get_name(constructor.variant)
 }
 
 pub fn unsafe_convert(
   constructor: Constructor(construct_to, original_variants, original_generics),
 ) -> Constructor(construct_to, new_variants, new_generics) {
-  Constructor(variant: constructor.variant)
+  Constructor(module: constructor.module, variant: constructor.variant)
 }
 // vim: foldmethod=marker foldlevel=0

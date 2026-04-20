@@ -7,8 +7,7 @@ version = "0.4.0"
 description = "Type-safe gleam codegen (in gleam!)"
 licences = ["Apache-2.0"]
 repository = { type = "github", user = "Brewingweasel", repo = "gleamgen" }
-# links = [{ title = "Website", href = "" }]
-#
+
 # For a full reference of all the available options, you can have a look at
 # https://gleam.run/writing-gleam/gleam-toml/.
 
@@ -19,3 +18,8 @@ glance = ">= 6.0.0 and < 7.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
+
+[documentation]
+pages = [
+	{ title = "Getting Started", path = "getting_started.html", source = "docs/getting_started.md" },
+]

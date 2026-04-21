@@ -3,9 +3,22 @@
 [![Package Version](https://img.shields.io/hexpm/v/gleamgen?color=a6f0fc)](https://hex.pm/packages/gleamgen)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/gleamgen/)
 
-A package for generating clean, type-checked, and formatted Gleam code ✏️
+A package for generating clean, type-checked, and formatted Gleam code!
 
-## Installation 🚀
+## Key Features
+ - Type safety: ensure generated code is type safe using phantom types
+   (including support for functions, custom types, and all builtin operators)
+ - Simple escape hatches with the `dynamic` version of functions (generating
+   code is by nature dynamic)
+ - Automatically fix errors or clean up code. For example gleamgen
+   automatically:
+    - removes unused imports
+    - inlines anonymous functions when appropriate, 
+    - simplifies blocks, and combines equivalent case branches
+ - Generate code in existing files (combines with existing imports and
+   definitions)
+
+## Installation
 
 ```sh
 gleam add gleamgen
@@ -118,16 +131,6 @@ pub fn main() -> Nil {
 }
 ```
 
-In general, there are two versions of every gleamgen function:
-
-- The version with phantom types to ensure type safety of the generated code
-- The "dynamic" version, which does not ensure type safety but is more flexible
-
-When possible, use the typed version to ensure the correctness of the generated code.
-
-Note:
-This library has not reached version 1.0.0, so it is not stable.
-1.0.0 should be released soon.
-
-Further documentation can be found at <https://hexdocs.pm/gleamgen>.
-Also check out the examples folder (or the tests).
+To get started, check out the [getting started
+guide](https://hexdocs.pm/gleamgen/getting_started.html), [the
+docs](https://hexdocs.pm/gleamgen/), and the examples folder.

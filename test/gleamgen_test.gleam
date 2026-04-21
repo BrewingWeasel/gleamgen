@@ -516,9 +516,9 @@ pub fn option_helper_combine_with_unqualified_import_test() {
   let mod = {
     use _option_module <- module.with_import(
       import_.new(["gleam", "option"])
-      |> import_.with_exposing([
-        import_.ExposedValue("Some", alias: option.None),
-        import_.ExposedValue("None", alias: option.None),
+      |> import_.with_unqualified_items([
+        import_.UnqualifiedValue("Some", alias: option.None),
+        import_.UnqualifiedValue("None", alias: option.None),
       ]),
     )
 

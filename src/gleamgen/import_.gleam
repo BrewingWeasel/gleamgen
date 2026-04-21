@@ -10,18 +10,18 @@ import gleamgen/type_
 import gleamgen/type_/custom
 
 /// One entry in an `import path.{ … }` exposing list.
-pub type ExposedItem {
+pub type UnqualifiedItem {
   /// Renders as `type name` or `type name as alias`.
-  ExposedType(name: String, alias: Option(String))
+  UnqualifiedType(name: String, alias: Option(String))
   /// Renders as `name` or `name as alias`.
-  ExposedValue(name: String, alias: Option(String))
+  UnqualifiedValue(name: String, alias: Option(String))
 }
 
 pub type ImportedModule {
   ImportedModule(
     name: List(String),
     alias: Option(String),
-    exposing: List(ExposedItem),
+    exposing: List(UnqualifiedItem),
     before_text: String,
     predefined: Bool,
   )
@@ -59,9 +59,9 @@ pub fn with_alias(imported: ImportedModule, alias: String) -> ImportedModule {
   ImportedModule(..imported, alias: option.Some(alias))
 }
 
-pub fn with_exposing(
+pub fn with_unqualified_items(
   imported: ImportedModule,
-  exposing: List(ExposedItem),
+  exposing: List(UnqualifiedItem),
 ) -> ImportedModule {
   ImportedModule(..imported, exposing: exposing)
 }
@@ -75,20 +75,20 @@ pub fn with_predefined(
   ImportedModule(..imported, predefined: predefined)
 }
 
-pub fn exposed_type(name: String) -> ExposedItem {
-  ExposedType(name, option.None)
+pub fn unqualified_type(name: String) -> UnqualifiedItem {
+  UnqualifiedType(name, option.None)
 }
 
-pub fn exposed_type_as(name: String, alias: String) -> ExposedItem {
-  ExposedType(name, option.Some(alias))
+pub fn unqualified_type_as(name: String, alias: String) -> UnqualifiedItem {
+  UnqualifiedType(name, option.Some(alias))
 }
 
-pub fn exposed_value(name: String) -> ExposedItem {
-  ExposedValue(name, option.None)
+pub fn unqualified_value(name: String) -> UnqualifiedItem {
+  UnqualifiedValue(name, option.None)
 }
 
-pub fn exposed_value_as(name: String, alias: String) -> ExposedItem {
-  ExposedValue(name, option.Some(alias))
+pub fn unqualified_value_as(name: String, alias: String) -> UnqualifiedItem {
+  UnqualifiedValue(name, option.Some(alias))
 }
 
 pub fn raw_ident(imported: ImportReference, name: String) -> Expression(any) {
@@ -145,10 +145,10 @@ pub fn convert_import(
   let exposing =
     list.flatten([
       list.map(unqualified_values, fn(name) {
-        ExposedValue(name.name, name.alias)
+        UnqualifiedValue(name.name, name.alias)
       }),
       list.map(unqualified_types, fn(name) {
-        ExposedType(name.name, name.alias)
+        UnqualifiedType(name.name, name.alias)
       }),
     ])
 
@@ -185,16 +185,19 @@ fn compare_optional_string(a: Option(String), b: Option(String)) -> order.Order 
   }
 }
 
-fn compare_exposed_item(a: ExposedItem, b: ExposedItem) -> order.Order {
+fn compare_unqualified_item(
+  a: UnqualifiedItem,
+  b: UnqualifiedItem,
+) -> order.Order {
   case a, b {
-    ExposedType(..), ExposedValue(..) -> order.Lt
-    ExposedValue(..), ExposedType(..) -> order.Gt
-    ExposedType(n1, a1), ExposedType(n2, a2) ->
+    UnqualifiedType(..), UnqualifiedValue(..) -> order.Lt
+    UnqualifiedValue(..), UnqualifiedType(..) -> order.Gt
+    UnqualifiedType(n1, a1), UnqualifiedType(n2, a2) ->
       case string.compare(n1, n2) {
         order.Eq -> compare_optional_string(a1, a2)
         o -> o
       }
-    ExposedValue(n1, a1), ExposedValue(n2, a2) ->
+    UnqualifiedValue(n1, a1), UnqualifiedValue(n2, a2) ->
       case string.compare(n1, n2) {
         order.Eq -> compare_optional_string(a1, a2)
         o -> o
@@ -202,14 +205,14 @@ fn compare_exposed_item(a: ExposedItem, b: ExposedItem) -> order.Order {
   }
 }
 
-fn render_exposed_item(item: ExposedItem) -> String {
+fn render_unqualified_item(item: UnqualifiedItem) -> String {
   case item {
-    ExposedType(name, alias) ->
+    UnqualifiedType(name, alias) ->
       case alias {
         option.None -> "type " <> name
         option.Some(a) -> "type " <> name <> " as " <> a
       }
-    ExposedValue(name, alias) ->
+    UnqualifiedValue(name, alias) ->
       case alias {
         option.None -> name
         option.Some(a) -> name <> " as " <> a
@@ -218,20 +221,20 @@ fn render_exposed_item(item: ExposedItem) -> String {
 }
 
 @internal
-pub fn exposing_to_string(items: List(ExposedItem)) -> String {
+pub fn exposing_to_string(items: List(UnqualifiedItem)) -> String {
   items
-  |> list.map(render_exposed_item)
+  |> list.map(render_unqualified_item)
   |> string.join(", ")
 }
 
-/// Combine exposing lists when `merge_imports` collapses duplicate module paths
+/// Combine unqualified lists when `merge_imports` collapses duplicate module paths
 /// (sorted and deduplicated).
-fn merge_exposing_lists(
-  a: List(ExposedItem),
-  b: List(ExposedItem),
-) -> List(ExposedItem) {
+fn merge_unqualified_lists(
+  a: List(UnqualifiedItem),
+  b: List(UnqualifiedItem),
+) -> List(UnqualifiedItem) {
   list.append(a, b)
-  |> list.sort(compare_exposed_item)
+  |> list.sort(compare_unqualified_item)
   |> list.unique
 }
 
@@ -250,7 +253,7 @@ fn do_merge_imports(
             option.None, option.Some(a) -> option.Some(a)
             option.None, option.None -> option.None
           },
-          exposing: merge_exposing_lists(last.exposing, import_.exposing),
+          exposing: merge_unqualified_lists(last.exposing, import_.exposing),
           before_text: last.before_text <> import_.before_text,
           predefined: last.predefined || import_.predefined,
         )

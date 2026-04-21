@@ -129,7 +129,9 @@ pub fn extend_module_other_imports_test() {
     use string_mod <- module.with_import(import_.new(["gleam", "string"]))
     use io_mod <- module.with_import(
       import_.new(["gleam", "io"])
-      |> import_.with_exposing([import_.ExposedValue("print", option.None)]),
+      |> import_.with_unqualified_items([
+        import_.UnqualifiedValue("print", option.None),
+      ]),
     )
 
     let io_println =

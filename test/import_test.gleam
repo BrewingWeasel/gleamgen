@@ -62,7 +62,9 @@ pub fn module_import_unqualified_test() {
     use io <- module.with_import(
       import_.new(["gleam", "io"])
       |> import_.with_alias("only_o")
-      |> import_.with_exposing([import_.ExposedValue("println", option.None)]),
+      |> import_.with_unqualified_items([
+        import_.UnqualifiedValue("println", option.None),
+      ]),
     )
     use int_mod <- module.with_import(import_.new(["gleam", "int"]))
 
@@ -110,7 +112,7 @@ pub fn module_import_with_exposing_test() {
   let mod = {
     use _string <- module.with_import(
       import_.new(["gleam", "string"])
-      |> import_.with_exposing([import_.exposed_value("length")]),
+      |> import_.with_unqualified_items([import_.unqualified_value("length")]),
     )
 
     use _main <- module.with_function(
@@ -141,7 +143,7 @@ pub fn module_import_with_alias_and_exposing_test() {
   let mod = {
     use io <- module.with_import(
       import_.new(["gleam", "io"])
-      |> import_.with_exposing([import_.exposed_value("print")])
+      |> import_.with_unqualified_items([import_.unqualified_value("print")])
       |> import_.with_alias("only_o"),
     )
 
@@ -178,11 +180,11 @@ pub fn module_merge_imports_exposing_test() {
   let mod = {
     use _ <- module.with_import(
       import_.new(["gleam", "string"])
-      |> import_.with_exposing([import_.exposed_value("reverse")]),
+      |> import_.with_unqualified_items([import_.unqualified_value("reverse")]),
     )
     use _ <- module.with_import(
       import_.new(["gleam", "string"])
-      |> import_.with_exposing([import_.exposed_value("length")]),
+      |> import_.with_unqualified_items([import_.unqualified_value("length")]),
     )
 
     use _main <- module.with_function(
@@ -213,11 +215,11 @@ pub fn module_merge_imports_exposing_dedupes_test() {
   let mod = {
     use _ <- module.with_import(
       import_.new(["gleam", "string"])
-      |> import_.with_exposing([import_.exposed_value("length")]),
+      |> import_.with_unqualified_items([import_.unqualified_value("length")]),
     )
     use _ <- module.with_import(
       import_.new(["gleam", "string"])
-      |> import_.with_exposing([import_.exposed_value("length")]),
+      |> import_.with_unqualified_items([import_.unqualified_value("length")]),
     )
 
     use _main <- module.with_function(

@@ -26,6 +26,36 @@ pub fn simple_case_string_test() {
   assert result == expected
 }
 
+pub fn simple_case_guard_string_test() {
+  let result =
+    case_.new(expression.string("hello"))
+    |> case_.with_pattern_guarded(
+      pattern.string_literal("hello"),
+      expression.raw("hello_allowed"),
+      fn(_) { expression.string("hi!") },
+    )
+    |> case_.with_pattern_guarded(
+      pattern.variable("v"),
+      expression.equals(expression.raw("bad_greeting"), expression.raw("v")),
+      fn(v) { expression.concat_string(expression.string("bad greeting: "), v) },
+    )
+    |> case_.with_pattern(pattern.variable("v"), fn(v) {
+      expression.concat_string(v, expression.string(" world"))
+    })
+    |> case_.build_expression()
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "case \"hello\" {
+  \"hello\" if hello_allowed -> \"hi!\"
+  v if bad_greeting == v -> \"bad greeting: \" <> v
+  v -> v <> \" world\"
+}"
+
+  assert result == expected
+}
+
 pub fn simple_case_or_test() {
   let result =
     case_.new(expression.string("hello"))

@@ -3,6 +3,7 @@ import gleam/bool
 import gleam/dict
 import gleam/function
 import gleam/list
+import gleam/option
 import gleam/pair
 import gleam/result
 import gleam/set
@@ -11,10 +12,18 @@ import gleamgen/internal/render
 import gleamgen/pattern.{type Pattern}
 import gleamgen/type_.{type Dynamic}
 
-pub type CaseExpression(input, output) {
+pub opaque type CaseExpression(input, output) {
   CaseExpression(
     input_expression: Expression(input),
-    cases: List(#(Pattern(Dynamic, Dynamic), Expression(output))),
+    clauses: List(Clause(output)),
+  )
+}
+
+type Clause(output) {
+  Clause(
+    pattern: Pattern(Dynamic, Dynamic),
+    guard: option.Option(Expression(Bool)),
+    handler: Expression(output),
   )
 }
 
@@ -73,8 +82,28 @@ pub fn with_pattern(
   handler: fn(pattern_output) -> Expression(output),
 ) {
   CaseExpression(old.input_expression, [
-    #(pattern |> pattern.to_dynamic(), handler(pattern.get_output(pattern))),
-    ..old.cases
+    Clause(
+      pattern |> pattern.to_dynamic(),
+      option.None,
+      handler(pattern.get_output(pattern)),
+    ),
+    ..old.clauses
+  ])
+}
+
+pub fn with_pattern_guarded(
+  old: CaseExpression(input, output),
+  pattern: Pattern(input, pattern_output),
+  guard: Expression(Bool),
+  handler: fn(pattern_output) -> Expression(output),
+) {
+  CaseExpression(old.input_expression, [
+    Clause(
+      pattern |> pattern.to_dynamic(),
+      option.Some(guard),
+      handler(pattern.get_output(pattern)),
+    ),
+    ..old.clauses
   ])
 }
 
@@ -83,76 +112,88 @@ pub fn build_expression(
 ) -> Expression(output) {
   let create_patterns = fn(context: render.Context) {
     let patterns_combined = case context.config.combine_equivalent_branches {
-      True -> list.group(case_.cases, by: fn(pattern) { pattern.1 })
-      False ->
-        case_.cases
-        |> list.map(fn(pattern) {
-          let #(_match_on, output) = pattern
-          #(output, [pattern])
+      True ->
+        list.group(case_.clauses, by: fn(clause) {
+          #(clause.handler, clause.guard)
         })
+      False ->
+        case_.clauses
+        |> list.map(fn(clause) { #(#(clause.handler, clause.guard), [clause]) })
         |> dict.from_list()
     }
 
-    case_.cases
+    case_.clauses
     |> list.reverse()
-    |> list.map_fold(
-      from: set.new(),
-      with: fn(previously_matched, pattern_details) {
-        let #(pattern, output) = pattern_details
-        use <- bool.guard(
-          when: set.contains(output, in: previously_matched)
-            && context.config.combine_equivalent_branches,
-          return: #(previously_matched, Error(Nil)),
-        )
+    |> list.map_fold(from: set.new(), with: fn(previously_matched, clause) {
+      use <- bool.guard(
+        when: set.contains(clause.handler, in: previously_matched)
+          && context.config.combine_equivalent_branches,
+        return: #(previously_matched, Error(Nil)),
+      )
 
-        let renderer = fn(number_of_subjects) {
-          let pattern = case dict.get(patterns_combined, output) {
-            Ok([_, _, ..] as repeated_patterns) -> {
-              let assert Ok(new_pattern) =
-                repeated_patterns
-                |> list.map(pair.first)
-                |> list.reduce(fn(pattern_1, pattern_2) {
-                  pattern.or(
-                    pattern_1 |> pattern.to_dynamic(),
-                    pattern_2 |> pattern.to_dynamic(),
-                  )
-                })
-              new_pattern
-            }
-            _ -> pattern
+      let renderer = fn(number_of_subjects) {
+        let pattern = case
+          dict.get(patterns_combined, #(clause.handler, clause.guard))
+        {
+          Ok([_, _, ..] as repeated_patterns) -> {
+            let assert Ok(new_pattern) =
+              repeated_patterns
+              |> list.map(fn(clause) { clause.pattern })
+              |> list.reduce(fn(pattern_1, pattern_2) {
+                pattern.or(
+                  pattern_1 |> pattern.to_dynamic(),
+                  pattern_2 |> pattern.to_dynamic(),
+                )
+              })
+            new_pattern
           }
-          let rendered_match =
-            pattern.render(pattern, context, number_of_subjects)
-          let rendered_response = expression.render(output, context)
-
-          rendered_match.doc
-          |> doc.append(
-            doc.concat([doc.space, doc.from_string("->"), doc.space]),
-          )
-          |> doc.group()
-          |> doc.append(rendered_response.doc)
-          |> render.Render(details: render.merge_details(
-            rendered_match.details,
-            rendered_response.details,
-          ))
+          _ -> clause.pattern
         }
-        #(set.insert(previously_matched, output), Ok(renderer))
-      },
-    )
+        let rendered_match =
+          pattern.render(pattern, context, number_of_subjects)
+        let rendered_response = expression.render(clause.handler, context)
+
+        let rendered_guard = case clause.guard {
+          option.Some(guard) -> {
+            let rendered_guard = expression.render(guard, context)
+            doc.concat([
+              doc.space,
+              doc.from_string("if"),
+              doc.space,
+              rendered_guard.doc,
+            ])
+          }
+          option.None -> doc.empty
+        }
+
+        rendered_match.doc
+        |> doc.append(rendered_guard)
+        |> doc.append(doc.concat([doc.space, doc.from_string("->"), doc.space]))
+        |> doc.group()
+        |> doc.append(rendered_response.doc)
+        |> render.Render(details: render.merge_details(
+          rendered_match.details,
+          rendered_response.details,
+        ))
+      }
+      #(set.insert(previously_matched, clause.handler), Ok(renderer))
+    })
     |> pair.second()
     |> list.filter_map(function.identity)
   }
 
   let all_can_match_on_multiple =
-    list.all(case_.cases, fn(m) { pattern.can_match_on_multiple(m.0) })
+    list.all(case_.clauses, fn(clause) {
+      pattern.can_match_on_multiple(clause.pattern)
+    })
 
   expression.new_case(
     case_.input_expression |> expression.to_dynamic(),
     create_patterns,
     all_can_match_on_multiple,
-    case_.cases
+    case_.clauses
       |> list.first()
-      |> result.map(fn(c) { expression.type_(c.1) })
+      |> result.map(fn(c) { expression.type_(c.handler) })
       |> result.lazy_unwrap(fn() { type_.dynamic() }),
   )
 }

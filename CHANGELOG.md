@@ -7,6 +7,8 @@
 - return import reference rather than import statement when importing a module
 - add option expression and type helpers
 - add support for type-checking imported custom types
+- add support for documentation comments
+- add support for accessing fields
 
 ## v0.4.0 - 2026-04-06
 

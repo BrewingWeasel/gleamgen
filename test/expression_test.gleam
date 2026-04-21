@@ -256,3 +256,15 @@ pub fn simple_string_addition_test() {
 
   assert result == expected
 }
+
+pub fn simple_field_access_test() {
+  let result =
+    expression.raw("custom")
+    |> expression.field("field")
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected = "custom.field"
+
+  assert result == expected
+}

@@ -15,6 +15,8 @@
 //// - [`equals`](#equals)
 //// - [`not_equals`](#not_equals)
 //// - [`list_prepend`](#list_prepend)
+//// - [`and`](#and)
+//// - [`or`](#or)
 //// ### Keywords:
 //// - [`echo_`](#echo_)
 //// - [`todo_`](#todo_)
@@ -80,6 +82,7 @@ type InternalExpression(type_) {
   RawDoc(doc.Document)
   Todo(Option(String))
   Panic(Option(String))
+  Field(expression: Expression(type_.Dynamic), field_name: String)
   Echo(expression: Expression(type_.Dynamic), as_string: Option(String))
   Assert(condition: Expression(type_.Dynamic), as_string: Option(String))
   MathOperator(
@@ -251,6 +254,17 @@ pub fn not_equals(
     NotEquals(first |> to_dynamic(), second |> to_dynamic()),
     type_.bool,
   )
+}
+
+/// Access a field of a custom type or tuple.
+/// This function cannot be type checked, so it returns an `Expression(type_.Dynamic)`
+///
+/// ```gleam
+/// expression.field(expression.raw("movie"), "director") 
+/// // Expression(type_.Dynamic) -> movie.director
+/// ```
+pub fn field(base: Expression(a), field: String) -> Expression(type_.Dynamic) {
+  Expression(Field(to_dynamic(base), field), type_.dynamic())
 }
 
 pub fn tuple1(arg1: Expression(a)) -> Expression(#(a)) {
@@ -1131,6 +1145,7 @@ pub fn render(
         details: render.RenderedDetails(..render.empty_details, used_imports:),
       )
     }
+    Field(base, field) -> render_field(base, field, context)
     ImportedIdent(module, value) -> {
       let module_to_use = render.get_import_from_context(context, module)
       let representation = import_reference.get_reference(module_to_use, value)
@@ -1221,6 +1236,20 @@ pub fn render(
     WithConfig(expr, config) ->
       render(coerce_dynamic_unsafe(expr), render.Context(..context, config:))
   }
+}
+
+fn render_field(
+  base: Expression(type_.Dynamic),
+  field: String,
+  context: public_render.Context,
+) -> public_render.Rendered {
+  let rendered_base = render(base, context)
+  doc.concat([
+    rendered_base.doc,
+    doc.from_string("."),
+    doc.from_string(field),
+  ])
+  |> render.Render(details: rendered_base.details)
 }
 
 fn create_echo(
@@ -1681,6 +1710,13 @@ fn recursively_update_expression(
           run_update,
         ))
         Ok(WithConfig(updated_expr, config))
+      }
+      Field(base, name) -> {
+        use updated_base <- result.try(recursively_update_expression(
+          base,
+          run_update,
+        ))
+        Ok(Field(updated_base, name))
       }
       SingleConstructor(constructor) -> {
         use updated_constructor <- result.try(recursively_update_expression(

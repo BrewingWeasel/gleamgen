@@ -1318,7 +1318,12 @@ fn render_use(func, args, callback_args, context) {
 }
 
 // TODO: clean up
-fn render_case(to_match_on, patterns, all_can_match_on_multiple, context) {
+fn render_case(
+  to_match_on: Expression(type_.Dynamic),
+  patterns: fn(public_render.Context) -> List(fn(Int) -> public_render.Rendered),
+  all_can_match_on_multiple: Bool,
+  context: public_render.Context,
+) -> public_render.Rendered {
   let #(rendered_match_on, subject_count) = case to_match_on.internal {
     TupleLiteral(expressions) if all_can_match_on_multiple -> {
       let #(expressions, details) = render_expressions(expressions, context)

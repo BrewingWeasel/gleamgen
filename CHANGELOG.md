@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.1 - 2026-05-21
+
+- Add type annotations to support gleam 1.16
+
 ## v1.0.0 - 2026-04-21
 
 - inline anonymous functions that are called directly after definition

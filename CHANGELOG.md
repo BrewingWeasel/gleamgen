@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fix escaping slashes in rendered strings
+
 ## v1.0.1 - 2026-05-21
 
 - Add type annotations to support gleam 1.16

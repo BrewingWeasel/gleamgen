@@ -35,15 +35,28 @@ pub fn string_escape_quote_test() {
   assert result == expected
 }
 
+pub fn string_newline_test() {
+  let result =
+    expression.string("hel\nlo")
+    |> expression.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "\"hel
+lo\""
+
+  assert result == expected
+}
+
 pub fn string_escape_slash_test() {
   let result =
     expression.string("hello\\hi")
     |> expression.render(render.default_context())
     |> render.to_string()
 
-  let expected = "\"hello\\hi\""
+  let expected = "\"hello\\\\hi\""
 
-  assert result == expected
+  assert result == expected as "the generated slash should also be escaped"
 }
 
 pub fn empty_string_test() {

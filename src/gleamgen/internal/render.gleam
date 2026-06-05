@@ -144,6 +144,9 @@ fn do_escape_string(original: String, escaped: String) -> String {
     Ok(#("\"", rest)) -> {
       do_escape_string(rest, escaped <> "\\\"")
     }
+    Ok(#("\\", rest)) -> {
+      do_escape_string(rest, escaped <> "\\\\")
+    }
     Ok(#(c, rest)) -> {
       do_escape_string(rest, escaped <> c)
     }

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.0.2 - 2026-06-05
 
 - Fix escaping slashes in rendered strings
 

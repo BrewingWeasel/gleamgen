@@ -394,3 +394,46 @@ pub fn call_with_block_argument_test() {
 
   assert direct_return == expected_direct_return
 }
+
+pub fn list_with_let_block_test() {
+  let value =
+    block.new_dynamic([
+      statement.expression(expression.math_operator(
+        expression.raw("x"),
+        expression.Add,
+        expression.int(1),
+      )),
+    ])
+
+  let mod = {
+    use _ <- module.with_function(
+      definition.new(name: "test")
+        |> definition.with_publicity(True),
+      function.new0(type_.list(type_.int), fn() {
+        expression.list([
+          {
+            use y <- block.with_let_declaration("y", value)
+            y
+          },
+          expression.int(3),
+        ])
+      }),
+    )
+    module.eof()
+  }
+
+  let expected =
+    "pub fn test() -> List(Int) {
+  [{
+      let y = x + 1
+      y
+    }, 3]
+}"
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  assert result == expected
+}

@@ -628,7 +628,10 @@ type BoolOperator {
 /// expression.and(expression.raw("has_cheese"), expression.raw("wants_cheese"))
 /// // Expression(Bool) -> "has_cheese && wants_cheese"
 /// ```
-pub fn and(expr1: Expression(Bool), expr2: Expression(Bool)) -> Expression(Bool) {
+pub fn and(
+  expr1: Expression(Bool),
+  expr2: Expression(Bool),
+) -> Expression(Bool) {
   Expression(
     BoolOperator(to_dynamic(expr1), And, to_dynamic(expr2)),
     type_.bool,
@@ -641,7 +644,10 @@ pub fn and(expr1: Expression(Bool), expr2: Expression(Bool)) -> Expression(Bool)
 /// expression.or(expression.raw("wants_cake"), expression.raw("wants_cheese"))
 /// // Expression(Bool) -> "wants_cake || wants_cheese"
 /// ```
-pub fn or(expr1: Expression(Bool), expr2: Expression(Bool)) -> Expression(Bool) {
+pub fn or(
+  expr1: Expression(Bool),
+  expr2: Expression(Bool),
+) -> Expression(Bool) {
   Expression(BoolOperator(to_dynamic(expr1), Or, to_dynamic(expr2)), type_.bool)
 }
 
@@ -1362,16 +1368,29 @@ fn render_case(
   ))
 }
 
-fn render_tuple(values, context) {
-  let #(rendered_values, details) = render_expressions(values, context)
+fn render_tuple(
+  values: List(Expression(type_.Dynamic)),
+  context: public_render.Context,
+) -> public_render.Rendered {
+  let arg_context =
+    render.Context(..context, include_brackets_current_level: True)
+
+  let #(rendered_values, details) = render_expressions(values, arg_context)
   rendered_values
   |> render.pretty_list()
   |> doc.prepend(doc.from_string("#"))
   |> render.Render(details: details)
 }
 
-fn render_list(values, initial_list, context) {
+fn render_list(
+  values: List(Expression(type_.Dynamic)),
+  initial_list: Option(Expression(type_.Dynamic)),
+  context: public_render.Context,
+) -> public_render.Rendered {
   let comma = doc.concat([doc.from_string(","), doc.space])
+
+  let arg_context =
+    render.Context(..context, include_brackets_current_level: True)
 
   let #(ending, trailing_comma) = case initial_list {
     Some(initial) -> #(
@@ -1379,7 +1398,7 @@ fn render_list(values, initial_list, context) {
         doc.from_string(","),
         doc.space,
         doc.from_string(".."),
-        render(initial, context).doc,
+        render(initial, arg_context).doc,
       ]),
       doc.soft_break,
     )
@@ -1389,7 +1408,7 @@ fn render_list(values, initial_list, context) {
   let open_bracket = doc.concat([doc.from_string("["), doc.soft_break])
   let close_bracket = doc.concat([trailing_comma, doc.from_string("]")])
 
-  let #(rendered_values, details) = render_expressions(values, context)
+  let #(rendered_values, details) = render_expressions(values, arg_context)
 
   rendered_values
   |> doc.join(with: comma)
@@ -1685,8 +1704,7 @@ fn recursively_update_expression(
   run_update: fn(
     Expression(type_.Dynamic),
     fn(Expression(type_.Dynamic)) -> Result(Expression(type_.Dynamic), Nil),
-  ) ->
-    Result(Expression(type_.Dynamic), Nil),
+  ) -> Result(Expression(type_.Dynamic), Nil),
 ) {
   let default_update = fn(expr: Expression(type_.Dynamic)) {
     let updated_internal = case expr.internal {

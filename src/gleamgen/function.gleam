@@ -57,8 +57,7 @@ pub fn new2(
   handler handler: fn(
     expression.Expression(param1),
     expression.Expression(param2),
-  ) ->
-    expression.Expression(ret),
+  ) -> expression.Expression(ret),
 ) -> Function(fn(param1, param2) -> ret, ret) {
   let body =
     handler(
@@ -84,8 +83,7 @@ pub fn new3(
     expression.Expression(param1),
     expression.Expression(param2),
     expression.Expression(param3),
-  ) ->
-    expression.Expression(ret),
+  ) -> expression.Expression(ret),
 ) -> Function(fn(param1, param2, param3) -> ret, ret) {
   let body =
     handler(
@@ -115,8 +113,7 @@ pub fn new4(
     expression.Expression(param2),
     expression.Expression(param3),
     expression.Expression(param4),
-  ) ->
-    expression.Expression(ret),
+  ) -> expression.Expression(ret),
 ) -> Function(fn(param1, param2, param3, param4) -> ret, ret) {
   let body =
     handler(
@@ -150,8 +147,7 @@ pub fn new5(
     expression.Expression(param3),
     expression.Expression(param4),
     expression.Expression(param5),
-  ) ->
-    expression.Expression(ret),
+  ) -> expression.Expression(ret),
 ) -> Function(fn(param1, param2, param3, param4, param5) -> ret, ret) {
   let body =
     handler(
@@ -189,8 +185,7 @@ pub fn new6(
     expression.Expression(param4),
     expression.Expression(param5),
     expression.Expression(param6),
-  ) ->
-    expression.Expression(ret),
+  ) -> expression.Expression(ret),
 ) -> Function(fn(param1, param2, param3, param4, param5, param6) -> ret, ret) {
   let body =
     handler(
@@ -232,8 +227,7 @@ pub fn new7(
     expression.Expression(param5),
     expression.Expression(param6),
     expression.Expression(param7),
-  ) ->
-    expression.Expression(ret),
+  ) -> expression.Expression(ret),
 ) -> Function(
   fn(param1, param2, param3, param4, param5, param6, param7) -> ret,
   ret,
@@ -282,8 +276,7 @@ pub fn new8(
     expression.Expression(param6),
     expression.Expression(param7),
     expression.Expression(param8),
-  ) ->
-    expression.Expression(ret),
+  ) -> expression.Expression(ret),
 ) -> Function(
   fn(param1, param2, param3, param4, param5, param6, param7, param8) -> ret,
   ret,
@@ -336,8 +329,7 @@ pub fn new9(
     expression.Expression(param7),
     expression.Expression(param8),
     expression.Expression(param9),
-  ) ->
-    expression.Expression(ret),
+  ) -> expression.Expression(ret),
 ) -> Function(
   fn(param1, param2, param3, param4, param5, param6, param7, param8, param9) ->
     ret,
@@ -385,7 +377,9 @@ pub fn to_dynamic(
 @internal
 pub fn get_function_name(type_: a) -> String
 
-pub fn anonymous(function: Function(type_, ret)) -> expression.Expression(type_) {
+pub fn anonymous(
+  function: Function(type_, ret),
+) -> expression.Expression(type_) {
   let type_ =
     function.parameters
     |> list.map(parameter.type_)

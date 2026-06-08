@@ -319,8 +319,7 @@ pub fn with_custom_type1(
   handler: fn(
     custom.CustomType(repr, generics),
     constructor.Constructor(repr, a, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [variant1] = type_.variants
   let rest =
@@ -366,8 +365,7 @@ pub fn with_imported_custom_type1(
   handler: fn(
     custom.CustomType(repr, generics),
     constructor.Constructor(repr, a, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [variant1] = type_.variants
   handler(
@@ -409,8 +407,7 @@ pub fn with_custom_type2(
     custom.CustomType(repr, generics),
     constructor.Constructor(repr, a, generics),
     constructor.Constructor(repr, b, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [variant2, variant1] = type_.variants
   let rest =
@@ -457,8 +454,7 @@ pub fn with_imported_custom_type2(
     custom.CustomType(repr, generics),
     constructor.Constructor(repr, a, generics),
     constructor.Constructor(repr, b, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [variant2, variant1] = type_.variants
   handler(
@@ -478,8 +474,7 @@ pub fn with_custom_type3(
     constructor.Constructor(repr, a, generics),
     constructor.Constructor(repr, b, generics),
     constructor.Constructor(repr, c, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [variant3, variant2, variant1] = type_.variants
   let rest =
@@ -506,8 +501,7 @@ pub fn with_imported_custom_type3(
     constructor.Constructor(repr, a, generics),
     constructor.Constructor(repr, b, generics),
     constructor.Constructor(repr, c, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [variant3, variant2, variant1] = type_.variants
   handler(
@@ -529,8 +523,7 @@ pub fn with_custom_type4(
     constructor.Constructor(repr, b, generics),
     constructor.Constructor(repr, c, generics),
     constructor.Constructor(repr, d, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [variant4, variant3, variant2, variant1] = type_.variants
   let rest =
@@ -559,8 +552,7 @@ pub fn with_imported_custom_type4(
     constructor.Constructor(repr, b, generics),
     constructor.Constructor(repr, c, generics),
     constructor.Constructor(repr, d, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [variant4, variant3, variant2, variant1] = type_.variants
   handler(
@@ -588,8 +580,7 @@ pub fn with_custom_type5(
     constructor.Constructor(repr, c, generics),
     constructor.Constructor(repr, d, generics),
     constructor.Constructor(repr, e, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [variant5, variant4, variant3, variant2, variant1] = type_.variants
   let rest =
@@ -624,8 +615,7 @@ pub fn with_imported_custom_type5(
     constructor.Constructor(repr, c, generics),
     constructor.Constructor(repr, d, generics),
     constructor.Constructor(repr, e, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [variant5, variant4, variant3, variant2, variant1] = type_.variants
   handler(
@@ -655,8 +645,7 @@ pub fn with_custom_type6(
     constructor.Constructor(repr, d, generics),
     constructor.Constructor(repr, e, generics),
     constructor.Constructor(repr, f, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [variant6, variant5, variant4, variant3, variant2, variant1] =
     type_.variants
@@ -694,8 +683,7 @@ pub fn with_imported_custom_type6(
     constructor.Constructor(repr, d, generics),
     constructor.Constructor(repr, e, generics),
     constructor.Constructor(repr, f, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [variant6, variant5, variant4, variant3, variant2, variant1] =
     type_.variants
@@ -728,8 +716,7 @@ pub fn with_custom_type7(
     constructor.Constructor(repr, e, generics),
     constructor.Constructor(repr, f, generics),
     constructor.Constructor(repr, g, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [
     variant7,
@@ -776,8 +763,7 @@ pub fn with_imported_custom_type7(
     constructor.Constructor(repr, e, generics),
     constructor.Constructor(repr, f, generics),
     constructor.Constructor(repr, g, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [
     variant7,
@@ -819,8 +805,7 @@ pub fn with_custom_type8(
     constructor.Constructor(repr, f, generics),
     constructor.Constructor(repr, g, generics),
     constructor.Constructor(repr, h, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [
     variant8,
@@ -870,8 +855,7 @@ pub fn with_imported_custom_type8(
     constructor.Constructor(repr, f, generics),
     constructor.Constructor(repr, g, generics),
     constructor.Constructor(repr, h, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [
     variant8,
@@ -916,8 +900,7 @@ pub fn with_custom_type9(
     constructor.Constructor(repr, g, generics),
     constructor.Constructor(repr, h, generics),
     constructor.Constructor(repr, i, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [
     variant9,
@@ -970,8 +953,7 @@ pub fn with_imported_custom_type9(
     constructor.Constructor(repr, g, generics),
     constructor.Constructor(repr, h, generics),
     constructor.Constructor(repr, i, generics),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let assert [
     variant9,
@@ -1008,8 +990,7 @@ pub fn with_custom_type_dynamic(
   handler: fn(
     custom.CustomType(repr, generics),
     List(constructor.Constructor(repr, Dynamic, generics)),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   let rest =
     handler(
@@ -1033,8 +1014,7 @@ pub fn with_imported_custom_type_dynamic(
   handler: fn(
     custom.CustomType(repr, generics),
     List(constructor.Constructor(repr, Dynamic, generics)),
-  ) ->
-    Module,
+  ) -> Module,
 ) -> Module {
   handler(
     custom.new_custom_type(option.Some(module), name),
@@ -1146,7 +1126,9 @@ pub fn render(
   |> render.Render(details:)
 }
 
-pub fn render_imported_module(module: import_.ImportedModule) -> render.Rendered {
+pub fn render_imported_module(
+  module: import_.ImportedModule,
+) -> render.Rendered {
   // Gleam syntax is `import path.{items} as alias`, not `import path as alias.{items}`.
   doc.concat([
     doc.from_string(module.before_text),

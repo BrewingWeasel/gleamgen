@@ -381,8 +381,7 @@ pub fn with_use5(
     Expression(c),
     Expression(d),
     Expression(e),
-  ) ->
-    Expression(ret),
+  ) -> Expression(ret),
 ) -> Expression(ret) {
   let rest =
     callback(
@@ -421,8 +420,7 @@ pub fn with_use6(
     Expression(d),
     Expression(e),
     Expression(f),
-  ) ->
-    Expression(ret),
+  ) -> Expression(ret),
 ) -> Expression(ret) {
   let rest =
     callback(
@@ -465,8 +463,7 @@ pub fn with_use7(
     Expression(e),
     Expression(f),
     Expression(g),
-  ) ->
-    Expression(ret),
+  ) -> Expression(ret),
 ) -> Expression(ret) {
   let rest =
     callback(
@@ -513,8 +510,7 @@ pub fn with_use8(
     Expression(f),
     Expression(g),
     Expression(h),
-  ) ->
-    Expression(ret),
+  ) -> Expression(ret),
 ) -> Expression(ret) {
   let rest =
     callback(
@@ -565,8 +561,7 @@ pub fn with_use9(
     Expression(g),
     Expression(h),
     Expression(i),
-  ) ->
-    Expression(ret),
+  ) -> Expression(ret),
 ) -> Expression(ret) {
   let rest =
     callback(

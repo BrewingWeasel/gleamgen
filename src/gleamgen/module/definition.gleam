@@ -45,7 +45,10 @@ pub fn new(name name: String) -> Definition {
   )
 }
 
-pub fn with_publicity(definition: Definition, to is_public: Bool) -> Definition {
+pub fn with_publicity(
+  definition: Definition,
+  to is_public: Bool,
+) -> Definition {
   Definition(..definition, is_public:)
 }
 

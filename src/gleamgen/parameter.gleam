@@ -14,7 +14,10 @@ pub opaque type Parameter(type_) {
   )
 }
 
-pub fn new(name: String, type_: type_.GeneratedType(type_)) -> Parameter(type_) {
+pub fn new(
+  name: String,
+  type_: type_.GeneratedType(type_),
+) -> Parameter(type_) {
   Parameter(name:, type_:, label: option.None)
 }
 

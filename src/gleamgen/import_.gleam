@@ -176,7 +176,10 @@ pub fn merge_imports(imports) {
   do_merge_imports(imports, option.None, [])
 }
 
-fn compare_optional_string(a: Option(String), b: Option(String)) -> order.Order {
+fn compare_optional_string(
+  a: Option(String),
+  b: Option(String),
+) -> order.Order {
   case a, b {
     option.None, option.None -> order.Eq
     option.None, option.Some(_) -> order.Lt

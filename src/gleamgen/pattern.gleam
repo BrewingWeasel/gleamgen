@@ -96,7 +96,9 @@ pub fn concat_string(
   StringConcat(#(initial, variable), output: expression.raw(variable))
 }
 
-pub fn ok(ok_pattern: Pattern(a, a_output)) -> Pattern(Result(a, err), a_output) {
+pub fn ok(
+  ok_pattern: Pattern(a, a_output),
+) -> Pattern(Result(a, err), a_output) {
   Constructor(
     #("Ok", [ok_pattern |> to_dynamic]),
     output: ok_pattern.output,
@@ -899,7 +901,9 @@ pub fn list_empty() -> Pattern(List(a), Nil) {
 }
 
 /// Renders `[first, ..]` and binds the head element to `first`.
-pub fn list_first_discard_rest(first: String) -> Pattern(List(a), Expression(a)) {
+pub fn list_first_discard_rest(
+  first: String,
+) -> Pattern(List(a), Expression(a)) {
   Constructor(
     module: option.None,
     constructor: #("[" <> first <> ", ..]", []),

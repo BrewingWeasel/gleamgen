@@ -1105,23 +1105,18 @@ pub fn render(
       }),
       doc.line,
     )
-    |> doc.append(case module.module_documentation_comments, rendered_imports {
-      [], _ | _, [] -> doc.empty
-      _, _ -> doc.line
+    |> doc.append(case module.module_documentation_comments {
+      [] -> doc.empty
+      _ -> doc.concat([doc.line, doc.line])
     })
 
   rendered_imports
   |> doc.join(with: doc.line)
   |> doc.prepend(documentation_comments)
-  |> doc.append(
-    case
-      list.is_empty(rendered_imports)
-      && list.is_empty(module.module_documentation_comments)
-    {
-      True -> doc.empty
-      False -> doc.concat([doc.line, doc.line])
-    },
-  )
+  |> doc.append(case rendered_imports {
+    [] -> doc.empty
+    _ -> doc.concat([doc.line, doc.line])
+  })
   |> doc.append(doc.concat_join(rendered_defs, [doc.line, doc.line]))
   |> render.Render(details:)
 }

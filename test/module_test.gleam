@@ -68,6 +68,46 @@ pub const favorite_number = 46"
   assert result == expected
 }
 
+pub fn module_documentation_comments_and_imports_test() {
+  let mod = {
+    use <- module.with_module_documentation_comments([
+      "This is a module",
+      "It has documentation comments",
+    ])
+
+    use io_mod <- module.with_import(import_.new(["gleam", "io"]))
+
+    let io_println =
+      import_.value_of_type(io_mod, "println", type_.reference(io.println))
+
+    use _ <- module.with_function(
+      definition.new("main") |> definition.with_publicity(True),
+      function.new0(type_.nil, fn() {
+        expression.call1(io_println, expression.string("Hello, world!"))
+      }),
+    )
+
+    module.eof()
+  }
+
+  let result =
+    mod
+    |> module.render(render.default_context())
+    |> render.to_string()
+
+  let expected =
+    "//// This is a module
+//// It has documentation comments
+
+import gleam/io
+
+pub fn main() -> Nil {
+  io.println(\"Hello, world!\")
+}"
+
+  assert result == expected
+}
+
 const sample_module = "import gleam/int
 import gleam/io
 

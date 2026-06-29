@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.4 - 2026-06-28
+
+- Add whitespace after module documentation (Martin Schut)
+
 ## v1.0.3 - 2026-06-07
 
 - Fix block rendering in lists

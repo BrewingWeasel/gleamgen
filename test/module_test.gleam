@@ -108,7 +108,6 @@ pub fn main() -> Nil {
   assert result == expected
 }
 
-
 const sample_module = "import gleam/int
 import gleam/io
 

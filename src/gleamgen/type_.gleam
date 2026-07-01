@@ -509,7 +509,7 @@ fn render_custom(
       let module_to_use = render.get_import_from_context(context, module)
       let doc = import_reference.get_reference(module_to_use, name)
 
-      let details = render.add_import_to_details(render.empty_details, module)
+      let details = render.add_import_to_details(details, module)
       #(details, doc)
     }
     option.None -> #(details, doc.from_string(name))
